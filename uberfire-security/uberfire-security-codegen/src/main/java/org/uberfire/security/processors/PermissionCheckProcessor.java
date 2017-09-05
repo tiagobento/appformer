@@ -51,7 +51,7 @@ public class PermissionCheckProcessor extends IOCDecoratorExtension<PermissionCh
     public void generateDecorator(final Decorable decorable,
                                   final FactoryController controller) {
         MetaMethod metaMethod = decorable.getAsMethod();
-        PermissionCheck securedResource = metaMethod.getAnnotation(PermissionCheck.class);
+        PermissionCheck securedResource = metaMethod.unsafeGetAnnotation(PermissionCheck.class);
         String permission = securedResource.value();
         String onGranted = securedResource.onGranted();
         String onDenied = securedResource.onDenied();

@@ -85,7 +85,7 @@ public class ResourceCheckProcessor extends IOCDecoratorExtension<ResourceCheck>
     public void generateDecorator(final Decorable decorable,
                                   final FactoryController controller) {
         MetaMethod metaMethod = decorable.getAsMethod();
-        ResourceCheck securedResource = metaMethod.getAnnotation(ResourceCheck.class);
+        ResourceCheck securedResource = metaMethod.unsafeGetAnnotation(ResourceCheck.class);
         String resourceType = securedResource.type();
         String resourceAction = securedResource.action();
         String onGranted = securedResource.onGranted();
@@ -134,7 +134,7 @@ public class ResourceCheckProcessor extends IOCDecoratorExtension<ResourceCheck>
 
     public boolean implementsResource(MetaClass metaClass) {
         for (MetaClass iface : metaClass.getInterfaces()) {
-            if (iface.asClass().equals(Resource.class) || implementsResource(iface)) {
+            if (iface.unsafeAsClass().equals(Resource.class) || implementsResource(iface)) {
                 return true;
             }
         }
