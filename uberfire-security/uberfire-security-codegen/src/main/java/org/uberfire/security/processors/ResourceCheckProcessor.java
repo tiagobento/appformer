@@ -22,6 +22,7 @@ import org.jboss.errai.codegen.builder.ContextualStatementBuilder;
 import org.jboss.errai.codegen.builder.ElseBlockBuilder;
 import org.jboss.errai.codegen.builder.StatementEnd;
 import org.jboss.errai.codegen.builder.impl.BooleanExpressionBuilder;
+import org.jboss.errai.codegen.meta.MetaAnnotation;
 import org.jboss.errai.codegen.meta.MetaClass;
 import org.jboss.errai.codegen.meta.MetaMethod;
 import org.jboss.errai.codegen.meta.MetaParameter;
@@ -85,11 +86,11 @@ public class ResourceCheckProcessor extends IOCDecoratorExtension<ResourceCheck>
     public void generateDecorator(final Decorable decorable,
                                   final FactoryController controller) {
         MetaMethod metaMethod = decorable.getAsMethod();
-        ResourceCheck securedResource = metaMethod.unsafeGetAnnotation(ResourceCheck.class);
-        String resourceType = securedResource.type();
-        String resourceAction = securedResource.action();
-        String onGranted = securedResource.onGranted();
-        String onDenied = securedResource.onDenied();
+        MetaAnnotation securedResource = metaMethod.getAnnotation(ResourceCheck.class).get();
+        String resourceType = securedResource.value("type");
+        String resourceAction = securedResource.value("action");
+        String onGranted = securedResource.value("onGranted");
+        String onDenied = securedResource.value("onDenied");
         String declaringClass = metaMethod.getDeclaringClassName();
         int paramCount = metaMethod.getParameters().length;
 
@@ -134,7 +135,7 @@ public class ResourceCheckProcessor extends IOCDecoratorExtension<ResourceCheck>
 
     public boolean implementsResource(MetaClass metaClass) {
         for (MetaClass iface : metaClass.getInterfaces()) {
-            if (iface.unsafeAsClass().equals(Resource.class) || implementsResource(iface)) {
+            if (iface.instanceOf(Resource.class) || implementsResource(iface)) {
                 return true;
             }
         }
