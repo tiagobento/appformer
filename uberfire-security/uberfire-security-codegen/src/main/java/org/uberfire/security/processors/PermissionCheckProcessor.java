@@ -16,6 +16,7 @@
 package org.uberfire.security.processors;
 
 import org.jboss.errai.codegen.Statement;
+import org.jboss.errai.codegen.meta.MetaAnnotation;
 import org.jboss.errai.codegen.meta.MetaMethod;
 import org.jboss.errai.codegen.util.Stmt;
 import org.jboss.errai.ioc.client.api.CodeDecorator;
@@ -51,10 +52,10 @@ public class PermissionCheckProcessor extends IOCDecoratorExtension<PermissionCh
     public void generateDecorator(final Decorable decorable,
                                   final FactoryController controller) {
         MetaMethod metaMethod = decorable.getAsMethod();
-        PermissionCheck securedResource = metaMethod.unsafeGetAnnotation(PermissionCheck.class);
+        MetaAnnotation securedResource = metaMethod.getAnnotation(PermissionCheck.class).get();
         String permission = securedResource.value();
-        String onGranted = securedResource.onGranted();
-        String onDenied = securedResource.onDenied();
+        String onGranted = securedResource.value("onGranted");
+        String onDenied = securedResource.value("onDenied");
         String declaringClass = metaMethod.getDeclaringClassName();
 
         // The method must return void
