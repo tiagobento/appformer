@@ -16,6 +16,7 @@
 package org.guvnor.common.services.backend.exceptions;
 
 import org.guvnor.common.services.shared.exceptions.GenericPortableException;
+import org.jboss.errai.config.marshalling.MarshallingConfiguration;
 import org.jboss.errai.config.rebind.EnvUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,7 @@ public class ExceptionUtilities {
     public static RuntimeException handleException(final Exception e) {
         logger.error("Exception thrown: " + e.getMessage(),
                      e);
-        if (EnvUtil.isPortableType(e.getClass())) {
+        if (MarshallingConfiguration.isPortableType(e.getClass())) {
             if (e instanceof RuntimeException) {
                 return (RuntimeException) e;
             } else {

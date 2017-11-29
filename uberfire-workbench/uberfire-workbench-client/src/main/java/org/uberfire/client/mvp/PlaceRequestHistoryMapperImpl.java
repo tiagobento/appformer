@@ -26,6 +26,9 @@ import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
 import org.uberfire.mvp.impl.PathPlaceRequest;
 
+import javax.enterprise.context.Dependent;
+
+@Dependent
 public class PlaceRequestHistoryMapperImpl
         implements
         PlaceRequestHistoryMapper {
