@@ -17,6 +17,7 @@
 package org.uberfire.ext.widgets.core.client.editors.texteditor;
 
 import javax.annotation.PostConstruct;
+import javax.enterprise.context.Dependent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -31,6 +32,7 @@ import org.uberfire.ext.widgets.common.client.ace.AceEditorTheme;
 /**
  * A Text editor
  */
+@Dependent
 public class TextEditorView extends Composite
         implements
         RequiresResize,

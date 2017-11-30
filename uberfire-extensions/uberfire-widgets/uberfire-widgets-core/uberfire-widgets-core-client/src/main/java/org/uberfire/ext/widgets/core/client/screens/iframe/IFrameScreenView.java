@@ -20,6 +20,9 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.RequiresResize;
 
+import javax.enterprise.context.Dependent;
+
+@Dependent
 public class IFrameScreenView
         extends Composite
         implements IFrameScreenPresenter.View,
