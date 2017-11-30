@@ -30,6 +30,9 @@ import org.uberfire.ext.widgets.common.client.common.BusyPopup;
 import org.uberfire.ext.widgets.common.client.tables.PagedTable;
 import org.uberfire.java.nio.base.version.VersionRecord;
 
+import javax.enterprise.context.Dependent;
+
+@Dependent
 public class VersionHistoryPresenterViewImpl
         extends Composite
         implements VersionHistoryPresenterView {

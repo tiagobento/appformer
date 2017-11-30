@@ -18,6 +18,7 @@ package org.dashbuilder.exception;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import org.jboss.errai.config.marshalling.MarshallingConfiguration;
 import org.jboss.errai.config.rebind.EnvUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,7 @@ public class ExceptionManager {
      */
     public RuntimeException handleException(final Exception e) {
         log.error(e.getMessage(), e);
-        if (e instanceof RuntimeException && EnvUtil.isPortableType(e.getClass()) ) {
+        if (e instanceof RuntimeException && MarshallingConfiguration.isPortableType(e.getClass()) ) {
             return (RuntimeException) e;
         }
         return new GenericPortableException( e.getMessage(), e );

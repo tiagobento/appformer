@@ -16,11 +16,16 @@
 
 package org.uberfire;
 
+import org.jboss.errai.common.configuration.ErraiApp;
 import org.jboss.errai.common.configuration.ErraiModule;
+import org.uberfire.client.plugin.RuntimePluginsServiceProxyClientImpl;
+import org.uberfire.client.workbench.WorkbenchServicesProxyClientImpl;
 
 /**
  * @author Tiago Bento <tfernand@redhat.com>
  */
-@ErraiModule(includes = { "client.*", "shared.*" })
-public class UberfireWebAppModule {
+@ErraiApp(gwtModuleName = "org.uberfire.FastCompiledUberfireShowcaseClient")
+@ErraiModule(includes = { "client.*", "shared.*" },
+             iocAlternatives = { RuntimePluginsServiceProxyClientImpl.class, WorkbenchServicesProxyClientImpl.class })
+public class UberfireClientWebAppApp {
 }

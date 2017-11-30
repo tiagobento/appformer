@@ -18,14 +18,19 @@ package org.uberfire;
 
 import org.jboss.errai.common.configuration.ErraiApp;
 import org.jboss.errai.common.configuration.ErraiModule;
-import org.uberfire.client.plugin.RuntimePluginsServiceProxyClientImpl;
-import org.uberfire.client.workbench.WorkbenchServicesProxyClientImpl;
+import org.uberfire.client.RuntimePluginsServiceProxyBackendImpl;
+import org.uberfire.client.VFSLockServiceProxyBackendImpl;
+import org.uberfire.client.VFSServiceProxyBackendImpl;
+import org.uberfire.client.WorkbenchServicesProxyBackendImpl;
 
 /**
  * @author Tiago Bento <tfernand@redhat.com>
  */
-@ErraiApp(gwtModuleName = "org.uberfire.FastCompiledUberfireShowcaseClient")
+@ErraiApp(gwtModuleName = "org.uberfire.FastCompiledUberfireShowcase", userOnHostPageEnabled = true)
 @ErraiModule(includes = { "client.*", "shared.*" },
-             iocAlternatives = { RuntimePluginsServiceProxyClientImpl.class, WorkbenchServicesProxyClientImpl.class })
-public class UberfireShowcaseModule {
+             iocAlternatives = { WorkbenchServicesProxyBackendImpl.class,
+                                 VFSServiceProxyBackendImpl.class,
+                                 VFSLockServiceProxyBackendImpl.class,
+                                 RuntimePluginsServiceProxyBackendImpl.class })
+public class UberfireWebAppApp {
 }

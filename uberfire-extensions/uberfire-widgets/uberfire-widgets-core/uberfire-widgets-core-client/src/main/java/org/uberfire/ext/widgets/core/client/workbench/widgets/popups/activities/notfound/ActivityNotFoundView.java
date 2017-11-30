@@ -16,6 +16,7 @@
 package org.uberfire.ext.widgets.core.client.workbench.widgets.popups.activities.notfound;
 
 import javax.annotation.PostConstruct;
+import javax.enterprise.context.Dependent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -29,6 +30,7 @@ import org.gwtbootstrap3.client.ui.Label;
 /**
  * View for when an Activity cannot be found
  */
+@Dependent
 public class ActivityNotFoundView extends SimplePanel
         implements
         ActivityNotFoundPresenter.View {

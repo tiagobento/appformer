@@ -31,6 +31,9 @@ import org.uberfire.ext.editor.commons.client.resources.i18n.CommonConstants;
 import org.uberfire.java.nio.base.version.VersionRecord;
 import org.uberfire.mvp.Command;
 
+import javax.enterprise.context.Dependent;
+
+@Dependent
 public class VersionMenuDropDownButtonViewImpl
         extends Composite
         implements VersionMenuDropDownButtonView {
