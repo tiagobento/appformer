@@ -93,7 +93,7 @@ public class WorkbenchClientApiActivitiesErraiGenerator extends ErraiAptGenerato
     }
 
     @Override
-    public int priority() {
+    public int layer() {
         return -1;
     }
 }
