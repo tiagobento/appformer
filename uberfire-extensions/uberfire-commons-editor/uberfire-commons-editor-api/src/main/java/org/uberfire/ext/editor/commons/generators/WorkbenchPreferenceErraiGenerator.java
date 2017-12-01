@@ -76,7 +76,7 @@ public class WorkbenchPreferenceErraiGenerator extends ErraiAptGenerators.Multip
     }
 
     @Override
-    public int priority() {
+    public int layer() {
         return -1;
     }
 }

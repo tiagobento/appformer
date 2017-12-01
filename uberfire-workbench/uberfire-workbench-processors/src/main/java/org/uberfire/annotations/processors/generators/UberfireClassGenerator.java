@@ -28,6 +28,7 @@ import org.uberfire.annotations.processors.exceptions.GenerationException;
 
 import static javax.tools.Diagnostic.Kind.NOTE;
 import static org.jboss.errai.common.apt.generator.ErraiAptGeneratedSourceFile.Type.CLIENT;
+import static org.jboss.errai.common.apt.generator.ErraiAptGeneratedSourceFile.Type.SHARED;
 
 /**
  * @author Tiago Bento <tfernand@redhat.com>
@@ -61,7 +62,7 @@ public class UberfireClassGenerator {
         return new ErraiAptGeneratedSourceFile(packageName,
                                                activityClassName,
                                                sourceCode,
-                                               CLIENT);
+                                               SHARED);
     }
 
     private String generateSourceCode(final String packageName,
