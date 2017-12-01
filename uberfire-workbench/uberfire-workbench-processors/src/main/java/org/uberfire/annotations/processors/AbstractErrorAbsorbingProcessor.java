@@ -32,6 +32,8 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.JavaFileObject;
 
+import static java.util.stream.Collectors.joining;
+
 /**
  * Contains a series of adaptations and workarounds to make annotation processors work well under Eclipse JDT APT. Does
  * not limit compatibility with other annotation processing environments (such as javac).
@@ -71,6 +73,14 @@ public abstract class AbstractErrorAbsorbingProcessor extends AbstractProcessor 
     @Override
     public final boolean process(Set<? extends TypeElement> annotations,
                                  RoundEnvironment roundEnv) {
+
+
+        //FIXME: tiago remove ugly clause
+        if (Boolean.getBoolean("apt-generators") && !(annotations.stream().map(Object::toString).collect(joining("")).contains("Prefer"))) {
+            // Errai APT generators will generate this code
+            return false;
+        }
+
         try {
             if (rememberedInitError != null) {
                 throw rememberedInitError;

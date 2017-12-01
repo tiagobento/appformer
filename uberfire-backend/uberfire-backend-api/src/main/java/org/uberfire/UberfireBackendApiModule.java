@@ -21,6 +21,6 @@ import org.jboss.errai.common.configuration.ErraiModule;
 /**
  * @author Tiago Bento <tfernand@redhat.com>
  */
-@ErraiModule(includes = { "backend.*" }, excludes = { "backend.server.*" })
+@ErraiModule(includes = { "backend.*", "workbench.*"}, excludes = { "backend.server.*" })
 public class UberfireBackendApiModule {
 }

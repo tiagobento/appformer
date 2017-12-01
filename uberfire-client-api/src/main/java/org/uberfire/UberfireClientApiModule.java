@@ -21,6 +21,6 @@ import org.jboss.errai.common.configuration.ErraiModule;
 /**
  * @author Tiago Bento <tfernand@redhat.com>
  */
-@ErraiModule(includes = { "client.*" })
+@ErraiModule(includes = { "client.*", "generators.*" })
 public class UberfireClientApiModule {
 }
