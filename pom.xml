@@ -819,6 +819,7 @@
     <module>uberfire-commons</module>
     <module>uberfire-api</module>
     <module>uberfire-client-api</module>
+    <module>uberfire-client-api-export-apt</module>
     <module>uberfire-security</module>
     <module>uberfire-nio2-backport</module>
     <module>uberfire-io</module>

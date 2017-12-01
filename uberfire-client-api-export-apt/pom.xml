@@ -26,51 +26,28 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>uberfire-client-api</artifactId>
+  <artifactId>uberfire-client-api-export-apt</artifactId>
   <packaging>jar</packaging>
 
-  <name>UberFire Client API</name>
-  <description>UberFire Client API</description>
+  <name>UberFire Client API - Export APT</name>
+  <description>UberFire Client API - Export APT</description>
 
   <dependencies>
-
-    <dependency>
-      <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
     <dependency>
       <groupId>org.jboss.errai</groupId>
-      <artifactId>errai-javax-enterprise</artifactId>
+      <artifactId>errai-common-apt</artifactId>
     </dependency>
-
-    <dependency>
-      <groupId>org.jboss.errai</groupId>
-      <artifactId>errai-common</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.gwt</groupId>
-      <artifactId>gwt-user</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-workbench-processors</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-client-api-export-apt</artifactId>
-    </dependency>
-
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <proc>none</proc>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>

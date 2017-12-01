@@ -93,13 +93,11 @@ public class WorkbenchPreferenceProcessor extends AbstractErrorAbsorbingProcesso
 
                 generate(messager,
                          classElement,
-                         packageElement,
                          packageName,
                          className,
                          beanGenerator);
                 generate(messager,
                          classElement,
-                         packageElement,
                          packageName,
                          className,
                          portableGenerator);
@@ -111,7 +109,6 @@ public class WorkbenchPreferenceProcessor extends AbstractErrorAbsorbingProcesso
 
     private void generate(final Messager messager,
                           final TypeElement classElement,
-                          final PackageElement packageElement,
                           final String packageName,
                           final String className,
                           final WorkbenchPreferenceGeneratedImplGenerator generator) throws IOException {
@@ -119,7 +116,6 @@ public class WorkbenchPreferenceProcessor extends AbstractErrorAbsorbingProcesso
             messager.printMessage(Diagnostic.Kind.NOTE,
                                   "Generating code for [" + className + "]");
             final StringBuffer generatedImplCode = generator.generate(packageName,
-                                                                      packageElement,
                                                                       className,
                                                                       classElement,
                                                                       processingEnv);

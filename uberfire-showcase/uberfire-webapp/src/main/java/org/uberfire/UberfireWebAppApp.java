@@ -22,6 +22,10 @@ import org.uberfire.client.RuntimePluginsServiceProxyBackendImpl;
 import org.uberfire.client.VFSLockServiceProxyBackendImpl;
 import org.uberfire.client.VFSServiceProxyBackendImpl;
 import org.uberfire.client.WorkbenchServicesProxyBackendImpl;
+import org.uberfire.client.plugin.RuntimePluginsServiceProxyClientImpl;
+import org.uberfire.client.workbench.VFSLockServiceProxyClientImpl;
+import org.uberfire.client.workbench.VFSServiceProxyClientImpl;
+import org.uberfire.client.workbench.WorkbenchServicesProxyClientImpl;
 
 /**
  * @author Tiago Bento <tfernand@redhat.com>

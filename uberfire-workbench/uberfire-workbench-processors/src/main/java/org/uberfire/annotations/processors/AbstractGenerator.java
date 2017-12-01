@@ -17,7 +17,6 @@ package org.uberfire.annotations.processors;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.PackageElement;
 
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.template.Configuration;
@@ -72,7 +71,6 @@ public abstract class AbstractGenerator {
     }
 
     public abstract StringBuffer generate(final String packageName,
-                                          final PackageElement packageElement,
                                           final String className,
                                           final Element element,
                                           final ProcessingEnvironment processingEnvironment) throws GenerationException;
