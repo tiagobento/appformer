@@ -528,22 +528,6 @@
         </plugins>
       </build>
     </profile>
-
-    <profile>
-      <id>apt-generators</id>
-      <activation>
-        <property>
-          <name>apt-generators</name>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>org.jboss.errai</groupId>
-          <artifactId>errai-generators-apt</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-
   </profiles>
 
 </project>
