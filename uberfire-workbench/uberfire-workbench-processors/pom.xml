@@ -45,8 +45,9 @@
 
     <dependency>
       <groupId>org.jboss.errai</groupId>
-      <artifactId>errai-common-apt</artifactId>
+      <artifactId>errai-ioc</artifactId>
     </dependency>
+
   </dependencies>
 
   <build>

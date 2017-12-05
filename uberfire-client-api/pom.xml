@@ -61,11 +61,6 @@
       <scope>provided</scope>
     </dependency>
 
-    <dependency>
-      <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-workbench-processors</artifactId>
-    </dependency>
-
   </dependencies>
 
 </project>
