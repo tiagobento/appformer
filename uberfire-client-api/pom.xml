@@ -66,11 +66,6 @@
       <artifactId>uberfire-workbench-processors</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-client-api-export-apt</artifactId>
-    </dependency>
-
   </dependencies>
 
 </project>

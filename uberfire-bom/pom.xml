@@ -200,11 +200,6 @@
       </dependency>
       <dependency>
         <groupId>org.uberfire</groupId>
-        <artifactId>uberfire-client-api-export-apt</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.uberfire</groupId>
         <artifactId>uberfire-client-api</artifactId>
         <version>${project.version}</version>
         <classifier>sources</classifier>
