@@ -74,13 +74,6 @@ public abstract class AbstractErrorAbsorbingProcessor extends AbstractProcessor 
     public final boolean process(Set<? extends TypeElement> annotations,
                                  RoundEnvironment roundEnv) {
 
-
-        //FIXME: tiago remove ugly clause
-        if (Boolean.getBoolean("apt-generators") && !(annotations.stream().map(Object::toString).collect(joining("")).contains("Prefer"))) {
-            // Errai APT generators will generate this code
-            return false;
-        }
-
         try {
             if (rememberedInitError != null) {
                 throw rememberedInitError;
