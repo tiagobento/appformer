@@ -22,19 +22,21 @@ import org.uberfire.client.RuntimePluginsServiceProxyBackendImpl;
 import org.uberfire.client.VFSLockServiceProxyBackendImpl;
 import org.uberfire.client.VFSServiceProxyBackendImpl;
 import org.uberfire.client.WorkbenchServicesProxyBackendImpl;
-import org.uberfire.client.plugin.RuntimePluginsServiceProxyClientImpl;
-import org.uberfire.client.workbench.VFSLockServiceProxyClientImpl;
-import org.uberfire.client.workbench.VFSServiceProxyClientImpl;
-import org.uberfire.client.workbench.WorkbenchServicesProxyClientImpl;
+
+import static org.jboss.errai.common.configuration.Target.GWT;
+import static org.jboss.errai.common.configuration.Target.JAVA;
 
 /**
  * @author Tiago Bento <tfernand@redhat.com>
  */
-@ErraiApp(gwtModuleName = "org.uberfire.FastCompiledUberfireShowcase", userOnHostPageEnabled = true)
-@ErraiModule(includes = { "client.*", "shared.*" },
-             iocAlternatives = { WorkbenchServicesProxyBackendImpl.class,
-                                 VFSServiceProxyBackendImpl.class,
-                                 VFSLockServiceProxyBackendImpl.class,
-                                 RuntimePluginsServiceProxyBackendImpl.class })
+@ErraiApp(gwtModuleName = "org.uberfire.FastCompiledUberfireShowcase",
+        targets = {JAVA, GWT},
+        userOnHostPageEnabled = true)
+@ErraiModule(includes = {"client.*", "shared.*"},
+        iocAlternatives = {WorkbenchServicesProxyBackendImpl.class,
+                VFSServiceProxyBackendImpl.class,
+                VFSLockServiceProxyBackendImpl.class,
+                RuntimePluginsServiceProxyBackendImpl.class})
 public class UberfireWebAppApp {
+
 }
