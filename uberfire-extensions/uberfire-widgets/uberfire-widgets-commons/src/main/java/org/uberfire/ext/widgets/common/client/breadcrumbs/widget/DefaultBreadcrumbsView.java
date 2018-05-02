@@ -18,50 +18,51 @@ package org.uberfire.ext.widgets.common.client.breadcrumbs.widget;
 
 import javax.inject.Inject;
 
-import org.jboss.errai.common.client.dom.Anchor;
-import org.jboss.errai.common.client.dom.ListItem;
-import org.jboss.errai.ui.client.local.api.IsElement;
+import elemental2.dom.HTMLAnchorElement;
+import elemental2.dom.HTMLLIElement;
+import org.jboss.errai.ui.client.local.api.elemental2.IsElement;
 import org.jboss.errai.ui.shared.api.annotations.DataField;
 import org.jboss.errai.ui.shared.api.annotations.Templated;
-import org.uberfire.client.mvp.UberElement;
-import org.uberfire.mvp.Command;
+import org.uberfire.client.mvp.UberElemental;
 
 @Templated
-public class BreadcrumbsView implements UberElement<BreadcrumbsPresenter>,
-                                        BreadcrumbsPresenter.View,
-                                        IsElement {
+public class DefaultBreadcrumbsView implements UberElemental<DefaultBreadcrumbsPresenter>,
+                                               DefaultBreadcrumbsPresenter.View,
+                                               IsElement {
 
     @Inject
-    @DataField
-    ListItem breadcrumb;
+    @DataField("breadcrumb")
+    private HTMLLIElement breadcrumb;
 
     @Inject
-    @DataField
-    Anchor breadcrumbLink;
+    @DataField("breadcrumbLink")
+    private HTMLAnchorElement breadcrumbLink;
 
-    private BreadcrumbsPresenter presenter;
+    private DefaultBreadcrumbsPresenter presenter;
 
     @Override
-    public void init(BreadcrumbsPresenter presenter) {
+    public void init(DefaultBreadcrumbsPresenter presenter) {
         this.presenter = presenter;
     }
 
     @Override
-    public void setup(String label,
-                      Command clickCommand) {
-        breadcrumbLink.setTextContent(label);
-        breadcrumbLink.setOnclick((e) -> clickCommand.execute());
+    public void setup(final String label) {
+        breadcrumbLink.textContent = label;
+        breadcrumbLink.onclick = e -> {
+            presenter.onClick();
+            return null;
+        };
     }
 
     @Override
     public void activate() {
-        breadcrumb.setClassName("active");
-        breadcrumbLink.setClassName("breadcrumb-last");
+        breadcrumb.className = "active";
+        breadcrumbLink.className = "breadcrumb-last";
     }
 
     @Override
     public void deactivate() {
-        breadcrumb.setClassName("");
-        breadcrumbLink.setClassName("breadcrumb-link");
+        breadcrumb.className = "";
+        breadcrumbLink.className = "breadcrumb-link";
     }
 }
