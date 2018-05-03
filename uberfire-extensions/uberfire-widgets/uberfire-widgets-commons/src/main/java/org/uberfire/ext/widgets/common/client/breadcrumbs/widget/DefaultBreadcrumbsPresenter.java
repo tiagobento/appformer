@@ -15,6 +15,7 @@
  */
 package org.uberfire.ext.widgets.common.client.breadcrumbs.widget;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
@@ -31,6 +32,10 @@ public class DefaultBreadcrumbsPresenter implements BreadcrumbPresenter {
     @Inject
     public DefaultBreadcrumbsPresenter(final View view) {
         this.view = view;
+    }
+
+    @PostConstruct
+    public void init() {
         view.init(this);
     }
 

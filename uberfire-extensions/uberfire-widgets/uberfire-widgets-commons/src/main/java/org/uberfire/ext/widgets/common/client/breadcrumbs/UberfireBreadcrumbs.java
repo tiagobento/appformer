@@ -172,7 +172,6 @@ public class UberfireBreadcrumbs {
                               final Command command,
                               final boolean removeDeepLevelBreadcrumbsAfterActivation) {
 
-        final List<BreadcrumbPresenter> breadcrumbs = getBreadcrumbs(associatedPerspective);
         final DefaultBreadcrumbsPresenter breadCrumb = breadcrumbsPresenters.get();
 
         breadCrumb.setup(breadCrumbLabel,
@@ -182,9 +181,6 @@ public class UberfireBreadcrumbs {
                                                          associatedPlaceRequest,
                                                          command));
 
-        deactivateLastBreadcrumb(breadcrumbs);
-        breadCrumb.activate();
-
         addBreadCrumb(associatedPerspective, breadCrumb);
     }
 
@@ -192,9 +188,13 @@ public class UberfireBreadcrumbs {
                               final BreadcrumbPresenter breadCrumbPresenter) {
 
         final List<BreadcrumbPresenter> breadcrumbs = getBreadcrumbs(associatedPerspective);
+        
+        deactivateLastBreadcrumb(breadcrumbs);
+        breadCrumbPresenter.activate();
+        
         breadcrumbs.add(breadCrumbPresenter);
-
         breadcrumbsPerPerspective.put(associatedPerspective, breadcrumbs);
+        
         if (currentPerspective.equals(associatedPerspective)) {
             updateView();
         }
