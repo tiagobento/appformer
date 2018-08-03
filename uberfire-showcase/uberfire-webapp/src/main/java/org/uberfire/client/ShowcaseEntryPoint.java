@@ -16,12 +16,13 @@
 package org.uberfire.client;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -36,7 +37,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.Widget;
 import org.gwtbootstrap3.client.ui.html.Text;
 import org.jboss.errai.common.client.api.Caller;
 import org.jboss.errai.ioc.client.api.EntryPoint;
@@ -58,6 +58,7 @@ import org.uberfire.client.perspectives.SimplePerspectiveNoContext;
 import org.uberfire.client.resources.AppResource;
 import org.uberfire.client.screen.JSWorkbenchScreenActivity;
 import org.uberfire.client.screens.popup.SimplePopUp;
+import org.uberfire.client.screens.react.JsWorkbenchScreenActivity;
 import org.uberfire.client.views.pfly.PatternFlyEntryPoint;
 import org.uberfire.client.views.pfly.menu.MainBrand;
 import org.uberfire.client.views.pfly.menu.UserMenu;
@@ -129,7 +130,7 @@ public class ShowcaseEntryPoint {
         for (final IOCBeanDef<WorkbenchScreenActivity> _menuItem : IOC.getBeanManager().lookupBeans(WorkbenchScreenActivity.class)) {
             final String name;
             if (!_menuItem.getBeanClass().equals(PerspectiveEditorScreenActivity.class)) {
-                if (_menuItem.getBeanClass().equals(JSWorkbenchScreenActivity.class)) {
+                if (Arrays.asList(JSWorkbenchScreenActivity.class, JsWorkbenchScreenActivity.class).contains(_menuItem.getBeanClass())) {
                     name = _menuItem.getName();
                 } else {
                     name = IOC.getBeanManager().lookupBean(_menuItem.getBeanClass()).getName();
