@@ -29,6 +29,8 @@
   <inherits name="org.ext.uberfire.social.activities.SocialActivitiesAPI"/>
   <inherits name="org.ext.uberfire.social.activities.SocialActivitiesClient"/>
 
+  <inherits name="org.appformer.jsbridge.AppFormerJsBridge"/>
+
   <!-- Specify the application specific style sheet. -->
   <stylesheet src='css/uberfire-showcase.css'/>
 
