@@ -459,7 +459,7 @@
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
-            <id>unpack-wildfly</id>
+            <id>unpack</id>
             <phase>process-resources</phase>
             <goals>
               <goal>unpack</goal>
