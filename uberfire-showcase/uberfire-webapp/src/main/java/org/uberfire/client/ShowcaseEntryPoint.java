@@ -59,7 +59,7 @@ import org.uberfire.client.perspectives.SimplePerspectiveNoContext;
 import org.uberfire.client.resources.AppResource;
 import org.uberfire.client.screen.JSWorkbenchScreenActivity;
 import org.uberfire.client.screens.popup.SimplePopUp;
-import org.appformer.jsbridge.client.JsWorkbenchScreenActivity;
+import org.uberfire.jsbridge.client.JsWorkbenchScreenActivity;
 import org.uberfire.client.views.pfly.PatternFlyEntryPoint;
 import org.uberfire.client.views.pfly.menu.MainBrand;
 import org.uberfire.client.views.pfly.menu.UserMenu;
