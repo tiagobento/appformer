@@ -59,6 +59,7 @@ import org.uberfire.client.perspectives.SimplePerspectiveNoContext;
 import org.uberfire.client.resources.AppResource;
 import org.uberfire.client.screen.JSWorkbenchScreenActivity;
 import org.uberfire.client.screens.popup.SimplePopUp;
+import org.uberfire.jsbridge.client.AppFormerJsBridge;
 import org.uberfire.jsbridge.client.JsWorkbenchScreenActivity;
 import org.uberfire.client.views.pfly.PatternFlyEntryPoint;
 import org.uberfire.client.views.pfly.menu.MainBrand;
@@ -123,6 +124,8 @@ public class ShowcaseEntryPoint {
     private PatternFlyEntryPoint pflyEntryPoint;
     @Inject
     private PerspectiveEditorSettings perspectiveEditorSettings;
+    @Inject
+    private AppFormerJsBridge appFormerJsBridge;
 
     public static List<MenuItem> getScreens() {
         final List<MenuItem> screens = new ArrayList<>();
@@ -166,6 +169,9 @@ public class ShowcaseEntryPoint {
         hideLoadingPopup();
         GWT.log("PatternFly version: " + pflyEntryPoint.getPatternFlyVersion());
         GWT.log("Loaded MomentJS using locale: " + pflyEntryPoint.getMomentLocale());
+        GWT.log("Exposing JS bridge");
+        appFormerJsBridge.init("org.uberfire.UberfireShowcase");
+
     }
 
     private void setupMenu(@Observes final ApplicationReadyEvent event) {
