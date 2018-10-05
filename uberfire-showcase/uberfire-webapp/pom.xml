@@ -546,7 +546,7 @@
               <properties>
                 <property>
                   <name>ts-exporter</name>
-                  <value>all</value>
+                  <value>export</value>
                 </property>
               </properties>
             </configuration>
@@ -561,7 +561,7 @@
               <properties>
                 <property>
                   <name>ts-exporter</name>
-                  <value>none</value>
+                  <value>default</value>
                 </property>
               </properties>
             </configuration>
