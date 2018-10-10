@@ -1,8 +1,7 @@
 import * as React from "react";
 import * as AppFormer from 'appformer-js';
 import {VFSService} from "@kiegroup-ts-generated/uberfire-backend-api-rpc";
-
-alert("I'm alive!");
+import {Clock} from "./Clock";
 
 export class StaticReactComponent extends AppFormer.Screen {
     constructor() {
@@ -15,7 +14,7 @@ export class StaticReactComponent extends AppFormer.Screen {
     }
 
     af_componentRoot(root?: { ss: AppFormer.Screen[]; ps: AppFormer.Perspective[] }): AppFormer.Element {
-        return <div>This is a React Component...</div>;
+        return <Clock />;
     }
 
     af_onOpen(): void {
