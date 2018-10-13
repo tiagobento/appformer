@@ -4,12 +4,9 @@
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "publishConfig": {
-    "registry": "http://localhost:4873"
-  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:ts-exporter": "npx webpack && npm unpublish -f -reg http://localhost:4873 && yarn publish --new-version ${npm_package_version}"
+    "build:ts-exporter": "npx webpack && npm unpublish -f -reg http://localhost:4873 && yarn publish --new-version ${npm_package_version} --registry http://localhost:4873"
   },
   "author": "",
   "license": "ISC",
