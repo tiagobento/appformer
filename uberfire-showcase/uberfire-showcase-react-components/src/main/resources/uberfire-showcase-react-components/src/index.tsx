@@ -23,6 +23,10 @@ export class StaticReactComponent extends AppFormer.Screen {
     af_onOpen(): void {
         console.info("ReactComponent is open.")
     }
+
+    af_onClose(): void {
+        console.info("ReactComponent is closed.")
+    }
 }
 
 AppFormer.register({StaticReactComponent});
