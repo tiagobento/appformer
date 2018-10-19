@@ -143,7 +143,8 @@ public class JsWorkbenchScreenActivity extends AbstractWorkbenchScreenActivity {
     // PROPERTIES
     @Override
     public String getTitle() {
-        return (String) screen.get("af_componentTitle");
+        final String title = (String) screen.get("af_componentTitle");
+        return title != null ? title : getIdentifier();
     }
 
     @Override
