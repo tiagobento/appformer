@@ -81,8 +81,8 @@ public class JsNativeScreen {
 
     // ===== Properties
 
-    public String componentId() {
-        return (String) get("af_componentId");
+    public String getComponentId() {
+        return componentId;
     }
 
     public String componentTitle() {
@@ -129,7 +129,7 @@ public class JsNativeScreen {
 
     private Object get(final String property) {
         if (!this.scriptLoaded()) {
-            return componentId;
+            return null;
         }
         return getNative(property);
     }

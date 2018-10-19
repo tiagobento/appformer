@@ -31,6 +31,7 @@ import elemental2.dom.DomGlobal;
 import elemental2.promise.Promise;
 import org.jboss.errai.bus.client.ErraiBus;
 import org.jboss.errai.bus.client.api.base.MessageBuilder;
+import org.jboss.errai.enterprise.client.cdi.api.CDI;
 import org.jboss.errai.ioc.client.container.IOC;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.jboss.errai.marshalling.client.Marshalling;
@@ -38,7 +39,6 @@ import org.uberfire.client.mvp.Activity;
 import org.uberfire.client.mvp.ActivityBeansCache;
 import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
-import org.uberfire.client.mvp.WorkbenchScreenActivity;
 import org.uberfire.client.workbench.Workbench;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
 
@@ -52,16 +52,15 @@ public class AppFormerJsBridge {
     private Workbench workbench;
 
     @Inject
-    private AppFormerJSActivityLoader appFormerJSLoader;
+    private AppFormerJSActivityLoader appFormerJsLoader;
 
     public void init(final String gwtModuleName) {
-        workbench.addStartupBlocker(AppFormerJsBridge.class);
 
         exposeBridge();
 
         ScriptInjector.fromUrl("/" + gwtModuleName + "/AppFormerComponentsRegistry.js")
                 .setWindow(ScriptInjector.TOP_WINDOW)
-                .setCallback((Success<Void>) i2 -> appFormerJSLoader.init(gwtModuleName))
+                .setCallback((Success<Void>) i2 -> appFormerJsLoader.init(gwtModuleName))
                 .inject();
 
         //FIXME: Load React from local instead of CDN.
@@ -71,12 +70,6 @@ public class AppFormerJsBridge {
                         .setWindow(ScriptInjector.TOP_WINDOW)
                         .setCallback((Success<Void>) i2 -> ScriptInjector.fromUrl("/" + gwtModuleName + "/appformer.js")
                                 .setWindow(ScriptInjector.TOP_WINDOW)
-                                .setCallback((Success<Void>) i3 -> ScriptInjector.fromUrl("/" + gwtModuleName + "/showcase-components-autoregister.js")
-                                        .setWindow(ScriptInjector.TOP_WINDOW)
-
-                                        .setCallback((Success<Void>) i5 ->
-                                                workbench.removeStartupBlocker(AppFormerJsBridge.class))
-                                        .inject())
                                 .inject())
                         .inject())
                 .inject();
@@ -88,9 +81,14 @@ public class AppFormerJsBridge {
             registerPerspective: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::registerPerspective(Ljava/lang/Object;),
             goTo: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::goTo(Ljava/lang/String;),
             rpc: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::rpc(Ljava/lang/String;[Ljava/lang/Object;),
-            translate: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::translate(Ljava/lang/String;[Ljava/lang/Object;)
+            translate: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::translate(Ljava/lang/String;[Ljava/lang/Object;),
+            sendEvent: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::sendEvent(Ljava/lang/String;)
         };
     }-*/;
+
+    public void sendEvent(final String eventJson) {
+        CDI.fireEvent(Marshalling.fromJSON(eventJson));
+    }
 
     public void goTo(final String place) {
         final SyncBeanManager beanManager = IOC.getBeanManager();
@@ -131,7 +129,6 @@ public class AppFormerJsBridge {
         final SyncBeanManager beanManager = IOC.getBeanManager();
         final AppFormerJSActivityLoader jsLoader = beanManager.lookupBean(AppFormerJSActivityLoader.class).getInstance();
         jsLoader.registerScreen(jsObject);
-
     }
 
     public Promise<Object> rpc(final String path, final Object[] params) {
