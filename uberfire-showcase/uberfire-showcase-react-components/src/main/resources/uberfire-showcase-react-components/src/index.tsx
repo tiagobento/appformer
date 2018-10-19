@@ -6,8 +6,8 @@ import {Files} from "./Files";
 export class StaticReactComponent extends AppFormer.Screen {
     constructor() {
         super("ReactComponent");
-        this.isReact = true;
-        this.componentTitle = "React component";
+        this.af_isReact = true;
+        this.af_componentTitle = "React component";
     }
 
     af_componentRoot(root?: { ss: AppFormer.Screen[]; ps: AppFormer.Perspective[] }): AppFormer.RootElement {
@@ -30,9 +30,9 @@ export class FirstReactPerspective extends AppFormer.Perspective {
 
     constructor() {
         super("FirstReactPerspective");
-        this.isReact = true;
-        this.parts = FirstReactPerspective.parts();
-        this.panels = FirstReactPerspective.panels();
+        this.af_isReact = true;
+        this.af_parts = FirstReactPerspective.parts();
+        this.af_panels = FirstReactPerspective.panels();
     }
 
     private static parts() {
