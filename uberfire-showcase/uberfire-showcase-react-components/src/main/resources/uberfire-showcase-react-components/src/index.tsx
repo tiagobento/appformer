@@ -29,4 +29,4 @@ export class StaticReactComponent extends AppFormer.Screen {
     }
 }
 
-AppFormer.register({StaticReactComponent});
+AppFormer.register(new StaticReactComponent());

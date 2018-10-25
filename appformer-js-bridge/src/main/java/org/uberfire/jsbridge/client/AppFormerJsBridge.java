@@ -20,7 +20,6 @@ import java.lang.annotation.Annotation;
 import java.util.function.Function;
 
 import javax.enterprise.context.Dependent;
-import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 import com.google.gwt.core.client.Callback;
@@ -78,7 +77,7 @@ public class AppFormerJsBridge {
             rpc: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::rpc(Ljava/lang/String;[Ljava/lang/Object;),
             translate: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::translate(Ljava/lang/String;[Ljava/lang/Object;),
             sendEvent: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::sendEvent(Ljava/lang/String;),
-            render: function(component, container, callback) {
+            render: function (component, container, callback) {
                 if (component instanceof HTMLElement) {
                     container.innerHTML = "";
                     container.appendChild(component);
@@ -144,7 +143,7 @@ public class AppFormerJsBridge {
                     ? Marshalling.toJSON(value)
                     : null;
 
-            final Object[] gwtParams = stream(((Object[]) params[0])).map(jsonToGwt).toArray();
+            final Object[] gwtParams = stream(params).map(jsonToGwt).toArray();
 
             MessageBuilder.createCall()
                     .call(serviceFqcn)
