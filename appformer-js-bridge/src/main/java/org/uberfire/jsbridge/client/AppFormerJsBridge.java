@@ -117,13 +117,13 @@ public class AppFormerJsBridge {
     public void registerPerspective(final Object jsObject) {
         final SyncBeanManager beanManager = IOC.getBeanManager();
         final AppFormerJsActivityLoader jsLoader = beanManager.lookupBean(AppFormerJsActivityLoader.class).getInstance();
-        jsLoader.onActivityLoaded(jsObject);
+        jsLoader.onComponentLoaded(jsObject);
     }
 
     public void registerScreen(final Object jsObject) {
         final SyncBeanManager beanManager = IOC.getBeanManager();
         final AppFormerJsActivityLoader jsLoader = beanManager.lookupBean(AppFormerJsActivityLoader.class).getInstance();
-        jsLoader.onActivityLoaded(jsObject);
+        jsLoader.onComponentLoaded(jsObject);
     }
 
     public Promise<Object> rpc(final String path, final Object[] params) {
