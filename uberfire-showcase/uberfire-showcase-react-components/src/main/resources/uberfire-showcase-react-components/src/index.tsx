@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as AppFormer from 'appformer-js';
+import * as AppFormerEditors from 'appformer-js-editors';
 import {Clock} from "./Clock";
 import {Files} from "./Files";
 
@@ -100,5 +101,23 @@ export class FirstReactPerspective extends AppFormer.Perspective {
 
 }
 
+export class ReactHtmlEditor extends AppFormerEditors.Editor {
+
+    constructor() {
+        super("ReactEditor");
+        this.af_isReact = true;
+    }
+
+    af_onOpen(): void {
+        alert("yay!");
+    }
+
+    public af_componentRoot(children?: any): AppFormer.Element {
+        return <div>Test</div>;
+    }
+
+}
+
 AppFormer.register(new StaticReactComponent());
-AppFormer.register( new FirstReactPerspective());
+AppFormer.register(new FirstReactPerspective());
+AppFormer.register(new ReactHtmlEditor());

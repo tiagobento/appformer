@@ -6,7 +6,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import org.uberfire.client.mvp.AbstractWorkbenchPerspectiveActivity;
 import org.uberfire.client.mvp.ActivityManager;
 import org.uberfire.client.mvp.PlaceManager;
-import org.uberfire.jsbridge.client.loading.AppFormerComponentConfiguration.PerspectiveComponentParams;
 import org.uberfire.jsbridge.client.perspective.JsWorkbenchPerspectiveActivity;
 import org.uberfire.jsbridge.client.perspective.jsnative.JsNativePerspective;
 import org.uberfire.mvp.PlaceRequest;
@@ -31,7 +30,7 @@ public class JsLazyWorkbenchPerspectiveActivity extends AbstractWorkbenchPerspec
     private boolean loaded;
     private final Consumer<String> lazyLoadingParentScript;
 
-    public JsLazyWorkbenchPerspectiveActivity(final AppFormerComponentConfiguration backedComponent,
+    public JsLazyWorkbenchPerspectiveActivity(final AppFormerComponentsRegistry.Entry registryEntry,
                                               final PlaceManager placeManager,
                                               final ActivityManager activityManager,
                                               final Consumer<String> lazyLoadingParentScript) {
@@ -39,11 +38,11 @@ public class JsLazyWorkbenchPerspectiveActivity extends AbstractWorkbenchPerspec
         super(placeManager);
         this.activityManager = activityManager;
 
-        this.backedPerspectiveId = backedComponent.getId();
+        this.backedPerspectiveId = registryEntry.getComponentId();
         this.lazyLoadingParentScript = lazyLoadingParentScript;
 
-        final PerspectiveComponentParams config = new PerspectiveComponentParams(backedComponent.getParams());
-        this.configuredIsDefault = config.isDefault().orElse(super.isDefault());
+        this.configuredIsDefault = new AppFormerComponentsRegistry.Entry.PerspectiveParams(registryEntry.getParams())
+                .isDefault().orElse(super.isDefault());
 
         this.loaded = false;
     }

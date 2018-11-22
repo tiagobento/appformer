@@ -18,113 +18,197 @@ package org.uberfire.jsbridge.client.loading;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
+import javax.inject.Inject;
+
+import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.ScriptInjector;
+import elemental2.dom.DomGlobal;
+import elemental2.promise.Promise;
 import org.jboss.errai.ioc.client.api.EntryPoint;
 import org.jboss.errai.ioc.client.container.IOC;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
+import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.mvp.Activity;
 import org.uberfire.client.mvp.ActivityBeansCache;
 import org.uberfire.client.mvp.ActivityManager;
 import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
+import org.uberfire.client.mvp.PlaceManagerImpl;
 import org.uberfire.client.mvp.WorkbenchScreenActivity;
+import org.uberfire.client.promise.Promises;
 import org.uberfire.jsbridge.client.SingletonBeanDefinition;
 import org.uberfire.jsbridge.client.screen.JsNativeScreen;
 import org.uberfire.jsbridge.client.screen.JsWorkbenchScreenActivity;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
 
+import static java.util.Arrays.stream;
+import static java.util.Optional.ofNullable;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
 import static org.jboss.errai.ioc.client.QualifierUtil.DEFAULT_QUALIFIERS;
 
 @EntryPoint
-public class AppFormerJsActivityLoader {
+public class AppFormerJsActivityLoader implements PlaceManagerImpl.AppFormerActivityLoader {
 
-    private Map<String, String> components = new HashMap<>();
+    @Inject
+    private Promises promises;
+
+    @Inject
+    private ActivityManager activityManager;
+
+    @Inject
+    private ActivityBeansCache activityBeansCache;
+
+    @Inject
+    private PlaceManager placeManager;
+
+    @Inject
+    private LazyLoadingScreen lazyLoadingScreen;
+
+    private final Map<String, String> components = new HashMap<>();
+    private final Set<String> loadedScripts = new HashSet<>();
+    private final Map<String, AppFormerComponentsRegistry.Entry> editors = new HashMap<>();
+
     private String gwtModuleName;
-    private Set<String> loadedScripts = new HashSet<>();
 
-    public void init(String gwtModuleName) {
+    public void init(final String gwtModuleName) {
         this.gwtModuleName = gwtModuleName;
-        extractComponentsFromRegistry();
-    }
 
-    private void extractComponentsFromRegistry() {
-        Arrays.stream(AppFormerComponentsRegistry.keys())
-                .map(k -> new AppFormerComponentConfiguration(k, AppFormerComponentsRegistry.get(k)))
+        stream(AppFormerComponentsRegistry.keys())
+                .map(componentId -> new AppFormerComponentsRegistry.Entry(componentId, AppFormerComponentsRegistry.get(componentId)))
                 .forEach(this::registerComponent);
     }
 
-    public void onActivityLoaded(final Object jsInput) {
+    public void onActivityLoaded(final Object jsObject) {
 
-        final JavaScriptObject jsObject = (JavaScriptObject) jsInput;
         final String id = extractId(jsObject);
+
+        if (this.editors.values().stream().anyMatch(s -> s.getComponentId().equals(id))) {
+            //FIXME: Here's where we actually create the ResourceTypes and the EditorActivity.
+            DomGlobal.console.info("Creating " + id + " beans");
+            return;
+        }
 
         if (!components.containsKey(id)) {
             throw new IllegalArgumentException("Cannot find component " + id);
         }
 
-        final SyncBeanManager beanManager = IOC.getBeanManager();
-        final ActivityManager activityManager = beanManager.lookupBean(ActivityManager.class).getInstance();
-
-        JsWorkbenchLazyActivity activity = (JsWorkbenchLazyActivity) activityManager.getActivity(new DefaultPlaceRequest(id));
-        activity.updateRealContent((JavaScriptObject) jsInput);
+        ((JsWorkbenchLazyActivity) activityManager.getActivity(new DefaultPlaceRequest(id)))
+                .updateRealContent((JavaScriptObject) jsObject);
     }
 
     //TODO this should be unified with JSWorkbenchScreenActivity getIdentifier
-    public native String extractId(final JavaScriptObject object)  /*-{
+    public native String extractId(final Object object)  /*-{
         return object['af_componentId'];
     }-*/;
 
-    private void lazyLoadParentScript(String component) {
-        //TODO REMOVE THIS: ONLY FOR DEMO PURPOSES
-        com.google.gwt.user.client.Timer timer = new com.google.gwt.user.client.Timer() {
-            @Override
-            public void run() {
-                String targetScript = components.get(component);
-                if (!loadedScripts.contains(targetScript)) {
-                    loadedScripts.add(targetScript);
-                    ScriptInjector.fromUrl("/" + gwtModuleName + "/" + targetScript)
-                            .setWindow(ScriptInjector.TOP_WINDOW)
-                            .inject();
-                }
-            }
-        };
-        timer.schedule(1500);
+    private Promise<Void> loadScriptFor(final String componentId) {
+
+        final Optional<String> editorScriptUrl = ofNullable(editors.get(componentId))
+                .map(AppFormerComponentsRegistry.Entry::getSource);
+
+        final Optional<String> scriptUrl = editorScriptUrl.isPresent()
+                ? editorScriptUrl
+                : Optional.ofNullable(components.get(componentId));
+
+        if (!scriptUrl.isPresent() || loadedScripts.contains(scriptUrl.get())) {
+            return promises.resolve();
+        }
+
+        loadedScripts.add(scriptUrl.get());
+        return injectScript("/" + gwtModuleName + "/" + scriptUrl.get());
     }
 
-    private void registerComponent(final AppFormerComponentConfiguration component) {
+    private Promise<Void> injectScript(final String scriptUrl) {
+        return promises.resolve().then(l -> new Promise<>((res, rej) -> {
+            com.google.gwt.user.client.Timer timer = new com.google.gwt.user.client.Timer() {
+                @Override
+                public void run() {
+                    ScriptInjector.fromUrl(scriptUrl)
+                            .setWindow(ScriptInjector.TOP_WINDOW)
+                            .setCallback(new Callback<Void, Exception>() {
+                                @Override
+                                public void onFailure(final Exception e) {
+                                    rej.onInvoke(e);
+                                }
 
-        switch (component.getType()) {
+                                @Override
+                                public void onSuccess(final Void v) {
+                                    res.onInvoke(v);
+                                }
+                            })
+                            .inject();
+                }
+            };
+            timer.schedule(1500);
+        }));
+    }
+
+    private void registerComponent(final AppFormerComponentsRegistry.Entry registryEntry) {
+        switch (registryEntry.getType()) {
             case PERSPECTIVE:
-                registerPerspective(component);
+                registerPerspective(registryEntry);
                 break;
             case SCREEN:
-                registerScreen(component);
+                registerScreen(registryEntry);
+                break;
+            case EDITOR:
+                registerEditor(registryEntry);
                 break;
             default:
-                throw new IllegalArgumentException("Don't know how to register component " + component.getId());
+                throw new IllegalArgumentException("Don't know how to register component " + registryEntry.getComponentId());
         }
     }
 
+    public boolean triggerLoadOfMatchingEditors(final Path path,
+                                                final Runnable callback) {
+
+        if (path == null) {
+            return false;
+        }
+
+        final List<Promise<Void>> matchingEditors = this.editors.values().stream()
+                .filter(e -> {
+                    final String matches = e.getParams().get("matches");
+                    final String regex = matches.substring(1, matches.length() - 1); //FIXME: Temporary workaround to remove extra quotes
+                    return path.toURI().matches(regex);
+                })
+                .filter(e -> !this.loadedScripts.contains(e.getSource()))
+                .map(e -> this.loadScriptFor(e.getComponentId()))
+                .collect(toList());
+
+        if (matchingEditors.size() <= 0) {
+            return false;
+        }
+
+        this.promises.resolve().then(i -> promises.all(matchingEditors, identity()).then(s -> {
+            callback.run();
+            return this.promises.resolve();
+        }));
+
+        return true;
+    }
+
+    private void registerEditor(final AppFormerComponentsRegistry.Entry registryEntry) {
+        this.editors.put(registryEntry.getComponentId(), registryEntry);
+    }
+
     @SuppressWarnings("unchecked")
-    private void registerScreen(final AppFormerComponentConfiguration component) {
+    private void registerScreen(final AppFormerComponentsRegistry.Entry registryEntry) {
 
-        final String identifier = component.getId();
+        final String identifier = registryEntry.getComponentId();
 
-        final SyncBeanManager beanManager = IOC.getBeanManager();
-        final JsNativeScreen newScreen = new JsNativeScreen(identifier,
-                                                            this::lazyLoadParentScript,
-                                                            beanManager.lookupBean(LazyLoadingScreen.class).getInstance());
-
-        final JsWorkbenchScreenActivity activity = new JsWorkbenchScreenActivity(newScreen,
-                                                                                 beanManager.lookupBean(PlaceManager.class).getInstance());
-        final ActivityBeansCache activityBeansCache = beanManager.lookupBean(ActivityBeansCache.class).getInstance();
+        final JsNativeScreen newScreen = new JsNativeScreen(identifier, this::loadScriptFor, lazyLoadingScreen);
+        final JsWorkbenchScreenActivity activity = new JsWorkbenchScreenActivity(newScreen, placeManager);
 
         //FIXME: Check if this bean is being registered correctly. Startup/Shutdown is begin called as if they were Open/Close.
-        final SingletonBeanDefinition<JsWorkbenchScreenActivity, JsWorkbenchScreenActivity> activityBean = new SingletonBeanDefinition<>(
+        final SingletonBeanDefinition activityBean = new SingletonBeanDefinition<>(
                 activity,
                 JsWorkbenchScreenActivity.class,
                 new HashSet<>(Arrays.asList(DEFAULT_QUALIFIERS)),
@@ -134,33 +218,29 @@ public class AppFormerJsActivityLoader {
                 JsWorkbenchLazyActivity.class,
                 Activity.class);
 
+        final SyncBeanManager beanManager = IOC.getBeanManager();
         beanManager.registerBean(activityBean);
         beanManager.registerBeanTypeAlias(activityBean, WorkbenchScreenActivity.class);
         beanManager.registerBeanTypeAlias(activityBean, JsWorkbenchLazyActivity.class);
         beanManager.registerBeanTypeAlias(activityBean, Activity.class);
 
-        components.put(identifier, component.getSource());
-        activityBeansCache.addNewScreenActivity(beanManager.lookupBeans(activity.getIdentifier()).iterator().next());
+        components.put(identifier, registryEntry.getSource());
+        activityBeansCache.addNewScreenActivity(activityBean);
     }
 
     @SuppressWarnings("unchecked")
-    private void registerPerspective(final AppFormerComponentConfiguration component) {
+    private void registerPerspective(final AppFormerComponentsRegistry.Entry registryEntry) {
 
-        final String componentId = component.getId();
+        final String componentId = registryEntry.getComponentId();
 
-        final SyncBeanManager beanManager = IOC.getBeanManager();
-        final ActivityBeansCache activityBeansCache = beanManager.lookupBean(ActivityBeansCache.class).getInstance();
-
-        final PlaceManager placeManager = beanManager.lookupBean(PlaceManager.class).getInstance();
-        final ActivityManager activityManager = beanManager.lookupBean(ActivityManager.class).getInstance();
-
-        final JsLazyWorkbenchPerspectiveActivity activity = new JsLazyWorkbenchPerspectiveActivity(component,
-                                                                                                   placeManager,
-                                                                                                   activityManager,
-                                                                                                   this::lazyLoadParentScript);
+        final JsLazyWorkbenchPerspectiveActivity activity = new JsLazyWorkbenchPerspectiveActivity(
+                registryEntry,
+                placeManager,
+                activityManager,
+                this::loadScriptFor);
 
         //FIXME: Check if this bean is being registered correctly. Startup/Shutdown is begin called as if they were Open/Close.
-        final SingletonBeanDefinition<JsLazyWorkbenchPerspectiveActivity, JsLazyWorkbenchPerspectiveActivity> activityBean = new SingletonBeanDefinition<>(
+        final SingletonBeanDefinition activityBean = new SingletonBeanDefinition<>(
                 activity,
                 JsLazyWorkbenchPerspectiveActivity.class,
                 new HashSet<>(Arrays.asList(DEFAULT_QUALIFIERS)),
@@ -170,12 +250,14 @@ public class AppFormerJsActivityLoader {
                 JsWorkbenchLazyActivity.class,
                 Activity.class);
 
+        final SyncBeanManager beanManager = IOC.getBeanManager();
+        final ActivityBeansCache activityBeansCache = beanManager.lookupBean(ActivityBeansCache.class).getInstance();
         beanManager.registerBean(activityBean);
         beanManager.registerBeanTypeAlias(activityBean, PerspectiveActivity.class);
         beanManager.registerBeanTypeAlias(activityBean, JsWorkbenchLazyActivity.class);
         beanManager.registerBeanTypeAlias(activityBean, Activity.class);
 
-        components.put(componentId, component.getSource());
-        activityBeansCache.addNewPerspectiveActivity(beanManager.lookupBeans(activity.getIdentifier()).iterator().next());
+        components.put(componentId, registryEntry.getSource());
+        activityBeansCache.addNewPerspectiveActivity(activityBean);
     }
 }

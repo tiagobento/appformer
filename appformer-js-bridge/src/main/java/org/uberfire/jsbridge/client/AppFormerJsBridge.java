@@ -33,6 +33,7 @@ import org.jboss.errai.ioc.client.container.IOC;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.jboss.errai.marshalling.client.Marshalling;
 import org.jboss.errai.ui.client.local.spi.TranslationService;
+import org.uberfire.backend.vfs.PathFactory;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.jsbridge.client.loading.AppFormerJsActivityLoader;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
@@ -71,6 +72,7 @@ public class AppFormerJsBridge {
             registerScreen: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::registerScreen(Ljava/lang/Object;),
             registerPerspective: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::registerPerspective(Ljava/lang/Object;),
             goTo: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::goTo(Ljava/lang/String;),
+            goToPath: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::goToPath(Ljava/lang/String;),
             rpc: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::rpc(Ljava/lang/String;[Ljava/lang/Object;),
             translate: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::translate(Ljava/lang/String;[Ljava/lang/Object;),
             fireEvent: this.@org.uberfire.jsbridge.client.AppFormerJsBridge::fireEvent(Ljava/lang/String;),
@@ -97,6 +99,13 @@ public class AppFormerJsBridge {
         final SyncBeanManager beanManager = IOC.getBeanManager();
         final PlaceManager placeManager = beanManager.lookupBean(PlaceManager.class).getInstance();
         placeManager.goTo(new DefaultPlaceRequest(place));
+    }
+
+    public void goToPath(final String uri) {
+        final SyncBeanManager beanManager = IOC.getBeanManager();
+        final PlaceManager placeManager = beanManager.lookupBean(PlaceManager.class).getInstance();
+        PathFactory.PathImpl path = new PathFactory.PathImpl("", uri); //FIXME: Not good
+        placeManager.goTo(path);
     }
 
     public String translate(final String key, final Object[] args) {
