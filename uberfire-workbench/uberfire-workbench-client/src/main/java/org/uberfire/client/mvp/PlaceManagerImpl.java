@@ -402,10 +402,7 @@ public class PlaceManagerImpl
         }
 
         if (appFormerActivityLoader.triggerLoadOfMatchingEditors(place.getPath(), lazyLoadingSuccessCallback)) {
-            DomGlobal.console.info("Triggered lazy loading of scripts..");
             return new ResolvedRequest(null, new DefaultPlaceRequest("LazyLoadingScreen"));
-        } else {
-            DomGlobal.console.info("Did NOT trigger lazy loading of scripts..");
         }
 
         final Set<Activity> activities = activityManager.getActivities(resolvedPlaceRequest);

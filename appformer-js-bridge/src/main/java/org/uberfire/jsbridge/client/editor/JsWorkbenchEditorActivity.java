@@ -17,49 +17,41 @@
 package org.uberfire.jsbridge.client.editor;
 
 import com.google.gwt.user.client.ui.IsWidget;
+import org.jboss.errai.common.client.ui.ElementWrapperWidget;
 import org.uberfire.backend.vfs.ObservablePath;
+import org.uberfire.client.mvp.AbstractWorkbenchEditorActivity;
+import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.mvp.WorkbenchEditorActivity;
 import org.uberfire.mvp.PlaceRequest;
+import org.uberfire.workbench.model.CompassPosition;
 import org.uberfire.workbench.model.Position;
 import org.uberfire.workbench.model.menu.Menus;
 import org.uberfire.workbench.model.toolbar.ToolBar;
 
-public class JsWorkbenchEditorActivity implements WorkbenchEditorActivity {
+public class JsWorkbenchEditorActivity extends AbstractWorkbenchEditorActivity implements WorkbenchEditorActivity {
 
     private final JsNativeEditor editor;
+    private PlaceRequest placeRequest;
 
-    public JsWorkbenchEditorActivity(JsNativeEditor editor) {
+    public JsWorkbenchEditorActivity(final JsNativeEditor editor,
+                                     final PlaceManager placeManager) {
+        super(placeManager);
         this.editor = editor;
     }
 
     @Override
-    public void onStartup(ObservablePath path, PlaceRequest place) {
+    public void onStartup(final ObservablePath path, final PlaceRequest place) {
+        this.placeRequest = place;
+    }
 
+    @Override
+    public void onOpen() {
+        editor.renderNative();
     }
 
     @Override
     public void onSave() {
 
-    }
-
-    @Override
-    public boolean isDirty() {
-        return false;
-    }
-
-    @Override
-    public boolean onMayClose() {
-        return false;
-    }
-
-    @Override
-    public Position getDefaultPosition() {
-        return null;
-    }
-
-    @Override
-    public PlaceRequest getOwningPlace() {
-        return null;
     }
 
     @Override
@@ -73,8 +65,40 @@ public class JsWorkbenchEditorActivity implements WorkbenchEditorActivity {
     }
 
     @Override
-    public String getTitle() {
+    public boolean onMayClose() {
+        return true;
+    }
+
+    @Override
+    public void onClose() {
+        editor.unmount();
+    }
+
+    @Override
+    public void onShutdown() {
+
+    }
+
+    //
+
+    @Override
+    public boolean isDirty() {
+        return false;
+    }
+
+    @Override
+    public Position getDefaultPosition() {
+        return CompassPosition.ROOT;
+    }
+
+    @Override
+    public PlaceRequest getOwningPlace() {
         return null;
+    }
+
+    @Override
+    public String getTitle() {
+        return editor.getTitle();
     }
 
     @Override
@@ -84,7 +108,7 @@ public class JsWorkbenchEditorActivity implements WorkbenchEditorActivity {
 
     @Override
     public IsWidget getWidget() {
-        return null;
+        return ElementWrapperWidget.getWidget(editor.getElement());
     }
 
     @Override
@@ -103,32 +127,12 @@ public class JsWorkbenchEditorActivity implements WorkbenchEditorActivity {
     }
 
     @Override
-    public void onStartup(PlaceRequest place) {
-
-    }
-
-    @Override
-    public void onOpen() {
-
-    }
-
-    @Override
-    public void onClose() {
-
-    }
-
-    @Override
-    public void onShutdown() {
-
-    }
-
-    @Override
     public PlaceRequest getPlace() {
-        return null;
+        return placeRequest;
     }
 
     @Override
     public String getIdentifier() {
-        return null;
+        return editor.getComponentId();
     }
 }

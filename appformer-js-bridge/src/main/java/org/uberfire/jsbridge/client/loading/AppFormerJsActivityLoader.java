@@ -29,6 +29,7 @@ import javax.inject.Inject;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.ScriptInjector;
+import com.google.gwt.user.client.DOM;
 import elemental2.dom.DomGlobal;
 import elemental2.promise.Promise;
 import org.jboss.errai.ioc.client.api.EntryPoint;
@@ -275,14 +276,14 @@ public class AppFormerJsActivityLoader implements PlaceManagerImpl.AppFormerActi
     private void registerEditor(final Object jsObject,
                                 final String componentId) {
 
-        final JsNativeEditor editor = new JsNativeEditor(jsObject);
+        final JsNativeEditor editor = new JsNativeEditor(componentId, jsObject);
 
         final SyncBeanManager beanManager = IOC.getBeanManager();
         final SingletonBeanDefinition activityBean = new SingletonBeanDefinition<>(
-                new JsWorkbenchEditorActivity(editor),
+                new JsWorkbenchEditorActivity(editor, placeManager),
                 JsWorkbenchEditorActivity.class,
                 new HashSet<>(Arrays.asList(DEFAULT_QUALIFIERS)),
-                componentId, //FIXME: change to editor.getId();
+                editor.getComponentId(),
                 true,
                 WorkbenchEditorActivity.class,
                 Activity.class);
@@ -292,7 +293,7 @@ public class AppFormerJsActivityLoader implements PlaceManagerImpl.AppFormerActi
         beanManager.registerBeanTypeAlias(activityBean, Activity.class);
 
         activityBeansCache.addNewEditorActivity(activityBean,
-                                                "2",
-                                                "SampleResourceType");
+                                                editor.getPriority() +"", //FIXME: STRING????
+                                                editor.getResourceType());
     }
 }

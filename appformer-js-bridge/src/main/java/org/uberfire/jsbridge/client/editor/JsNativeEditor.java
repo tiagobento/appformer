@@ -16,11 +16,51 @@
 
 package org.uberfire.jsbridge.client.editor;
 
+import elemental2.dom.DomGlobal;
+import elemental2.dom.Element;
+import elemental2.dom.HTMLElement;
+
 public class JsNativeEditor {
 
     private final Object self;
+    private final String componentId;
+    private final HTMLElement container;
 
-    public JsNativeEditor(final Object self) {
+    public JsNativeEditor(String componentId, final Object self) {
+        this.componentId = componentId;
         this.self = self;
+        this.container = (HTMLElement) DomGlobal.document.createElement("div");
     }
+
+    public String getComponentId() {
+        return componentId;
+    }
+
+    public native int getPriority() /*-{
+        return this.@org.uberfire.jsbridge.client.editor.JsNativeEditor::self["af_priority"];
+    }-*/;
+
+    public native String getTitle() /*-{
+        return this.@org.uberfire.jsbridge.client.editor.JsNativeEditor::self["af_componentTitle"];
+    }-*/;
+
+    public native void renderNative() /*-{
+        $wnd.AppFormer.render(
+                this.@org.uberfire.jsbridge.client.editor.JsNativeEditor::self["af_componentRoot"](),
+                this.@org.uberfire.jsbridge.client.editor.JsNativeEditor::container);
+    }-*/;
+
+    public native void unmount() /*-{
+        if (this.@org.uberfire.jsbridge.client.editor.JsNativeEditor::self["af_isReact"]) {
+            $wnd.ReactDOM.unmountComponentAtNode(this.@org.uberfire.jsbridge.client.editor.JsNativeEditor::container);
+        }
+    }-*/;
+
+    public HTMLElement getElement() {
+        return container;
+    }
+
+    public native String getResourceType() /*-{
+        return this.@org.uberfire.jsbridge.client.editor.JsNativeEditor::self["af_resourceType"];
+    }-*/;
 }
