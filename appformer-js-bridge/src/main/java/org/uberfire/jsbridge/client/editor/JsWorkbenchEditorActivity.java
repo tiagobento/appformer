@@ -39,6 +39,9 @@ public class JsWorkbenchEditorActivity extends AbstractWorkbenchEditorActivity i
         this.editor = editor;
     }
 
+    //
+    //Lifecycle
+
     @Override
     public void onStartup(final ObservablePath path, final PlaceRequest place) {
         this.placeRequest = place;
@@ -80,6 +83,7 @@ public class JsWorkbenchEditorActivity extends AbstractWorkbenchEditorActivity i
     }
 
     //
+    //Properties
 
     @Override
     public boolean isDirty() {
