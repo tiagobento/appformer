@@ -24,14 +24,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import elemental2.dom.DomGlobal;
 import org.jboss.errai.ioc.client.api.EnabledByProperty;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
@@ -41,8 +40,6 @@ import org.uberfire.client.workbench.events.NewPerspectiveEvent;
 import org.uberfire.client.workbench.events.NewWorkbenchScreenEvent;
 import org.uberfire.client.workbench.type.ClientResourceType;
 import org.uberfire.commons.data.Pair;
-
-import static java.util.Collections.sort;
 
 /**
  *
@@ -181,7 +178,6 @@ public class ActivityBeansCache {
                                      String priority,
                                      String resourceTypeName) {
 
-        DomGlobal.console.info("Registering editor for " + resourceTypeName);
         final String id = activityBean.getName();
 
         validateUniqueness(id);
@@ -193,6 +189,18 @@ public class ActivityBeansCache {
                                                                                   activityBean,
                                                                                   Integer.valueOf(priority),
                                                                                   Arrays.asList(resourceTypeName)));
+        this.resourceTypeManagerCache.sortResourceActivitiesByPriority();
+    }
+
+    public void addNewEditorActivity(final SyncBeanDef<Activity> syncBeanDef,
+                                     final int priority,
+                                     final List<String> resourceTypes) {
+
+        validateUniqueness(syncBeanDef.getName());
+        activitiesById.put(syncBeanDef.getName(), syncBeanDef);
+
+        ActivityAndMetaInfo metaInfo = new ActivityAndMetaInfo(iocManager, syncBeanDef, priority, resourceTypes);
+        this.resourceTypeManagerCache.addResourceActivity(metaInfo);
         this.resourceTypeManagerCache.sortResourceActivitiesByPriority();
     }
 

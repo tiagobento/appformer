@@ -60,7 +60,7 @@ public class JsNativeEditor {
         return container;
     }
 
-    public native String getResourceType() /*-{
-        return this.@org.uberfire.jsbridge.client.editor.JsNativeEditor::self["af_resourceType"];
+    public native String[] getResourceTypes() /*-{
+        return this.@org.uberfire.jsbridge.client.editor.JsNativeEditor::self["af_resourceTypes"];
     }-*/;
 }

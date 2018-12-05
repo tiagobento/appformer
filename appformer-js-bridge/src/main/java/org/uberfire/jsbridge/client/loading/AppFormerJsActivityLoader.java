@@ -293,7 +293,7 @@ public class AppFormerJsActivityLoader implements PlaceManagerImpl.AppFormerActi
         beanManager.registerBeanTypeAlias(activityBean, Activity.class);
 
         activityBeansCache.addNewEditorActivity(activityBean,
-                                                editor.getPriority() +"", //FIXME: STRING????
-                                                editor.getResourceType());
+                                                editor.getPriority(),
+                                                Arrays.asList(editor.getResourceTypes()));
     }
 }

@@ -103,11 +103,9 @@ export class FirstReactPerspective extends AppFormer.Perspective {
 
 export class ReactHtmlEditor extends AppFormerEditors.Editor {
 
-    public af_resourceType : string;
-
     constructor() {
         super("ReactEditor");
-        this.af_resourceType = "SampleResourceType";
+        this.af_resourceTypes = ["SampleResourceType"];
         this.af_componentTitle = "ReactEditor";
         this.af_isReact = true;
         this.af_priority = 200000;
