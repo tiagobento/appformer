@@ -47,6 +47,7 @@ import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.jboss.errai.security.shared.api.identity.User;
 import org.slf4j.Logger;
 import org.uberfire.backend.vfs.Path;
+import org.uberfire.client.mvp.ActivityBeansCache;
 import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.resources.WorkbenchResources;
@@ -123,6 +124,8 @@ public class Workbench {
     @Inject
     private Event<ApplicationReadyEvent> appReady;
     private boolean isStandaloneMode = false;
+    @Inject
+    private ActivityBeansCache activityBeansCache;
     @Inject
     private SyncBeanManager iocManager;
     @Inject
@@ -211,22 +214,27 @@ public class Workbench {
         logger.info("Starting workbench...");
         ((SessionInfoImpl) currentSession()).setId(((ClientMessageBusImpl) bus).getSessionId());
 
-        layout.setMarginWidgets(isStandaloneMode,
-                                headersToKeep);
-        layout.onBootstrap();
-
-        addLayoutToRootPanel(layout);
-
         //Lookup PerspectiveProviders and if present launch it to set-up the Workbench
         if (!isStandaloneMode) {
             final PerspectiveActivity homePerspective = getHomePerspectiveActivity();
+            appReady.fire(new ApplicationReadyEvent());
             if (homePerspective != null) {
-                appReady.fire(new ApplicationReadyEvent());
+                layout.setMarginWidgets(isStandaloneMode,
+                                        headersToKeep);
+                layout.onBootstrap();
+
+                addLayoutToRootPanel(layout);
                 placeManager.goTo(new DefaultPlaceRequest(homePerspective.getIdentifier()));
             } else {
-                logger.error("No home perspective available!");
+                activityBeansCache.noOp();
+                logger.warn("No home perspective available!");
             }
         } else {
+            layout.setMarginWidgets(isStandaloneMode,
+                                    headersToKeep);
+            layout.onBootstrap();
+
+            addLayoutToRootPanel(layout);
             handleStandaloneMode(Window.Location.getParameterMap());
         }
 
@@ -240,21 +248,11 @@ public class Workbench {
         });
 
         // Resizing the Window should resize everything
-        Window.addResizeHandler(new ResizeHandler() {
-            @Override
-            public void onResize(ResizeEvent event) {
-                layout.resizeTo(event.getWidth(),
-                                event.getHeight());
-            }
-        });
+        Window.addResizeHandler(event -> layout.resizeTo(event.getWidth(),
+                                                 event.getHeight()));
 
         // Defer the initial resize call until widgets are rendered and sizes are available
-        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-            @Override
-            public void execute() {
-                layout.onResize();
-            }
-        });
+        Scheduler.get().scheduleDeferred(() -> layout.onResize());
     }
 
     // TODO add tests for standalone startup vs. full startup
