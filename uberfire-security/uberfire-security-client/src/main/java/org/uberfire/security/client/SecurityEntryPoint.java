@@ -21,6 +21,8 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
+import org.jboss.errai.bus.client.ErraiBus;
+import org.jboss.errai.bus.client.util.BusToolsCli;
 import org.jboss.errai.common.client.api.Caller;
 import org.jboss.errai.ioc.client.api.EntryPoint;
 import org.uberfire.backend.authz.AuthorizationService;
@@ -40,11 +42,13 @@ public class SecurityEntryPoint {
 
     @PostConstruct
     public void init() {
-        authorizationService.call(
-                (AuthorizationPolicy p) -> {
-                    permissionManager.setAuthorizationPolicy(p);
-                }
-        ).loadPolicy();
+        if (BusToolsCli.isRemoteCommunicationEnabled()) {
+            authorizationService.call(
+                    (AuthorizationPolicy p) -> {
+                        permissionManager.setAuthorizationPolicy(p);
+                    }
+            ).loadPolicy();
+        }
     }
 
     public void onPolicySaved(@Observes AuthorizationPolicySavedEvent event) {
