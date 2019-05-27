@@ -1824,20 +1824,6 @@
         <version>${project.version}</version>
       </dependency>
 
-      <dependency>
-        <groupId>org.uberfire</groupId>
-        <artifactId>uberfire-submarine-client-proxies</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.uberfire</groupId>
-        <artifactId>uberfire-submarine-client-proxies</artifactId>
-        <version>${project.version}</version>
-        <classifier>sources</classifier>
-      </dependency>
-
-
     </dependencies>
 
   </dependencyManagement>

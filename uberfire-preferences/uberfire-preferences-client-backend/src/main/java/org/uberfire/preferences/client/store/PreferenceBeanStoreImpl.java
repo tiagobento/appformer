@@ -53,17 +53,23 @@ public class PreferenceBeanStoreImpl implements PreferenceBeanStore {
     public <U extends BasePreference<U>, T extends BasePreferencePortable<U>> void load(final T emptyPortablePreference,
                                                                                         final ParameterizedCommand<T> successCallback,
                                                                                         final ParameterizedCommand<Throwable> errorCallback) {
-
-        store.call((RemoteCallback<T>) portablePreference -> {
-                       if (successCallback != null) {
-                           successCallback.execute(portablePreference);
+        store.call(new RemoteCallback<T>() {
+                       @Override
+                       public void callback(final T portablePreference) {
+                           if (successCallback != null) {
+                               successCallback.execute(portablePreference);
+                           }
                        }
                    },
-                   (ErrorCallback<Throwable>) (throwable, throwable2) -> {
-                       if (errorCallback != null) {
-                           errorCallback.execute(throwable);
+                   new ErrorCallback<Throwable>() {
+                       @Override
+                       public boolean error(final Throwable throwable,
+                                            final Throwable throwable2) {
+                           if (errorCallback != null) {
+                               errorCallback.execute(throwable);
+                           }
+                           return false;
                        }
-                       return false;
                    }).load(emptyPortablePreference);
     }
 
