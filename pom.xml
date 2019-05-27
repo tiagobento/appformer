@@ -881,7 +881,6 @@
     <module>dashbuilder</module>
     <module>appformer-js-bridge</module>
     <module>appformer-js</module>
-    <module>uberfire-submarine-client-proxies</module>
   </modules>
 
   <dependencyManagement>
