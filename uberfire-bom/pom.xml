@@ -136,6 +136,17 @@
       </dependency>
       <dependency>
         <groupId>org.uberfire</groupId>
+        <artifactId>uberfire-security-client-backend</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.uberfire</groupId>
+        <artifactId>uberfire-security-client-backend</artifactId>
+        <version>${project.version}</version>
+        <classifier>sources</classifier>
+      </dependency>
+      <dependency>
+        <groupId>org.uberfire</groupId>
         <artifactId>uberfire-security-codegen</artifactId>
         <version>${project.version}</version>
       </dependency>
