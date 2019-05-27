@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2019 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,7 @@ package org.uberfire.preferences.client.store;
 import java.util.Collection;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 
 import org.jboss.errai.common.client.api.Caller;
@@ -37,6 +38,7 @@ import org.uberfire.preferences.shared.impl.PreferenceScopeResolutionStrategyInf
  * Client implementation for {@link PreferenceBeanStore}. It just pass along the method calls to the backend
  * implementation, with the proper callbacks.
  */
+@Alternative
 @ApplicationScoped
 public class PreferenceBeanStoreImpl implements PreferenceBeanStore {
 
@@ -52,18 +54,17 @@ public class PreferenceBeanStoreImpl implements PreferenceBeanStore {
                                                                                         final ParameterizedCommand<T> successCallback,
                                                                                         final ParameterizedCommand<Throwable> errorCallback) {
 
-        successCallback.execute((T) emptyPortablePreference.defaultValue((U) emptyPortablePreference));
-//        store.call((RemoteCallback<T>) portablePreference -> {
-//                       if (successCallback != null) {
-//                           successCallback.execute(portablePreference);
-//                       }
-//                   },
-//                   (ErrorCallback<Throwable>) (throwable, throwable2) -> {
-//                       if (errorCallback != null) {
-//                           errorCallback.execute(throwable);
-//                       }
-//                       return false;
-//                   }).load(emptyPortablePreference);
+        store.call((RemoteCallback<T>) portablePreference -> {
+                       if (successCallback != null) {
+                           successCallback.execute(portablePreference);
+                       }
+                   },
+                   (ErrorCallback<Throwable>) (throwable, throwable2) -> {
+                       if (errorCallback != null) {
+                           errorCallback.execute(throwable);
+                       }
+                       return false;
+                   }).load(emptyPortablePreference);
     }
 
     @Override
@@ -71,26 +72,25 @@ public class PreferenceBeanStoreImpl implements PreferenceBeanStore {
                                                                                         final PreferenceScopeResolutionStrategyInfo scopeResolutionStrategyInfo,
                                                                                         final ParameterizedCommand<T> successCallback,
                                                                                         final ParameterizedCommand<Throwable> errorCallback) {
-        successCallback.execute((T) emptyPortablePreference.defaultValue((U) emptyPortablePreference));
-//        store.call(new RemoteCallback<T>() {
-//                       @Override
-//                       public void callback(final T portablePreference) {
-//                           if (successCallback != null) {
-//                               successCallback.execute(portablePreference);
-//                           }
-//                       }
-//                   },
-//                   new ErrorCallback<Throwable>() {
-//                       @Override
-//                       public boolean error(final Throwable throwable,
-//                                            final Throwable throwable2) {
-//                           if (errorCallback != null) {
-//                               errorCallback.execute(throwable);
-//                           }
-//                           return false;
-//                       }
-//                   }).load(emptyPortablePreference,
-//                           scopeResolutionStrategyInfo);
+        store.call(new RemoteCallback<T>() {
+                       @Override
+                       public void callback(final T portablePreference) {
+                           if (successCallback != null) {
+                               successCallback.execute(portablePreference);
+                           }
+                       }
+                   },
+                   new ErrorCallback<Throwable>() {
+                       @Override
+                       public boolean error(final Throwable throwable,
+                                            final Throwable throwable2) {
+                           if (errorCallback != null) {
+                               errorCallback.execute(throwable);
+                           }
+                           return false;
+                       }
+                   }).load(emptyPortablePreference,
+                           scopeResolutionStrategyInfo);
     }
 
     @Override
