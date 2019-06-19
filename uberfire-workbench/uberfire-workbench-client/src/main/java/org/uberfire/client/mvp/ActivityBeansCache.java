@@ -86,7 +86,8 @@ public class ActivityBeansCache {
 
     @PostConstruct
     void init() {
-        registerGWTEditorProvider();
+        registerGwtEditorProvider();
+
         final Collection<SyncBeanDef<Activity>> availableActivities = getAvailableActivities();
 
         for (final SyncBeanDef<Activity> activityBean : availableActivities) {
@@ -101,7 +102,7 @@ public class ActivityBeansCache {
                 splashActivities.add((SplashScreenActivity) activityBean.getInstance());
             } else {
                 if (isClientEditor(activityBean.getQualifiers())) {
-                    registerGWTClientBean(id, activityBean);
+                    registerGwtClientBean(id, activityBean);
                 }
                 final Pair<Integer, List<String>> metaInfo = generateActivityMetaInfo(activityBean);
                 if (metaInfo != null) {
@@ -120,46 +121,47 @@ public class ActivityBeansCache {
         activitiesById.put(id,
                            activityBean);
     }
-    private native void notifyJSReady() /*-{
-        if ($wnd.appFormerGwtFinishedLoading) {
-            $wnd.appFormerGwtFinishedLoading();
-        }
-    }-*/;
 
-    private native void registerGWTEditorProvider() /*-{
-        console.log("registerGWTEditorProvider")
+    void registerGwtEditorProvider() {
+        nativeRegisterGwtEditorProvider();
+    }
+
+    private native void nativeRegisterGwtEditorProvider() /*-{
+
+    console.log("registerGWTEditorProvider");
+
         $wnd.gwtEditorBeans = new Map();
         $wnd.resolveEditor = function (id) {
             return $wnd.gwtEditorBeans.get(id);
-        }
+        };
 
         $wnd.GWTEditor = function (instance) {
             this.instance = instance;
-        }
+        };
 
         $wnd.GWTEditor.prototype.isDirty = function () {
             return this.instance.@org.uberfire.client.mvp.WorkbenchClientEditorActivity::isDirty();
-        }
+        };
 
         $wnd.GWTEditor.prototype.onOpen = function () {
             this.instance.@org.uberfire.client.mvp.WorkbenchClientEditorActivity::onOpen()();
-        }
+        };
 
         $wnd.GWTEditor.prototype.setContent = function (value) {
             this.instance.@org.uberfire.client.mvp.WorkbenchClientEditorActivity::setContent(Ljava/lang/String;)(value);
-        }
+        };
 
         $wnd.GWTEditor.prototype.getContent = function () {
             return this.instance.@org.uberfire.client.mvp.WorkbenchClientEditorActivity::getContent()();
-        }
+        };
 
         $wnd.GWTEditor.prototype.getView = function () {
             return this.instance.@org.uberfire.client.mvp.WorkbenchClientEditorActivity::getWidgetElement()();
-        }
+        };
 
         $wnd.GWTEditorSuplier = function (bean) {
             this.bean = bean;
-        }
+        };
 
         $wnd.GWTEditorSuplier.prototype.get = function () {
             return new $wnd.GWTEditor(this.bean.@org.jboss.errai.ioc.client.container.SyncBeanDef::newInstance()());
@@ -167,7 +169,11 @@ public class ActivityBeansCache {
 
     }-*/;
 
-    private native void registerGWTClientBean(final String id, final SyncBeanDef<Activity> activityBean) /*-{
+    void registerGwtClientBean(final String id, final SyncBeanDef<Activity> activityBean) {
+        nativeRegisterGwtClientBean(id, activityBean);
+    }
+
+    private native void nativeRegisterGwtClientBean(final String id, final SyncBeanDef<Activity> activityBean) /*-{
         $wnd.gwtEditorBeans.set(id, new $wnd.GWTEditorSuplier(activityBean));
     }-*/;
 

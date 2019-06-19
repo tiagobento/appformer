@@ -21,6 +21,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import javax.inject.Qualifier;
+
 import org.uberfire.client.workbench.type.ClientResourceType;
 
 /**
