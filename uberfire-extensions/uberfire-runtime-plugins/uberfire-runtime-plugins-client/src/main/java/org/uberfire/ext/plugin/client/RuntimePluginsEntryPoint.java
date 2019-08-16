@@ -27,6 +27,8 @@ import java.util.Collection;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
+import org.jboss.errai.bus.client.ErraiBus;
+import org.jboss.errai.bus.client.util.BusToolsCli;
 import org.jboss.errai.common.client.api.Caller;
 import org.jboss.errai.common.client.api.RemoteCallback;
 import org.jboss.errai.ioc.client.api.EnabledByProperty;
@@ -77,6 +79,10 @@ public class RuntimePluginsEntryPoint {
     @PostConstruct
     public void init() {
         WebAppResource.INSTANCE.CSS().ensureInjected();
+        if (!BusToolsCli.isRemoteCommunicationEnabled()) {
+            return;
+        }
+
         workbench.addStartupBlocker(RuntimePluginsEntryPoint.class);
         pluginServices.call(new RemoteCallback<Collection<RuntimePlugin>>() {
             @Override
