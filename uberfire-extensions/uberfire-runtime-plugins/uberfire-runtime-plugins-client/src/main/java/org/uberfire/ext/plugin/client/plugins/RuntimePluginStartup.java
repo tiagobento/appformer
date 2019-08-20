@@ -39,6 +39,9 @@ public class RuntimePluginStartup {
     }
 
     void startPlugins(@Observes UberfireJSAPIReadyEvent event) {
+        if (!BusToolsCli.isRemoteCommunicationEnabled()) {
+            return;
+        }
 
         runtimePlugins.call(new RemoteCallback<List<RuntimePlugin>>() {
             @Override
