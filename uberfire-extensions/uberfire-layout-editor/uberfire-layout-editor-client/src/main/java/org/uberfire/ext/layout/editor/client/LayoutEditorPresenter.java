@@ -15,50 +15,65 @@
  */
 package org.uberfire.ext.layout.editor.client;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
-import org.jboss.errai.ioc.client.api.ManagedInstance;
+import org.jboss.errai.common.client.dom.HTMLElement;
 import org.uberfire.client.mvp.UberElement;
 import org.uberfire.ext.layout.editor.api.editor.LayoutTemplate;
-import org.uberfire.ext.layout.editor.client.api.LayoutDragComponent;
-import org.uberfire.ext.layout.editor.client.api.LayoutDragComponentGroup;
-import org.uberfire.ext.layout.editor.client.api.LayoutDragComponentPalette;
+import org.uberfire.ext.layout.editor.api.editor.LayoutInstance;
+import org.uberfire.ext.layout.editor.client.api.LayoutEditorElement;
+import org.uberfire.ext.layout.editor.client.api.LayoutElementVisitor;
+import org.uberfire.ext.layout.editor.client.event.LayoutElementClearAllPropertiesEvent;
+import org.uberfire.ext.layout.editor.client.event.LayoutElementPropertyChangedEvent;
 import org.uberfire.ext.layout.editor.client.components.container.Container;
-import org.uberfire.ext.layout.editor.client.widgets.LayoutDragComponentGroupPresenter;
+import org.uberfire.ext.layout.editor.client.generator.LayoutGenerator;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
 
 @Dependent
-public class LayoutEditorPresenter implements LayoutDragComponentPalette {
+public class LayoutEditorPresenter {
 
     private final View view;
     private LayoutTemplate.Style pageStyle = LayoutTemplate.Style.FLUID;
-    protected Map<String, LayoutDragComponentGroupPresenter> layoutDragComponentGroups = new HashMap<>();
-    private ManagedInstance<LayoutDragComponentGroupPresenter> layoutDragComponentGroupInstance;
     private Container container;
+    private LayoutGenerator layoutGenerator;
+    private boolean preview = false;
 
     @Inject
     public LayoutEditorPresenter(final View view,
                                  Container container,
-                                 ManagedInstance<LayoutDragComponentGroupPresenter> layoutDragComponentGroupInstance) {
+                                 LayoutGenerator layoutGenerator) {
         this.view = view;
         this.container = container;
-        this.layoutDragComponentGroupInstance = layoutDragComponentGroupInstance;
+        this.layoutGenerator = layoutGenerator;
         view.init(this);
+    }
+
+    public void setup(Supplier<Boolean> lockSupplier) {
+        container.setLockSupplier(lockSupplier);
     }
 
     @PostConstruct
     public void initNew() {
-        view.setupContainer(container.getView());
+        view.setupDesign(container.getView());
+        view.setPreviewEnabled(false);
+    }
+
+    public void setPreviewEnabled(boolean previewEnabled) {
+        view.setPreviewEnabled(previewEnabled);
+    }
+
+    public void setElementSelectionEnabled(boolean enabled) {
+        container.setSelectable(enabled);
+        container.visit(element -> element.setSelectable(enabled));
     }
 
     public void clear() {
-        List<String> groupNames = new ArrayList<>(layoutDragComponentGroups.keySet());
-        groupNames.forEach(groupName -> removeDraggableGroup(groupName));
         container.reset();
     }
 
@@ -73,6 +88,9 @@ public class LayoutEditorPresenter implements LayoutDragComponentPalette {
     public void loadLayout(LayoutTemplate layoutTemplate,
                            String emptyTitleText,
                            String emptySubTitleText) {
+
+        view.setDesignStyle(layoutTemplate.getStyle());
+
         container.load(layoutTemplate,
                        emptyTitleText,
                        emptySubTitleText);
@@ -81,6 +99,7 @@ public class LayoutEditorPresenter implements LayoutDragComponentPalette {
     public void loadEmptyLayout(String layoutName,
                                 String emptyTitleText,
                                 String emptySubTitleText) {
+        view.setDesignStyle(pageStyle);
         container.loadEmptyLayout(layoutName,
                                   pageStyle,
                                   emptyTitleText,
@@ -102,70 +121,50 @@ public class LayoutEditorPresenter implements LayoutDragComponentPalette {
         this.pageStyle = pageStyle;
     }
 
+    public void switchToDesignMode() {
+        preview = false;
+        view.setupDesign(container.getView());
+    }
+
+    public void switchToPreviewMode() {
+        preview = true;
+        LayoutTemplate layoutTemplate = container.toLayoutTemplate();
+        LayoutInstance layoutInstance = layoutGenerator.build(layoutTemplate);
+        view.setupPreview(layoutInstance.getElement());
+    }
+
+    public List<LayoutEditorElement> getLayoutElements() {
+        List<LayoutEditorElement> result = new ArrayList<>();
+        container.visit(result::add);
+        return result;
+    }
+
+    public void visit(LayoutElementVisitor visitor) {
+        container.visit(visitor);
+    }
+
+    // Refresh the layout preview when the properties of a layout element change
+
+    protected void onLayoutPropertyChangedEvent(@Observes LayoutElementPropertyChangedEvent event) {
+        if (preview) {
+            switchToPreviewMode();
+        }
+    }
+
+    protected void onClearAllPropertiesEvent(@Observes LayoutElementClearAllPropertiesEvent event) {
+        if (preview) {
+            switchToPreviewMode();
+        }
+    }
+
     public interface View extends UberElement<LayoutEditorPresenter> {
 
-        void setupContainer(UberElement<Container> container);
+        void setupDesign(UberElement<Container> container);
 
-        void addDraggableComponentGroup(UberElement<LayoutDragComponentGroupPresenter> group);
+        void setDesignStyle(LayoutTemplate.Style pageStyle);
 
-        void removeDraggableComponentGroup(UberElement<LayoutDragComponentGroupPresenter> id);
-    }
+        void setPreviewEnabled(boolean previewEnabled);
 
-    // LayoutEditorComponentPalette
-
-    @Override
-    public void addDraggableGroup(LayoutDragComponentGroup group) {
-        LayoutDragComponentGroupPresenter layoutDragComponentGroupPresenter = createComponentGroupPresenter(
-                group);
-        view.addDraggableComponentGroup(layoutDragComponentGroupPresenter.getView());
-    }
-
-    private LayoutDragComponentGroupPresenter createComponentGroupPresenter(LayoutDragComponentGroup group) {
-        LayoutDragComponentGroupPresenter layoutDragComponentGroupPresenter = layoutDragComponentGroupInstance.get();
-        layoutDragComponentGroups.put(group.getName(),
-                                      layoutDragComponentGroupPresenter);
-        layoutDragComponentGroupPresenter.init(group);
-        return layoutDragComponentGroupPresenter;
-    }
-
-    @Override
-    public void removeDraggableGroup(String groupName) {
-        LayoutDragComponentGroupPresenter layoutDragComponentGroupPresenter = layoutDragComponentGroups
-                .remove(groupName);
-        if (layoutDragComponentGroupPresenter != null) {
-            view.removeDraggableComponentGroup(layoutDragComponentGroupPresenter.getView());
-        }
-    }
-
-    @Override
-    public boolean hasDraggableGroup(String groupName) {
-        return layoutDragComponentGroups.containsKey(groupName);
-    }
-
-    @Override
-    public void addDraggableComponent(String groupName,
-                                      String componentId,
-                                      LayoutDragComponent component) {
-        LayoutDragComponentGroupPresenter layoutDragComponentGroupPresenter = layoutDragComponentGroups
-                .get(groupName);
-        layoutDragComponentGroupPresenter.addComponent(componentId,
-                component);
-    }
-
-    @Override
-    public void removeDraggableComponent(String groupName,
-                                         String componentId) {
-        LayoutDragComponentGroupPresenter layoutDragComponentGroupPresenter = layoutDragComponentGroups
-                .get(groupName);
-        if (layoutDragComponentGroupPresenter != null) {
-            layoutDragComponentGroupPresenter.removeComponent(componentId);
-        }
-    }
-
-    @Override
-    public boolean hasDraggableComponent(String groupName,
-                                         String componentId) {
-        return hasDraggableGroup(groupName) && layoutDragComponentGroups
-                .get(groupName).hasComponent(componentId);
+        void setupPreview(HTMLElement previewPanel);
     }
 }

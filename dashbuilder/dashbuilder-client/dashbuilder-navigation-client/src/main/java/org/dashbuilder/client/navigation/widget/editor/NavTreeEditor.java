@@ -16,6 +16,7 @@
 package org.dashbuilder.client.navigation.widget.editor;
 
 import java.util.Optional;
+
 import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
@@ -26,6 +27,7 @@ import org.dashbuilder.client.navigation.event.NavItemEditCancelledEvent;
 import org.dashbuilder.client.navigation.event.NavItemEditStartedEvent;
 import org.dashbuilder.client.navigation.plugin.PerspectivePluginManager;
 import org.dashbuilder.client.navigation.resources.i18n.NavigationConstants;
+import org.dashbuilder.client.widgets.common.LoadingBox;
 import org.dashbuilder.navigation.NavFactory;
 import org.dashbuilder.navigation.NavGroup;
 import org.dashbuilder.navigation.NavTree;
@@ -39,10 +41,6 @@ public class NavTreeEditor extends NavItemEditor {
 
     public interface View extends NavItemEditor.View<NavTreeEditor> {
 
-        String getTreeLiteralI18n();
-
-        void setMaximized(boolean maximized);
-
         void setChangedFlag(boolean on);
     }
 
@@ -54,6 +52,7 @@ public class NavTreeEditor extends NavItemEditor {
     NavTree navTree;
     Command onSaveCommand;
     Optional<NavItemEditor> currentlyEditedItem = Optional.empty();
+    LoadingBox loadingBox;
 
     @Inject
     public NavTreeEditor(NavTreeEditorView view,
@@ -64,7 +63,8 @@ public class NavTreeEditor extends NavItemEditor {
                          TargetPerspectiveEditor targetPerspectiveEditor,
                          PerspectivePluginManager perspectivePluginManager,
                          Event<NavItemEditStartedEvent> navItemEditStartedEvent,
-                         Event<NavItemEditCancelledEvent> navItemEditCancelledEvent) {
+                         Event<NavItemEditCancelledEvent> navItemEditCancelledEvent,
+                         LoadingBox loadingBox) {
 
         super(view, beanManager,
                 placeManager,
@@ -76,6 +76,7 @@ public class NavTreeEditor extends NavItemEditor {
 
         this.view = view;
         this.navigationManager = navigationManager;
+        this.loadingBox = loadingBox;
         this.view.init(this);
 
         super.setChildEditorClass(NavItemDefaultEditor.class);
@@ -88,10 +89,6 @@ public class NavTreeEditor extends NavItemEditor {
     @Override
     public String getGroupLiteral() {
         return "Tree";
-    }
-
-    public void setMaximized(boolean maximized) {
-        view.setMaximized(maximized);
     }
 
     public NavTree getNavTree() {
@@ -121,10 +118,29 @@ public class NavTreeEditor extends NavItemEditor {
         super.onItemUpdated();
     }
 
+    public void newTree() {
+        saveDefaultNavTree();
+        newGroup();
+    }
+
     // View actions
 
-    void onNewTreeClicked() {
-        this.newGroup();
+    void saveDefaultNavTree() {
+
+        final boolean hasNoSavedTree = !navigationManager.hasNavTree();
+
+        if (hasNoSavedTree) {
+            showLoading();
+            navigationManager.saveNavTree(navigationManager.getNavTree(), this::hideLoading);
+        }
+    }
+
+    void showLoading() {
+        loadingBox.show();
+    }
+
+    void hideLoading() {
+        loadingBox.hide();
     }
 
     void onSaveClicked() {

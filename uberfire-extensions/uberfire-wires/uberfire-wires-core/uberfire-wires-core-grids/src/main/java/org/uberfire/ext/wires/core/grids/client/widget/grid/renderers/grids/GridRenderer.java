@@ -15,18 +15,116 @@
  */
 package org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids;
 
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 import com.ait.lienzo.client.core.shape.Group;
 import org.uberfire.ext.wires.core.grids.client.model.GridColumn;
 import org.uberfire.ext.wires.core.grids.client.model.GridData;
 import org.uberfire.ext.wires.core.grids.client.widget.context.GridBodyRenderContext;
+import org.uberfire.ext.wires.core.grids.client.widget.context.GridBoundaryRenderContext;
 import org.uberfire.ext.wires.core.grids.client.widget.context.GridHeaderRenderContext;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.impl.BaseGridRendererHelper;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.impl.SelectedRange;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.themes.GridRendererTheme;
 
 /**
  * Definition of a render for the pluggable rendering mechanism.
  */
 public interface GridRenderer {
+
+    interface GridRendererContext {
+
+        Group getGroup();
+
+        boolean isSelectionLayer();
+    }
+
+    /**
+     * Generic command to render a component of the grid
+     */
+    interface RendererCommand {
+
+        void execute(GridRendererContext parameter);
+    }
+
+    /**
+     * Command to render the "Selector" component of the grid
+     */
+    interface RenderSelectorCommand extends RendererCommand {
+
+    }
+
+    /**
+     * Command to render the "Selected cells" component of the grid
+     */
+    interface RenderSelectedCellsCommand extends RendererCommand {
+
+    }
+
+    /**
+     * Command to render the "Grid boundary" components of the grid
+     */
+    interface RenderGridBoundaryCommand extends RendererCommand {
+
+    }
+
+    /**
+     * Generic command for all header related rendering.
+     */
+    interface RendererHeaderCommand extends RendererCommand {
+
+    }
+
+    /**
+     * Command to render the "Grid lines" components of the grid header
+     */
+    interface RenderHeaderGridLinesCommand extends RendererHeaderCommand {
+
+    }
+
+    /**
+     * Command to render the "background" components of the grid header
+     */
+    interface RenderHeaderBackgroundCommand extends RendererHeaderCommand {
+
+    }
+
+    /**
+     * Command to render the "content" components of the grid header
+     */
+    interface RenderHeaderContentCommand extends RendererHeaderCommand {
+
+    }
+
+    /**
+     * Generic command for all body related rendering.
+     */
+    interface RendererBodyCommand extends RendererCommand {
+
+    }
+
+    /**
+     * Command to render the "Grid lines" components of the grid body
+     */
+    interface RenderBodyGridLinesCommand extends RendererBodyCommand {
+
+    }
+
+    /**
+     * Command to render the "background" components of the grid
+     */
+    interface RenderBodyGridBackgroundCommand extends RendererBodyCommand {
+
+    }
+
+    /**
+     * Command to render the "content" components of the grid
+     */
+    interface RenderBodyGridContentCommand extends RendererBodyCommand {
+
+    }
 
     /**
      * Returns the height of the header built by this renderer. The header's height may be greater than the product
@@ -58,22 +156,28 @@ public interface GridRenderer {
      * @param width The width of the GridWidget.
      * @param height The height of the GridWidget including header and body.
      * @param renderingInformation Calculated rendering information supporting rendering.
-     * @return A Group containing the "selector"
+     * @return A command that adds the "selector".
      */
-    Group renderSelector(final double width,
-                         final double height,
-                         final BaseGridRendererHelper.RenderingInformation renderingInformation);
+    RendererCommand renderSelector(final double width,
+                                   final double height,
+                                   final BaseGridRendererHelper.RenderingInformation renderingInformation);
 
     /**
      * Renders the selected ranges and append to the Body Group.
      * @param model The data model for the GridWidget.
      * @param context The context of the render phase.
      * @param rendererHelper Helper for rendering.
-     * @return
+     * @param selectedCells The cells that are selected.
+     * @param selectedCellsYOffsetStrategy A function that returns the YOffset of a selection.
+     * @param selectedCellsHeightStrategy A function that returns the height of a selection.
+     * @return A command that adds the "selected cells".
      */
-    Group renderSelectedCells(final GridData model,
-                              final GridBodyRenderContext context,
-                              final BaseGridRendererHelper rendererHelper);
+    RendererCommand renderSelectedCells(final GridData model,
+                                        final GridBodyRenderContext context,
+                                        final BaseGridRendererHelper rendererHelper,
+                                        final List<GridData.SelectedCell> selectedCells,
+                                        final BiFunction<SelectedRange, Integer, Double> selectedCellsYOffsetStrategy,
+                                        final Function<SelectedRange, Double> selectedCellsHeightStrategy);
 
     /**
      * Renders the header for the Grid.
@@ -81,12 +185,12 @@ public interface GridRenderer {
      * @param context The context of the render phase.
      * @param rendererHelper Helper for rendering.
      * @param renderingInformation Calculated rendering information supporting rendering.
-     * @return A Group containing all Shapes representing the Header.
+     * @return Commands that add the "header".
      */
-    Group renderHeader(final GridData model,
-                       final GridHeaderRenderContext context,
-                       final BaseGridRendererHelper rendererHelper,
-                       final BaseGridRendererHelper.RenderingInformation renderingInformation);
+    List<RendererCommand> renderHeader(final GridData model,
+                                       final GridHeaderRenderContext context,
+                                       final BaseGridRendererHelper rendererHelper,
+                                       final BaseGridRendererHelper.RenderingInformation renderingInformation);
 
     /**
      * Renders the body for the Grid.
@@ -94,12 +198,12 @@ public interface GridRenderer {
      * @param context The context of the render phase.
      * @param rendererHelper Helper for rendering.
      * @param renderingInformation Calculated rendering information supporting rendering.
-     * @return A Group containing all Shapes representing the Body.
+     * @return Commands that add the "body".
      */
-    Group renderBody(final GridData model,
-                     final GridBodyRenderContext context,
-                     final BaseGridRendererHelper rendererHelper,
-                     final BaseGridRendererHelper.RenderingInformation renderingInformation);
+    List<RendererCommand> renderBody(final GridData model,
+                                     final GridBodyRenderContext context,
+                                     final BaseGridRendererHelper rendererHelper,
+                                     final BaseGridRendererHelper.RenderingInformation renderingInformation);
 
     /**
      * Renders a divider between Grid header and body. The divider must be positioned in the Group relative to the
@@ -109,16 +213,14 @@ public interface GridRenderer {
      * @param width The width of the divider. May not be the width of the whole grid if there are floating columns.
      * @return A Group containing the divider positioned relative to the top-left of the Grid.
      */
-    Group renderHeaderBodyDivider(final double width);
+    RendererCommand renderHeaderBodyDivider(final double width);
 
     /**
      * Renders a boundary around the grid.
-     * @param width The width of the GridWidget.
-     * @param height The height of the GridWidget including header and body.
-     * @return A Group containing the grids boundary.
+     * @param context The context of the render phase.
+     * @return A command that adds the grids "boundary".
      */
-    Group renderGridBoundary(final double width,
-                             final double height);
+    RendererCommand renderGridBoundary(final GridBoundaryRenderContext context);
 
     /**
      * Checks whether a cell-relative coordinate is "on" the hot-spot to toggle the collapsed/expanded state.
@@ -132,4 +234,13 @@ public interface GridRenderer {
                              final double cellY,
                              final double cellWidth,
                              final double cellHeight);
+
+    /**
+     * Sets the constraint to control rendering of columns. The default implementation does not render to
+     * the SelectionLayer as a performance optimisation and only their basic definition, e.g. size, background
+     * colour, grid is rendered to support selection. Nested tables need to be rendered to the SelectionLayer
+     * to support their selection and other User interactions.
+     * @param columnRenderingConstraint
+     */
+    void setColumnRenderConstraint(final BiFunction<Boolean, GridColumn<?>, Boolean> columnRenderingConstraint);
 }

@@ -18,19 +18,28 @@ package org.uberfire.java.nio.fs.jgit;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.kie.soup.commons.util.Maps;
 import org.uberfire.java.nio.file.FileStore;
 import org.uberfire.java.nio.file.Path;
 import org.uberfire.java.nio.fs.jgit.util.Git;
 import org.uberfire.java.nio.fs.jgit.util.GitImpl;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class JGitFileSystemImplTest extends AbstractTestInfra {
 
@@ -47,8 +56,10 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
 
         assertThat(fileSystem.isReadOnly()).isFalse();
@@ -72,8 +83,10 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
 
         assertThat(fileSystem.isReadOnly()).isFalse();
@@ -87,6 +100,12 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         assertThat(root.getRoot().toString()).isEqualTo("/");
     }
 
+    private JGitFileSystemLock createFSLock(Git git) {
+        return new JGitFileSystemLock(git,
+                                      TimeUnit.MILLISECONDS,
+                                      30_000L);
+    }
+
     @Test
     public void testProvider() throws IOException, GitAPIException {
         final JGitFileSystemProvider fsProvider = mock(JGitFileSystemProvider.class);
@@ -96,8 +115,10 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
 
         assertThat(fileSystem.getName()).isEqualTo("my-repo");
@@ -116,8 +137,10 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
 
         assertThat(fileSystem.isReadOnly()).isFalse();
@@ -140,8 +163,10 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
 
         assertThat(fileSystem.isReadOnly()).isFalse();
@@ -163,13 +188,15 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
 
         final Path path = fileSystem.getPath("/path/to/some/place.txt");
 
-        assertThat(path).isNotNull();
+        AssertionsForClassTypes.assertThat(path).isNotNull();
         assertThat(path.isAbsolute()).isTrue();
         assertThat(path.toString()).isEqualTo("/path/to/some/place.txt");
         assertThat(path.toUri().toString()).isEqualTo("git://master@my-repo/path/to/some/place.txt");
@@ -191,13 +218,15 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
 
         final Path path = fileSystem.getPath("path/to/some/place.txt");
 
-        assertThat(path).isNotNull();
+        AssertionsForClassTypes.assertThat(path).isNotNull();
         assertThat(path.isAbsolute()).isFalse();
         assertThat(path.toString()).isEqualTo("path/to/some/place.txt");
         assertThat(path.toUri().toString()).isEqualTo("git://master@my-repo/:path/to/some/place.txt");
@@ -219,14 +248,16 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
 
         final Path path = fileSystem.getPath("test-branch",
                                              "/path/to/some/place.txt");
 
-        assertThat(path).isNotNull();
+        AssertionsForClassTypes.assertThat(path).isNotNull();
         assertThat(path.isAbsolute()).isTrue();
         assertThat(path.toString()).isEqualTo("/path/to/some/place.txt");
         assertThat(path.toUri().toString()).isEqualTo("git://test-branch@my-repo/path/to/some/place.txt");
@@ -248,14 +279,16 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
 
         final Path path = fileSystem.getPath("test-branch",
                                              "path/to/some/place.txt");
 
-        assertThat(path).isNotNull();
+        AssertionsForClassTypes.assertThat(path).isNotNull();
         assertThat(path.isAbsolute()).isFalse();
         assertThat(path.toString()).isEqualTo("path/to/some/place.txt");
         assertThat(path.toUri().toString()).isEqualTo("git://test-branch@my-repo/:path/to/some/place.txt");
@@ -277,15 +310,17 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
 
         final Path path = fileSystem.getPath("test-branch",
                                              "/path/to",
                                              "some/place.txt");
 
-        assertThat(path).isNotNull();
+        AssertionsForClassTypes.assertThat(path).isNotNull();
         assertThat(path.isAbsolute()).isTrue();
         assertThat(path.toString()).isEqualTo("/path/to/some/place.txt");
         assertThat(path.toUri().toString()).isEqualTo("git://test-branch@my-repo/path/to/some/place.txt");
@@ -307,15 +342,17 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
 
         final Path path = fileSystem.getPath("test-branch",
                                              "path/to",
                                              "some/place.txt");
 
-        assertThat(path).isNotNull();
+        AssertionsForClassTypes.assertThat(path).isNotNull();
         assertThat(path.isAbsolute()).isFalse();
         assertThat(path.toString()).isEqualTo("path/to/some/place.txt");
         assertThat(path.toUri().toString()).isEqualTo("git://test-branch@my-repo/:path/to/some/place.txt");
@@ -336,8 +373,10 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
 
         assertThat(fileSystem.getFileStores()).hasSize(1);
@@ -357,8 +396,10 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem1 = new JGitFileSystemImpl(fsProvider,
                                                                       null,
                                                                       git1,
+                                                                      createFSLock(git1),
                                                                       "my-repo1",
                                                                       CredentialsProvider.getDefault(),
+                                                                      null,
                                                                       null);
 
         final Git git2 = setupGit();
@@ -366,8 +407,10 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem2 = new JGitFileSystemImpl(fsProvider,
                                                                       null,
                                                                       git2,
+                                                                      createFSLock(git2),
                                                                       "my-repo2",
                                                                       CredentialsProvider.getDefault(),
+                                                                      null,
                                                                       null);
 
         final Path path1 = fileSystem1.getPath("master",
@@ -375,9 +418,9 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final Path path2 = fileSystem2.getPath("master",
                                                "/path/to/some.txt");
 
-        assertThat(path1).isNotEqualTo(path2);
+        AssertionsForClassTypes.assertThat(path1).isNotEqualTo(path2);
 
-        assertThat(path1).isEqualTo(fileSystem1.getPath("/path/to/some.txt"));
+        AssertionsForClassTypes.assertThat(path1).isEqualTo(fileSystem1.getPath("/path/to/some.txt"));
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -390,8 +433,10 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
         fileSystem.newWatchService();
     }
@@ -405,8 +450,10 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
         fileSystem.getUserPrincipalLookupService();
     }
@@ -420,14 +467,16 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
         fileSystem.getPathMatcher("*");
     }
 
     @Test
-    public void lockShouldSupportMultiplieInnerLocksForTheSameThreadTest() throws IOException, GitAPIException {
+    public void lockShouldSupportMultipleInnerLocksForTheSameThreadTest() throws IOException, GitAPIException {
         final JGitFileSystemProvider fsProvider = mock(JGitFileSystemProvider.class);
 
         final Git git = setupGit();
@@ -435,8 +484,10 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
                                                                      null,
                                                                      git,
+                                                                     createFSLock(git),
                                                                      "my-repo",
                                                                      CredentialsProvider.getDefault(),
+                                                                     null,
                                                                      null);
 
         fileSystem.lock();
@@ -452,9 +503,9 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
     public void lockTest() throws IOException, GitAPIException {
 
         final Git git = setupGit();
-        JGitFileSystemImpl.Lock lock = new JGitFileSystemImpl.Lock(git.getRepository().getDirectory().toURI());
+        JGitFileSystemLock lock = createFSLock(git);
 
-        JGitFileSystemImpl.Lock lockSpy = spy(lock);
+        JGitFileSystemLock lockSpy = spy(lock);
 
         lockSpy.lock();
         lockSpy.lock();
@@ -467,5 +518,34 @@ public class JGitFileSystemImplTest extends AbstractTestInfra {
         lockSpy.unlock();
         verify(lockSpy,
                times(1)).physicalUnLockOnFS();
+    }
+
+    @Test
+    public void testSetPublicURI() throws IOException, GitAPIException {
+
+        final JGitFileSystemProvider fsProvider = mock(JGitFileSystemProvider.class);
+
+        final Git git = setupGit();
+
+        final JGitFileSystemImpl fileSystem = new JGitFileSystemImpl(fsProvider,
+                                                                     new Maps.Builder<String, String>()
+                                                                             .put("ssh", "localhost:8080/git")
+                                                                             .build(),
+                                                                     git,
+                                                                     createFSLock(git),
+                                                                     "my-repo",
+                                                                     CredentialsProvider.getDefault(),
+                                                                     null,
+                                                                     null);
+
+        assertTrue(checkProtocolPresent(fileSystem.toString(), "ssh"));
+        assertFalse(checkProtocolPresent(fileSystem.toString(), "http"));
+
+        fileSystem.setPublicURI(new Maps.Builder<String, String>()
+                                        .put("http", "localhost:8080/git")
+                                        .put("ssh", "localhost:8080/git")
+                                        .build());
+        assertTrue(checkProtocolPresent(fileSystem.toString(), "ssh"));
+        assertTrue(checkProtocolPresent(fileSystem.toString(), "http"));
     }
 }

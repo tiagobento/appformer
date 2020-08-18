@@ -40,7 +40,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(org.jboss.byteman.contrib.bmunit.BMUnitRunner.class)
-@BMScript(value = "byteman/lucene.btm")
+@BMScript(dir = "byteman", value = "lucene.btm")
 public class BatchIndexConcurrencyTest extends BaseIndexTest {
 
     private MetaIndexEngine metaIndexEngine;
@@ -63,6 +63,8 @@ public class BatchIndexConcurrencyTest extends BaseIndexTest {
 
             ioService = new IOServiceIndexedImpl(metaIndexEngine,
                                                  Executors.newCachedThreadPool(new DescriptiveThreadFactory()),
+                                                 indexersFactory(),
+                                                 indexerDispatcherFactory(config.getIndexEngine()),
                                                  DublinCoreView.class,
                                                  VersionAttributeView.class) {
                 @Override

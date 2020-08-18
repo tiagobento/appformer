@@ -23,7 +23,7 @@ import org.junit.Test;
 import org.uberfire.java.nio.file.FileSystem;
 import org.uberfire.java.nio.file.Path;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class JGitFileSystemImplProviderAsDefaultTest extends AbstractTestInfra {
 
@@ -74,6 +74,23 @@ public class JGitFileSystemImplProviderAsDefaultTest extends AbstractTestInfra {
         assertThat(pathRelative.getRoot().toString()).isEqualTo("");
         assertThat(pathRelative.getRoot().toUri().toString()).isEqualTo("default://origin/master@default-new-complex-get-repo-name");
         assertThat(pathRelative.toString()).isEqualTo("home");
+
+        fs.close();
+    }
+
+    @Test
+    public void testGetComplexPathFileSystemNameIncludedInPath() {
+        final URI newRepo = URI.create("default://default-new-complex-get-repo-name");
+
+        FileSystem fs = provider.newFileSystem(newRepo,
+                                               EMPTY_ENV);
+
+        final Path path = provider.getPath(URI.create("default://origin/master@default-new-complex-get-repo-name/home/default-new-complex-get-repo-name/somefolder"));
+
+        assertThat(path).isNotNull();
+        assertThat(path.getRoot().toString()).isEqualTo("/");
+        assertThat(path.toString()).isEqualTo("/home/default-new-complex-get-repo-name/somefolder");
+        assertThat(path.toUri().getScheme()).isEqualTo("default");
 
         fs.close();
     }

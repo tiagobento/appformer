@@ -21,6 +21,7 @@ import com.ait.lienzo.client.core.shape.Viewport;
 import com.ait.lienzo.test.LienzoMockitoTestRunner;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.user.client.Command;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,7 +29,12 @@ import org.mockito.Mock;
 import org.uberfire.ext.wires.core.grids.client.widget.dnd.GridWidgetDnDHandlersState.GridWidgetHandlersOperation;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.GridLayer;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(LienzoMockitoTestRunner.class)
 public class GridWidgetDnDMouseUpHandlerTest {
@@ -64,6 +70,11 @@ public class GridWidgetDnDMouseUpHandlerTest {
         final GridWidgetDnDMouseUpHandler wrapped = new GridWidgetDnDMouseUpHandler(layer,
                                                                                     state);
         this.handler = spy(wrapped);
+
+        doAnswer(i -> {
+            ((Command) i.getArguments()[0]).execute();
+            return null;
+        }).when(handler).scheduleDeferred(any(Command.class));
     }
 
     @Test
@@ -123,6 +134,34 @@ public class GridWidgetDnDMouseUpHandlerTest {
     @Test
     public void stateIsResetOnMouseUpWhenStateIsRowMove() {
         state.setOperation(GridWidgetHandlersOperation.ROW_MOVE);
+
+        handler.onNodeMouseUp(event);
+
+        verify(state,
+               times(1)).reset();
+        verify(layer,
+               times(1)).remove(any(IPrimitive.class));
+        verify(layer,
+               times(1)).batch();
+    }
+
+    @Test
+    public void stateIsResetOnMouseUpWhenStateIsColumnMoveInitiated() {
+        state.setOperation(GridWidgetHandlersOperation.COLUMN_MOVE_INITIATED);
+
+        handler.onNodeMouseUp(event);
+
+        verify(state,
+               times(1)).reset();
+        verify(layer,
+               times(1)).remove(any(IPrimitive.class));
+        verify(layer,
+               times(1)).batch();
+    }
+
+    @Test
+    public void stateIsResetOnMouseUpWhenStateIsRowMoveInitiated() {
+        state.setOperation(GridWidgetHandlersOperation.ROW_MOVE_INITIATED);
 
         handler.onNodeMouseUp(event);
 

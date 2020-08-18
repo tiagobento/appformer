@@ -16,6 +16,10 @@
 
 package org.uberfire.ext.preferences.client.admin;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.function.Consumer;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
@@ -36,7 +40,7 @@ import org.uberfire.workbench.model.impl.PerspectiveDefinitionImpl;
 import org.uberfire.workbench.model.menu.MenuFactory;
 import org.uberfire.workbench.model.menu.Menus;
 
-@Dependent
+@ApplicationScoped
 @WorkbenchPerspective(identifier = AdminPagePerspective.IDENTIFIER)
 public class AdminPagePerspective {
 
@@ -55,7 +59,8 @@ public class AdminPagePerspective {
     @Perspective
     public PerspectiveDefinition getPerspective() {
         if (perspective == null) {
-            return createPerspectiveDefinition();
+            perspective = createPerspectiveDefinition();
+            configurePerspective(Collections.emptyMap());
         }
 
         return perspective;
@@ -66,7 +71,7 @@ public class AdminPagePerspective {
         perspectiveIdentifierToGoBackTo = placeRequest.getParameter("perspectiveIdentifierToGoBackTo",
                                                                     null);
         perspective = createPerspectiveDefinition();
-        configurePerspective(placeRequest);
+        configurePerspective(placeRequest.getParameters());
     }
 
     PerspectiveDefinition createPerspectiveDefinition() {
@@ -76,26 +81,22 @@ public class AdminPagePerspective {
         return perspective;
     }
 
-    void configurePerspective(final PlaceRequest placeRequest) {
+    void configurePerspective(final Map<String, String> parameters) {
         perspective.getRoot().addPart(new PartDefinitionImpl(new DefaultPlaceRequest(AdminPagePresenter.IDENTIFIER,
-                                                                                     placeRequest.getParameters())));
+                                                                                     parameters)));
     }
 
     @WorkbenchMenu
-    public Menus getMenus() {
+    public void getMenus(final Consumer<Menus> menusConsumer) {
         if (perspectiveIdentifierToGoBackTo != null) {
-            return MenuFactory
+            menusConsumer.accept(MenuFactory
                     .newTopLevelMenu(translationService.format(Constants.AdminPagePerspective_GoBackToThePreviousPage))
-                    .respondsWith(new Command() {
-                        @Override
-                        public void execute() {
-                            placeManager.goTo(perspectiveIdentifierToGoBackTo);
-                        }
-                    })
+                    .respondsWith(() -> placeManager.goTo(perspectiveIdentifierToGoBackTo))
                     .endMenu()
-                    .build();
+                    .build()
+            );
         }
 
-        return null;
+        menusConsumer.accept(null);
     }
 }

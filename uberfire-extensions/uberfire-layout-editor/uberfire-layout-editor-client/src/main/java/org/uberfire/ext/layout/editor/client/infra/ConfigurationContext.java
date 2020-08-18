@@ -75,4 +75,24 @@ public class ConfigurationContext {
     public LayoutTemplate getCurrentLayoutTemplate() {
         return currentLayoutTemplateSupplier.get();
     }
+
+    public Command getConfigurationCanceled() {
+        return configurationCanceled;
+    }
+
+    public void setConfigurationCanceled(final Command configurationCanceled) {
+        this.configurationCanceled = configurationCanceled;
+    }
+
+    public Command getConfigurationFinish() {
+        return configurationFinish;
+    }
+
+    public void setConfigurationFinish(final Command configurationFinish) {
+        this.configurationFinish = configurationFinish;
+    }
+    
+    public LayoutComponent getLayoutComponent() {
+        return this.component;
+    }
 }

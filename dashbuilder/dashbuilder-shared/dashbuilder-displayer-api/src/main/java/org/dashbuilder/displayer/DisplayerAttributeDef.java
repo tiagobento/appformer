@@ -88,8 +88,12 @@ public class DisplayerAttributeDef {
     public static final DisplayerAttributeDef METER_CRITICAL = new DisplayerAttributeDef("critical", DisplayerAttributeGroupDef.METER_GROUP);
     public static final DisplayerAttributeDef METER_END = new DisplayerAttributeDef("end", DisplayerAttributeGroupDef.METER_GROUP);
 
+    public static final DisplayerAttributeDef DONUT_HOLE_TITLE = new DisplayerAttributeDef("hole_title", DisplayerAttributeGroupDef.DONUT_GROUP);
+
     public static final DisplayerAttributeDef HTML_TEMPLATE = new DisplayerAttributeDef("html", DisplayerAttributeGroupDef.HTML_GROUP);
     public static final DisplayerAttributeDef JS_TEMPLATE = new DisplayerAttributeDef("javascript", DisplayerAttributeGroupDef.HTML_GROUP);
+    
+    public static final DisplayerAttributeDef MAP_COLOR_SCHEME = new DisplayerAttributeDef("color_scheme", DisplayerAttributeGroupDef.MAP_GROUP);
 
     protected String id;
     protected DisplayerAttributeGroupDef parent;

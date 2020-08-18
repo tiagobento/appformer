@@ -27,12 +27,17 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
+
 import org.guvnor.common.services.shared.message.Level;
 import org.guvnor.messageconsole.client.console.resources.MessageConsoleResources;
+import org.guvnor.messageconsole.client.console.resources.i18n.AlertsConstants;
 import org.guvnor.messageconsole.client.console.widget.MessageTableWidget;
+import org.jboss.errai.ui.client.local.spi.TranslationService;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.ext.widgets.common.client.common.BusyPopup;
+import org.uberfire.client.util.Clipboard;
 
 @ApplicationScoped
 public class MessageConsoleViewImpl extends Composite implements MessageConsoleView {
@@ -50,10 +55,20 @@ public class MessageConsoleViewImpl extends Composite implements MessageConsoleV
     @Inject
     private MessageConsoleService consoleService;
 
+    @Inject
+    private TranslationService translationService;
+
+    @Inject
+    private Clipboard clipboard;
+
+    @UiField
+    protected TextArea msgArea;
+
     @UiField(provided = true)
-    protected final MessageTableWidget<MessageConsoleServiceRow> dataGrid = new MessageTableWidget<MessageConsoleServiceRow>();
+    protected final MessageTableWidget<MessageConsoleServiceRow> dataGrid = new MessageTableWidget<>();
 
     public MessageConsoleViewImpl() {
+        dataGrid.setToolBarVisible(false);
         dataGrid.addLevelColumn(75,
                                 new MessageTableWidget.ColumnExtractor<Level>() {
                                     @Override
@@ -79,6 +94,7 @@ public class MessageConsoleViewImpl extends Composite implements MessageConsoleV
     @PostConstruct
     public void setupDataDisplay() {
         consoleService.addDataDisplay(dataGrid);
+        dataGrid.setColumnPickerButtonVisible(false);
     }
 
     private void addLineColumn() {
@@ -137,6 +153,10 @@ public class MessageConsoleViewImpl extends Composite implements MessageConsoleV
                                 Style.Unit.PX);
     }
 
+    public String getTitle() {
+        return translationService.format(AlertsConstants.Alerts);
+    }
+
     @Override
     public void showBusyIndicator(final String message) {
         BusyPopup.showMessage(message);
@@ -145,5 +165,13 @@ public class MessageConsoleViewImpl extends Composite implements MessageConsoleV
     @Override
     public void hideBusyIndicator() {
         BusyPopup.close();
+    }
+
+    @Override
+    public boolean copyMessages(String msg) {
+    msgArea.setText(msg);
+    msgArea.setFocus(true);
+    msgArea.selectAll();
+    return clipboard.copy();
     }
 }

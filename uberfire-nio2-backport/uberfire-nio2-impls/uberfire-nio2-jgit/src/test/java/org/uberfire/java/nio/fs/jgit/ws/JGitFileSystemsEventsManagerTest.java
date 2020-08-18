@@ -18,6 +18,8 @@ package org.uberfire.java.nio.fs.jgit.ws;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,6 +27,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.uberfire.commons.cluster.ClusterJMSService;
 import org.uberfire.commons.cluster.ClusterParameters;
 import org.uberfire.commons.cluster.ClusterService;
+import org.uberfire.commons.cluster.ConnectionMode;
 import org.uberfire.java.nio.file.Path;
 import org.uberfire.java.nio.file.WatchEvent;
 import org.uberfire.java.nio.file.WatchService;
@@ -32,6 +35,7 @@ import org.uberfire.java.nio.fs.jgit.ws.cluster.JGitEventsBroadcast;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
+import static org.uberfire.commons.cluster.ClusterParameters.APPFORMER_JMS_CONNECTION_MODE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JGitFileSystemsEventsManagerTest {
@@ -53,6 +57,12 @@ public class JGitFileSystemsEventsManagerTest {
                 return mock(JGitFileSystemWatchServices.class);
             }
         };
+    }
+
+    @AfterClass
+    public static void clearProperty() {
+        System.setProperty(ClusterParameters.APPFORMER_JMS_CONNECTION_MODE,
+                           ConnectionMode.NONE.toString());
     }
 
     @Test
@@ -231,10 +241,23 @@ public class JGitFileSystemsEventsManagerTest {
                never()).close();
     }
 
+    @Test
+    public void testShutdown() {
+        manager.newWatchService("fsPetra");
+        manager.newWatchService("fsEureka");
+
+        JGitFileSystemWatchServices fsPetraWatchService = manager.getFsWatchServices().get("fsPetra");
+        JGitFileSystemWatchServices fsEurekaWatchService = manager.getFsWatchServices().get("fsEureka");
+
+        manager.shutdown();
+
+        verify(fsPetraWatchService).close();
+        verify(fsEurekaWatchService).close();
+        verify(jGitEventsBroadcastMock).close();
+    }
+
     private void setupClusterParameters() {
-        System.setProperty(ClusterParameters.APPFORMER_CLUSTER,
-                           "true");
-        System.setProperty(ClusterParameters.APPFORMER_DEFAULT_CLUSTER_CONFIGS,
-                           "true");
+        System.setProperty(ClusterParameters.APPFORMER_JMS_CONNECTION_MODE,
+                           ConnectionMode.REMOTE.toString());
     }
 }

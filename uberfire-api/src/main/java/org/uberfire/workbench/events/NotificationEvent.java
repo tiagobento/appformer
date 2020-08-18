@@ -15,18 +15,27 @@
  */
 package org.uberfire.workbench.events;
 
+import org.jboss.errai.common.client.api.annotations.Portable;
 import org.uberfire.mvp.PlaceRequest;
 
 /**
  * An event to show a notification pop-up in the Workbench
  */
+@Portable
 public class NotificationEvent implements UberFireEvent {
 
-    private final String notification;
-    private final NotificationType type;
-    private final boolean isSingleton;
-    private final PlaceRequest placeRequest;
-    private final Integer initialTopOffset;
+    private String notification;
+    private NotificationType type;
+    private boolean isSingleton;
+    private PlaceRequest placeRequest;
+    private Integer initialTopOffset;
+    private boolean autoHide = true;
+    private String navigationText;
+    private PlaceRequest navigationPlace;
+
+    public NotificationEvent() {
+    }
+
     public NotificationEvent(final String notification) {
         this(notification,
              NotificationType.DEFAULT,
@@ -76,6 +85,7 @@ public class NotificationEvent implements UberFireEvent {
                              final boolean isSingleton,
                              final PlaceRequest placeRequest,
                              final Integer initialTopOffset) {
+
         this.notification = notification;
         this.type = type;
         this.isSingleton = isSingleton;
@@ -101,6 +111,35 @@ public class NotificationEvent implements UberFireEvent {
 
     public Integer getInitialTopOffset() {
         return initialTopOffset;
+    }
+
+    public NotificationEvent setAutoHide(final boolean autoHide) {
+        this.autoHide = autoHide;
+        return this;
+    }
+
+    public boolean autoHide() {
+        return autoHide;
+    }
+
+    public NotificationEvent setNavigation(final String text,
+                                       final PlaceRequest place) {
+        this.navigationText = text;
+        this.navigationPlace = place;
+        return this;
+    }
+
+    public boolean hasNavigation() {
+        return navigationText != null
+            && navigationPlace != null;
+    }
+
+    public String getNavigationText() {
+        return navigationText;
+    }
+
+    public PlaceRequest getNavigationPlace() {
+        return navigationPlace;
     }
 
     @Override

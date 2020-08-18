@@ -21,6 +21,7 @@ import org.dashbuilder.dataset.client.DataSetClientServices;
 import org.dashbuilder.dataset.client.editor.SQLDataSetDefEditor;
 import org.dashbuilder.dataset.def.DataColumnDef;
 import org.dashbuilder.dataset.def.DataSetDef;
+import org.dashbuilder.dataset.def.DataSetDefFactory;
 import org.dashbuilder.dataset.def.SQLDataSetDef;
 import org.dashbuilder.dataset.service.DataSetDefVfsServices;
 import org.jboss.errai.common.client.api.Caller;
@@ -46,6 +47,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.jgroups.util.Util.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 
@@ -71,8 +75,8 @@ public class DataSetDefWizardScreenTest {
 
     @Before
     public void setup() throws Exception {
-        services = new CallerMock<DataSetDefVfsServices>( dataSetDefVfsServices );
-        
+        services = new CallerMock<>( dataSetDefVfsServices );
+
         when(dataSetDef.getUUID()).thenReturn("uuid1");
         when(dataSetDef.getName()).thenReturn("name1");
         when(dataSetDef.getProvider()).thenReturn(DataSetProviderType.SQL);
@@ -86,7 +90,7 @@ public class DataSetDefWizardScreenTest {
             callback.callback(dataSetDef);
             return null;
         }).when(clientServices).newDataSet(any(DataSetProviderType.class), any(RemoteCallback.class));
-        
+
         doAnswer(invocationOnMock -> {
             presenter.onClose();
             return null;
@@ -109,6 +113,15 @@ public class DataSetDefWizardScreenTest {
     }
 
     @Test
+    public void testOnMayClose() {
+        presenter.init(null);
+        when(dataSetProviderTypeWorkflow.getDataSetDef()).thenReturn(mock(SQLDataSetDef.class));
+        presenter.onMayClose();
+        verify(view).confirmClose();
+        assertTrue(presenter.isDirty(presenter.getCurrentModelHash()));
+    }
+
+    @Test
     public void testOnClose() {
         presenter.init(PlaceRequest.NOWHERE);
         DataSetEditorWorkflow currentWorkflow = presenter.currentWorkflow;
@@ -126,12 +139,13 @@ public class DataSetDefWizardScreenTest {
         verify(errorPopupPresenter, times(1)).showMessage(anyString());
         verify(view, times(0)).setWidget(any(IsWidget.class));
     }
-    
+
     @Test
     public void testInitProviderTypeEdition() {
         PlaceRequest placeRequest = mock(PlaceRequest.class);
         presenter.init(placeRequest);
         assertEquals(dataSetProviderTypeWorkflow, presenter.currentWorkflow);
+        assertFalse(presenter.isDirty(presenter.getCurrentModelHash()));
         verify(workflowFactory, times(1)).providerType();
         verify(view, times(1)).setWidget(any(IsWidget.class));
         verify(dataSetProviderTypeWorkflow, times(1)).edit(any(DataSetDef.class));
@@ -145,6 +159,7 @@ public class DataSetDefWizardScreenTest {
         when(dataSetProviderTypeWorkflow.getProviderType()).thenReturn(DataSetProviderType.SQL);
         presenter.onProviderTypeSelected(dataSetProviderTypeWorkflow);
         assertEquals(dataSetBasicAttributesWorkflow, presenter.currentWorkflow);
+        assertFalse(presenter.isDirty(presenter.getCurrentModelHash()));
         verify(view, times(1)).setWidget(any(IsWidget.class));
         verify(dataSetBasicAttributesWorkflow, times(1)).edit(any(DataSetDef.class));
         verify(editWorkflow, times(1)).showTestButton();
@@ -188,11 +203,12 @@ public class DataSetDefWizardScreenTest {
             }
         }).when(dataSetBasicAttributesWorkflow).testDataSet(any(DataSetEditorWorkflow.TestDataSetCallback.class));
         presenter.currentWorkflow = dataSetBasicAttributesWorkflow;
-        
+
         presenter.onTestEvent(event);
-        
+
         verify(dataSetBasicAttributesWorkflow, times(1)).testDataSet(any(DataSetEditorWorkflow.TestDataSetCallback.class));
         assertEquals(editWorkflow, presenter.currentWorkflow);
+        assertTrue(presenter.isDirty(presenter.getCurrentModelHash()));
         verify(workflowFactory, times(1)).edit(any(DataSetProviderType.class));
         verify(view, times(1)).setWidget(any(IsWidget.class));
         final ArgumentCaptor<List> dataCaptor =  ArgumentCaptor.forClass(List.class);
@@ -211,17 +227,22 @@ public class DataSetDefWizardScreenTest {
     @Test
     public void testOnSave() {
         final Path path = mock(Path.class);
+        DataSetDef dataSetDef = DataSetDefFactory.newBeanDataSetDef().buildDef();
+        PlaceRequest placeRequest = mock(PlaceRequest.class);
         when(dataSetDefVfsServices.save(any(DataSetDef.class), anyString())).thenReturn(path);
-        presenter.currentWorkflow = editWorkflow;
+        when(dataSetProviderTypeWorkflow.getDataSetDef()).thenReturn(dataSetDef);
+
+        presenter.init(placeRequest);
         presenter.onSave(dataSetDef, "saveMessage");
         verify(placeManager, times(1)).goTo("DataSetAuthoringHome");
         verify(notification, times(1)).fire(any(NotificationEvent.class));
         verify(placeManager, times(1)).closePlace(any(PlaceRequest.class));
-        verify(editWorkflow, times(1)).clear();
-        verify(workflowFactory, times(0)).providerType();
+        verify(workflowFactory).dispose(dataSetProviderTypeWorkflow);
         verify(workflowFactory, times(0)).edit(any(DataSetProviderType.class));
-        verify(workflowFactory, times(0)).basicAttributes(any(DataSetProviderType.class));
+
         assertNull("current workflow null", presenter.currentWorkflow);
+        assertFalse(presenter.isDirty(presenter.getCurrentModelHash()));
+        assertTrue(presenter.mayClose());
     }
 
     @Test
@@ -302,5 +323,5 @@ public class DataSetDefWizardScreenTest {
         verify(errorPopupPresenter, times(0)).showMessage(anyString());
         verify(view, times(0)).setWidget(any(IsWidget.class));
     }
-    
+
 }

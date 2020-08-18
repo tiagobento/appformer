@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.uberfire</groupId>
     <artifactId>uberfire-parent</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>7.43.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -43,7 +43,6 @@
     <module>uberfire-apps</module>
     <module>uberfire-layout-editor</module>
     <module>uberfire-simple-docks</module>
-    <module>uberfire-social-activities</module>
   </modules>
 
 </project>

@@ -19,6 +19,7 @@ package org.uberfire.mvp;
  * A command representing a future activity. This was deliberately created in
  * addition to the existing GWT Command to allow better re-use of menu
  * structures when a WorkbenchPart is embedded within Eclipse.
+ * In case you need two parameters, see {@link BiParameterizedCommand}.
  */
 public interface ParameterizedCommand<T> {
 

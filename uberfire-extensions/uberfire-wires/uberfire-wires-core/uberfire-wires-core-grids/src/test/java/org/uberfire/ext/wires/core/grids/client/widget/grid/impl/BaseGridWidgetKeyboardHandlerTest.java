@@ -36,14 +36,25 @@ import org.uberfire.ext.wires.core.grids.client.model.impl.BaseGridData;
 import org.uberfire.ext.wires.core.grids.client.model.impl.BaseGridRow;
 import org.uberfire.ext.wires.core.grids.client.model.impl.BaseGridTest;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.GridWidget;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.columns.StringDOMElementColumn;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.columns.StringDOMElementSingletonColumn;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.GridRenderer;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.impl.BaseGridRendererHelper;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.selections.SelectionExtension;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.selections.impl.BaseCellSelectionManager;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.impl.DefaultGridLayer;
+import org.uberfire.ext.wires.core.grids.client.widget.layer.impl.GridLienzoPanel;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(LienzoMockitoTestRunner.class)
 public class BaseGridWidgetKeyboardHandlerTest {
@@ -65,6 +76,9 @@ public class BaseGridWidgetKeyboardHandlerTest {
 
     @Mock
     private BaseGridRendererHelper gridWidget1RendererHelper;
+
+    @Mock
+    private GridLienzoPanel gridPanel;
 
     private GridData gridWidget1Data;
 
@@ -126,6 +140,35 @@ public class BaseGridWidgetKeyboardHandlerTest {
     }
 
     @Test
+    public void testDestroyResourcesOnKeyDown() {
+        when(layer.getGridWidgets()).thenReturn(gridWidgets);
+        when(gridWidget1.isSelected()).thenReturn(true);
+        when(event.getNativeKeyCode()).thenReturn(KeyCodes.KEY_RIGHT);
+
+        final StringDOMElementColumn columnWithAdditionalDomElements = mock(StringDOMElementColumn.class);
+        gridWidget1Data.appendColumn(columnWithAdditionalDomElements);
+
+        handler.onKeyDown(event);
+
+        verify(columnWithAdditionalDomElements).destroyResources();
+    }
+
+    @Test
+    public void testDestroyResourcesAndFlushOnKeyDown() {
+        when(layer.getGridWidgets()).thenReturn(gridWidgets);
+        when(gridWidget1.isSelected()).thenReturn(true);
+        when(event.getNativeKeyCode()).thenReturn(KeyCodes.KEY_RIGHT);
+
+        final StringDOMElementSingletonColumn columnWithAdditionalDomElements = mock(StringDOMElementSingletonColumn.class);
+        gridWidget1Data.appendColumn(columnWithAdditionalDomElements);
+
+        handler.onKeyDown(event);
+
+        verify(columnWithAdditionalDomElements).flush();
+        verify(columnWithAdditionalDomElements).destroyResources();
+    }
+
+    @Test
     public void noSelectedDecisionTable() {
         handler.onKeyDown(event);
 
@@ -184,9 +227,9 @@ public class BaseGridWidgetKeyboardHandlerTest {
         when(gridWidget1.isSelected()).thenReturn(true);
         when(event.getNativeKeyCode()).thenReturn(KeyCodes.KEY_DELETE);
 
-        gridWidget1Data.setCell(0,
-                                0,
-                                new BaseGridCellValue<>("hello"));
+        gridWidget1Data.setCellValue(0,
+                                     0,
+                                     new BaseGridCellValue<>("hello"));
         assertEquals("hello",
                      gridWidget1Data.getCell(0,
                                              0).getValue().getValue());
@@ -541,10 +584,10 @@ public class BaseGridWidgetKeyboardHandlerTest {
     private void setupKeyboardOperations() {
         this.keyboardOperationClearCell = spy(new KeyboardOperationClearCell(layer));
         this.keyboardOperationEditCell = spy(new KeyboardOperationEditCell(layer));
-        this.keyboardOperationMoveLeft = spy(new KeyboardOperationMoveLeft(layer));
-        this.keyboardOperationMoveRight = spy(new KeyboardOperationMoveRight(layer));
-        this.keyboardOperationMoveUp = spy(new KeyboardOperationMoveUp(layer));
-        this.keyboardOperationMoveDown = spy(new KeyboardOperationMoveDown(layer));
+        this.keyboardOperationMoveLeft = spy(new KeyboardOperationMoveLeft(layer, gridPanel));
+        this.keyboardOperationMoveRight = spy(new KeyboardOperationMoveRight(layer, gridPanel));
+        this.keyboardOperationMoveUp = spy(new KeyboardOperationMoveUp(layer, gridPanel));
+        this.keyboardOperationMoveDown = spy(new KeyboardOperationMoveDown(layer, gridPanel));
         this.keyboardOperationSelectTopLeftCell = spy(new KeyboardOperationSelectTopLeftCell(layer));
         this.keyboardOperationSelectBottomRightCell = spy(new KeyboardOperationSelectBottomRightCell(layer));
 

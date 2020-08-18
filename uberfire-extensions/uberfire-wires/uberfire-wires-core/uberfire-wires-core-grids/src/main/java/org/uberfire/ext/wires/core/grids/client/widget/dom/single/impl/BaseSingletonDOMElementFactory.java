@@ -15,12 +15,18 @@
  */
 package org.uberfire.ext.wires.core.grids.client.widget.dom.single.impl;
 
+import java.util.function.Consumer;
+
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.Widget;
-import org.uberfire.client.callbacks.Callback;
 import org.uberfire.ext.wires.core.grids.client.widget.context.GridBodyCellRenderContext;
 import org.uberfire.ext.wires.core.grids.client.widget.dom.impl.BaseDOMElement;
 import org.uberfire.ext.wires.core.grids.client.widget.dom.single.SingletonDOMElementFactory;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.GridWidget;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.keyboard.KeyDownHandlerCommon;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.GridLayer;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.impl.GridLayerRedrawManager;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.impl.GridLienzoPanel;
@@ -53,27 +59,60 @@ public abstract class BaseSingletonDOMElementFactory<T, W extends Widget, E exte
 
     @Override
     public void attachDomElement(final GridBodyCellRenderContext context,
-                                 final Callback<E> onCreation,
-                                 final Callback<E> onDisplay) {
+                                 final Consumer<E> onCreation,
+                                 final Consumer<E> onDisplay) {
         gridLayer.batch(new GridLayerRedrawManager.PrioritizedCommand(Integer.MAX_VALUE) {
             @Override
             public void execute() {
                 final E domElement = createDomElement(gridLayer,
-                                                      gridWidget,
-                                                      context);
+                                                      gridWidget);
+                registerHandlers(widget, domElement);
+
                 domElement.setContext(context);
                 domElement.initialise(context);
-                onCreation.callback(domElement);
+                onCreation.accept(domElement);
 
                 domElement.attach();
-                onDisplay.callback(domElement);
+                onDisplay.accept(domElement);
             }
         });
     }
 
     @Override
+    public E createDomElement(final GridLayer gridLayer,
+                              final GridWidget gridWidget) {
+        widget = createWidget();
+        e = createDomElementInternal(widget, gridLayer, gridWidget);
+
+        return e;
+    }
+
+    @Override
+    public void registerHandlers(final W widget, final E widgetDomElement) {
+        widget.addDomHandler(destroyOrFlushKeyDownHandler(),
+                             KeyDownEvent.getType());
+        widget.addDomHandler((e) -> e.stopPropagation(),
+                             KeyDownEvent.getType());
+        widget.addDomHandler((e) -> e.stopPropagation(),
+                             MouseDownEvent.getType());
+
+        if (widget instanceof Focusable) {
+            widget.addDomHandler((e) ->
+                                 {
+                                     flush();
+                                     gridLayer.batch();
+                                     gridPanel.setFocus(true);
+                                 }, BlurEvent.getType());
+        }
+    }
+
+    @Override
     public void destroyResources() {
-        flush();
+        if (e != null) {
+            e.detach();
+            widget = null;
+            e = null;
+        }
     }
 
     @Override
@@ -88,5 +127,13 @@ public abstract class BaseSingletonDOMElementFactory<T, W extends Widget, E exte
         }
     }
 
+    protected KeyDownHandlerCommon destroyOrFlushKeyDownHandler() {
+        return new KeyDownHandlerCommon(gridPanel, gridLayer, gridWidget, this);
+    }
+
     protected abstract T getValue();
+
+    protected abstract E createDomElementInternal(final W widget,
+                                                  final GridLayer gridLayer,
+                                                  final GridWidget gridWidget);
 }

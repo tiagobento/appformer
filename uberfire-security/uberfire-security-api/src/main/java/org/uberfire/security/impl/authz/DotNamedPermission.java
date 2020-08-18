@@ -138,6 +138,11 @@ public class DotNamedPermission implements Permission,
         return equalsName(other) && equalsResult(other);
     }
 
+    @Override
+    public int hashCode() {
+        return (name != null ? name.hashCode() : 0);
+    }
+
     public boolean equalsName(Permission other) {
         if (name != null && !name.equals(other.getName())) {
             return false;
@@ -172,6 +177,7 @@ public class DotNamedPermission implements Permission,
                                       result);
     }
 
+    @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
         out.append(name).append(" ").append(result);

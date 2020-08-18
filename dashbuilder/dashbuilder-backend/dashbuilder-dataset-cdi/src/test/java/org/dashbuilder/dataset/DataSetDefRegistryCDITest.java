@@ -29,16 +29,19 @@ import org.dashbuilder.scheduler.SchedulerCDI;
 import org.dashbuilder.test.BaseCDITest;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.uberfire.java.nio.file.Path;
 import org.uberfire.java.nio.file.StandardDeleteOption;
+import org.uberfire.java.nio.file.FileSystem;
 
 import static org.mockito.Mockito.*;
 
 @RunWith(Arquillian.class)
+@Ignore("see https://issues.jboss.org/browse/RHPAM-832")
 public class DataSetDefRegistryCDITest extends BaseCDITest {
 
     @Mock
@@ -62,6 +65,9 @@ public class DataSetDefRegistryCDITest extends BaseCDITest {
     @Mock
     Event<DataSetStaleEvent> dataSetStaleEvent;
 
+    @Mock(name = "datasetsFS")
+    FileSystem fileSystem;
+
     DataSetDefRegistryCDI dataSetDefRegistry;
 
     public DataSetDef dataSetDef = DataSetDefFactory
@@ -76,6 +82,7 @@ public class DataSetDefRegistryCDITest extends BaseCDITest {
         dataSetDefRegistry = spy(new DataSetDefRegistryCDI(
                 10485760,
                 mockIOService(),
+                fileSystem,
                 dataSetProviderRegistry,
                 scheduler,
                 exceptionManager,

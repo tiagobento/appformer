@@ -17,8 +17,8 @@ package org.uberfire.ext.wires.core.grids.client.model.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-import org.kie.soup.commons.validation.PortablePreconditions;
 import org.uberfire.ext.wires.core.grids.client.model.GridColumn;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.columns.GridColumnRenderer;
 
@@ -41,14 +41,15 @@ public class BaseGridColumn<T> implements GridColumn<T> {
     private int index = -1;
     private List<HeaderMetaData> headerMetaData = new ArrayList<HeaderMetaData>();
     private GridColumnRenderer<T> columnRenderer;
+    private ColumnWidthMode columnWidthMode = ColumnWidthMode.FIXED;
+
+    protected String placeHolder = null;
 
     public BaseGridColumn(final HeaderMetaData headerMetaData,
                           final GridColumnRenderer<T> columnRenderer,
                           final double width) {
-        PortablePreconditions.checkNotNull("headerMetaData",
-                                           headerMetaData);
-        PortablePreconditions.checkNotNull("columnRenderer",
-                                           columnRenderer);
+        Objects.requireNonNull(headerMetaData, "headerMetaData");
+        Objects.requireNonNull(columnRenderer, "columnRenderer");
         this.headerMetaData.add(headerMetaData);
         this.columnRenderer = columnRenderer;
         this.width = width;
@@ -57,15 +58,25 @@ public class BaseGridColumn<T> implements GridColumn<T> {
     public BaseGridColumn(final List<HeaderMetaData> headerMetaData,
                           final GridColumnRenderer<T> columnRenderer,
                           final double width) {
-        PortablePreconditions.checkNotNull("headerMetaData",
-                                           headerMetaData);
-        PortablePreconditions.checkCondition("headerMetaData has at least one entry",
-                                             headerMetaData.size() > 0);
-        PortablePreconditions.checkNotNull("columnRenderer",
-                                           columnRenderer);
+        Objects.requireNonNull(headerMetaData, "headerMetaData");
+        Objects.requireNonNull(columnRenderer, "columnRenderer");
         this.headerMetaData.addAll(headerMetaData);
         this.columnRenderer = columnRenderer;
         this.width = width;
+    }
+
+    public BaseGridColumn(final HeaderMetaData headerMetaData,
+                          final GridColumnRenderer<T> columnRenderer,
+                          final double width, final String placeHolder) {
+        this(headerMetaData, columnRenderer, width);
+        this.placeHolder = placeHolder;
+    }
+
+    public BaseGridColumn(final List<HeaderMetaData> headerMetaData,
+                          final GridColumnRenderer<T> columnRenderer,
+                          final double width, final String placeHolder) {
+        this(headerMetaData, columnRenderer, width);
+        this.placeHolder = placeHolder;
     }
 
     @Override
@@ -176,6 +187,24 @@ public class BaseGridColumn<T> implements GridColumn<T> {
         this.maximumWidth = maximumWidth;
     }
 
+    public String getPlaceHolder() {
+        return placeHolder;
+    }
+
+    public void setPlaceHolder(String placeHolder) {
+        this.placeHolder = placeHolder;
+    }
+
+    @Override
+    public ColumnWidthMode getColumnWidthMode() {
+        return columnWidthMode;
+    }
+
+    @Override
+    public void setColumnWidthMode(ColumnWidthMode columnWidthMode) {
+        this.columnWidthMode = columnWidthMode;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -212,7 +241,7 @@ public class BaseGridColumn<T> implements GridColumn<T> {
         if (link != null ? !link.equals(that.link) : that.link != null) {
             return false;
         }
-        return headerMetaData.equals(that.headerMetaData);
+        return getHeaderMetaData().equals(that.getHeaderMetaData());
     }
 
     @Override
@@ -236,7 +265,7 @@ public class BaseGridColumn<T> implements GridColumn<T> {
         result = ~~result;
         result = 31 * result + index;
         result = ~~result;
-        result = 31 * result + headerMetaData.hashCode();
+        result = 31 * result + getHeaderMetaData().hashCode();
         result = ~~result;
         return result;
     }

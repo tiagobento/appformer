@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.uberfire</groupId>
     <artifactId>uberfire-workbench</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>7.43.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>uberfire-workbench-client-views-patternfly</artifactId>
@@ -33,7 +33,23 @@
   <dependencies>
     <dependency>
       <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.uberfire</groupId>
       <artifactId>uberfire-workbench-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-client-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-commons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-security-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.gwtbootstrap3</groupId>
@@ -42,6 +58,42 @@
     <dependency>
       <groupId>org.jboss.errai</groupId>
       <artifactId>errai-ui</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.errai</groupId>
+      <artifactId>errai-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.errai</groupId>
+      <artifactId>errai-ioc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.errai</groupId>
+      <artifactId>errai-security-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.kie.soup</groupId>
+      <artifactId>kie-soup-commons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.allen-sauer.gwt.dnd</groupId>
+      <artifactId>gwt-dnd</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.elemental2</groupId>
+      <artifactId>elemental2-dom</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.jsinterop</groupId>
+      <artifactId>jsinterop-annotations</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.jsinterop</groupId>
+      <artifactId>base</artifactId>
     </dependency>
 
     <dependency>
@@ -118,6 +170,25 @@
       <scope>test</scope>
     </dependency>
 
+
+    <dependency>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-experimental-api</artifactId>
+      <classifier>sources</classifier>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-experimental-client</artifactId>
+      <classifier>sources</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-testing-utils</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 
@@ -212,6 +283,27 @@
             </configuration>
           </execution>
           <execution>
+            <id>unpack-moment-timezone</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.webjars.bower</groupId>
+                  <artifactId>moment-timezone</artifactId>
+                  <version>${version.org.webjars.bower.moment-timezone}</version>
+                  <type>jar</type>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>${project.build.directory}/moment-timezone</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+              <overWriteReleases>false</overWriteReleases>
+              <overWriteSnapshots>true</overWriteSnapshots>
+            </configuration>
+          </execution>
+          <execution>
             <id>unpack-bootstrap-daterangepicker</id>
             <phase>process-resources</phase>
             <goals>
@@ -226,6 +318,48 @@
                   <type>jar</type>
                   <overWrite>true</overWrite>
                   <outputDirectory>${project.build.directory}/bootstrap-daterangepicker</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+              <overWriteReleases>false</overWriteReleases>
+              <overWriteSnapshots>true</overWriteSnapshots>
+            </configuration>
+          </execution>
+          <execution>
+            <id>unpack-d3</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.webjars.bower</groupId>
+                  <artifactId>d3</artifactId>
+                  <version>${version.org.webjars.bower.d3js}</version>
+                  <type>jar</type>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>${project.build.directory}/d3</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+              <overWriteReleases>false</overWriteReleases>
+              <overWriteSnapshots>true</overWriteSnapshots>
+            </configuration>
+          </execution>
+          <execution>
+            <id>unpack-monaco-editor</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.webjars.npm</groupId>
+                  <artifactId>monaco-editor</artifactId>
+                  <version>${version.org.webjars.npm.monaco-editor}</version>
+                  <type>jar</type>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>${project.build.directory}/monaco-editor</outputDirectory>
                 </artifactItem>
               </artifactItems>
               <overWriteReleases>false</overWriteReleases>
@@ -314,6 +448,24 @@
             </configuration>
           </execution>
           <execution>
+            <id>copy-moment-timezone-resources</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}/org/uberfire/client/views/static/moment-timezone</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.build.directory}/moment-timezone/META-INF/resources/webjars/moment-timezone/${version.org.webjars.bower.moment-timezone}/builds/</directory>
+                  <includes>
+                    <include>moment-timezone-with-data-2012-2022.min.js</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
             <id>copy-bootstrap-daterangepicker-resources</id>
             <phase>process-resources</phase>
             <goals>
@@ -327,6 +479,109 @@
                   <includes>
                     <include>daterangepicker.css</include>
                     <include>daterangepicker.js</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-d3-resources</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}/org/uberfire/client/views/static/d3</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.build.directory}/d3/META-INF/resources/webjars/d3/${version.org.webjars.bower.d3js}/</directory>
+                  <includes>
+                    <include>d3.min.js</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-monaco-editor</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}/org/uberfire/client/views/static/monaco-editor</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.build.directory}/monaco-editor/META-INF/resources/webjars/monaco-editor/${version.org.webjars.npm.monaco-editor}/</directory>
+                  <includes>
+                    <include>dev/vs/base/browser/ui/codiconLabel/codicon/codicon.ttf</include>
+                    <include>dev/vs/base/worker/workerMain.js</include>
+                    <include>dev/vs/basic-languages/_.contribution.js</include>
+                    <include>dev/vs/basic-languages/abap/abap.contribution.js</include>
+                    <include>dev/vs/basic-languages/apex/apex.contribution.js</include>
+                    <include>dev/vs/basic-languages/azcli/azcli.contribution.js</include>
+                    <include>dev/vs/basic-languages/bat/bat.contribution.js</include>
+                    <include>dev/vs/basic-languages/cameligo/cameligo.contribution.js</include>
+                    <include>dev/vs/basic-languages/clojure/clojure.contribution.js</include>
+                    <include>dev/vs/basic-languages/coffee/coffee.contribution.js</include>
+                    <include>dev/vs/basic-languages/cpp/cpp.contribution.js</include>
+                    <include>dev/vs/basic-languages/csharp/csharp.contribution.js</include>
+                    <include>dev/vs/basic-languages/csp/csp.contribution.js</include>
+                    <include>dev/vs/basic-languages/css/css.contribution.js</include>
+                    <include>dev/vs/basic-languages/dockerfile/dockerfile.contribution.js</include>
+                    <include>dev/vs/basic-languages/fsharp/fsharp.contribution.js</include>
+                    <include>dev/vs/basic-languages/go/go.contribution.js</include>
+                    <include>dev/vs/basic-languages/graphql/graphql.contribution.js</include>
+                    <include>dev/vs/basic-languages/handlebars/handlebars.contribution.js</include>
+                    <include>dev/vs/basic-languages/html/html.contribution.js</include>
+                    <include>dev/vs/basic-languages/ini/ini.contribution.js</include>
+                    <include>dev/vs/basic-languages/java/java.contribution.js</include>
+                    <include>dev/vs/basic-languages/javascript/javascript.contribution.js</include>
+                    <include>dev/vs/basic-languages/kotlin/kotlin.contribution.js</include>
+                    <include>dev/vs/basic-languages/less/less.contribution.js</include>
+                    <include>dev/vs/basic-languages/lua/lua.contribution.js</include>
+                    <include>dev/vs/basic-languages/markdown/markdown.contribution.js</include>
+                    <include>dev/vs/basic-languages/mips/mips.contribution.js</include>
+                    <include>dev/vs/basic-languages/msdax/msdax.contribution.js</include>
+                    <include>dev/vs/basic-languages/mysql/mysql.contribution.js</include>
+                    <include>dev/vs/basic-languages/objective-c/objective-c.contribution.js</include>
+                    <include>dev/vs/basic-languages/pascal/pascal.contribution.js</include>
+                    <include>dev/vs/basic-languages/pascaligo/pascaligo.contribution.js</include>
+                    <include>dev/vs/basic-languages/perl/perl.contribution.js</include>
+                    <include>dev/vs/basic-languages/pgsql/pgsql.contribution.js</include>
+                    <include>dev/vs/basic-languages/php/php.contribution.js</include>
+                    <include>dev/vs/basic-languages/postiats/postiats.contribution.js</include>
+                    <include>dev/vs/basic-languages/powerquery/powerquery.contribution.js</include>
+                    <include>dev/vs/basic-languages/powershell/powershell.contribution.js</include>
+                    <include>dev/vs/basic-languages/pug/pug.contribution.js</include>
+                    <include>dev/vs/basic-languages/python/python.contribution.js</include>
+                    <include>dev/vs/basic-languages/r/r.contribution.js</include>
+                    <include>dev/vs/basic-languages/razor/razor.contribution.js</include>
+                    <include>dev/vs/basic-languages/redis/redis.contribution.js</include>
+                    <include>dev/vs/basic-languages/redshift/redshift.contribution.js</include>
+                    <include>dev/vs/basic-languages/restructuredtext/restructuredtext.contribution.js</include>
+                    <include>dev/vs/basic-languages/ruby/ruby.contribution.js</include>
+                    <include>dev/vs/basic-languages/rust/rust.contribution.js</include>
+                    <include>dev/vs/basic-languages/sb/sb.contribution.js</include>
+                    <include>dev/vs/basic-languages/scheme/scheme.contribution.js</include>
+                    <include>dev/vs/basic-languages/scss/scss.contribution.js</include>
+                    <include>dev/vs/basic-languages/shell/shell.contribution.js</include>
+                    <include>dev/vs/basic-languages/solidity/solidity.contribution.js</include>
+                    <include>dev/vs/basic-languages/sophia/sophia.contribution.js</include>
+                    <include>dev/vs/basic-languages/sql/sql.contribution.js</include>
+                    <include>dev/vs/basic-languages/st/st.contribution.js</include>
+                    <include>dev/vs/basic-languages/swift/swift.contribution.js</include>
+                    <include>dev/vs/basic-languages/tcl/tcl.contribution.js</include>
+                    <include>dev/vs/basic-languages/twig/twig.contribution.js</include>
+                    <include>dev/vs/basic-languages/typescript/typescript.contribution.js</include>
+                    <include>dev/vs/basic-languages/vb/vb.contribution.js</include>
+                    <include>dev/vs/basic-languages/xml/xml.contribution.js</include>
+                    <include>dev/vs/basic-languages/yaml/yaml.contribution.js</include>
+                    <include>dev/vs/editor/editor.main.css</include>
+                    <include>dev/vs/editor/editor.main.js</include>
+                    <include>dev/vs/editor/editor.main.nls.js</include>
+                    <include>dev/vs/language/typescript/lib/typescriptServicesMetadata.js</include>
+                    <include>dev/vs/loader.js</include>
                   </includes>
                 </resource>
               </resources>
@@ -348,7 +603,7 @@
           <forkMode>pertest</forkMode>
           <!-- DO NOT REMOVE THE errai.ioc.experimental.infer_dependent_by_reachability
             flag or the testsuite WILL fail. -->
-          <argLine>-Xmx1500m -Derrai.devel.nocache=true -Dgwt.args='-testBeginTimeout 5' -Derrai.hosted_mode_testing=true -Derrai.ioc.experimental.infer_dependent_by_reachability=true -Dorg.jboss.errai.bus.do_long_poll=false</argLine>
+          <argLine>-Xmx1500m -Derrai.devel.nocache=true -Derrai.hosted_mode_testing=true -Derrai.ioc.experimental.infer_dependent_by_reachability=true -Dorg.jboss.errai.bus.do_long_poll=false</argLine>
 
           <systemProperties>
             <!-- Must disable long polling for automated tests to succeed -->

@@ -18,8 +18,9 @@ package org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.imp
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.logging.Logger;
 
-import org.kie.soup.commons.validation.PortablePreconditions;
 import org.uberfire.ext.wires.core.grids.client.model.Bounds;
 import org.uberfire.ext.wires.core.grids.client.model.GridColumn;
 import org.uberfire.ext.wires.core.grids.client.model.GridData;
@@ -27,23 +28,24 @@ import org.uberfire.ext.wires.core.grids.client.model.GridRow;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.GridWidget;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.GridRenderer;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.GridLayer;
-import org.uberfire.ext.wires.core.grids.client.widget.layer.impl.DefaultGridLayer;
+
+import static org.uberfire.ext.wires.core.grids.client.util.Logging.log;
 
 /**
  * Helper for rendering a grid.
  */
 public class BaseGridRendererHelper {
 
+    private static final Logger LOGGER = Logger.getLogger(BaseGridRendererHelper.class.getName());
+
     private final GridWidget view;
 
     public BaseGridRendererHelper(final GridWidget view) {
-        this.view = PortablePreconditions.checkNotNull("view",
-                                                       view);
+        this.view = Objects.requireNonNull(view, "view");
     }
 
     /**
      * Get the x-offset for a given Column in the model relative to zero.
-     *
      * @param column The GridColumn.
      * @return
      */
@@ -58,7 +60,6 @@ public class BaseGridRendererHelper {
 
     /**
      * Get the x-offset for a given Column index in the model relative to zero.
-     *
      * @param columnIndex The index of the GridColumn.
      * @return
      */
@@ -77,7 +78,6 @@ public class BaseGridRendererHelper {
 
     /**
      * Get the x-offset for a given Column index in a list of Columns relative to zero.
-     *
      * @param columns
      * @param columnIndex
      * @return
@@ -96,7 +96,6 @@ public class BaseGridRendererHelper {
 
     /**
      * Get the y-offset for a given Row.
-     *
      * @param row The GridRow.
      * @return
      */
@@ -108,7 +107,6 @@ public class BaseGridRendererHelper {
 
     /**
      * Get the y-offset for a given Row index.
-     *
      * @param rowIndex The index of the GridRow.
      * @return
      */
@@ -122,9 +120,24 @@ public class BaseGridRendererHelper {
         return rowOffset;
     }
 
+    public double getRowOffset(final GridRow row,
+                               final List<Double> rowHeights) {
+        final GridData model = view.getModel();
+        final int rowIndex = model.getRows().indexOf(row);
+        return getRowOffset(rowIndex, rowHeights);
+    }
+
+    public double getRowOffset(final int rowIndex,
+                               final List<Double> rowHeights) {
+        double rowOffset = 0;
+        for (int i = 0; i < rowIndex; i++) {
+            rowOffset = rowOffset + rowHeights.get(i);
+        }
+        return rowOffset;
+    }
+
     /**
      * Get the width of a set of columns, ignoring hidden columns.
-     *
      * @param columns The columns.
      * @return
      */
@@ -141,15 +154,23 @@ public class BaseGridRendererHelper {
     /**
      * Get rendering information about which columns are floating, which are visible. This method never returns null.
      * It returns a RenderingInformation object representing the columns that are visible and/or floating.
-     *
      * @return A RenderingInformation object or null if the GridWidget is not even partially visible.
      */
     public RenderingInformation getRenderingInformation() {
         final GridData model = view.getModel();
         final Bounds bounds = getVisibleBounds();
-        final List<GridColumn<?>> allColumns = new ArrayList<GridColumn<?>>();
-        final List<GridColumn<?>> bodyColumns = new ArrayList<GridColumn<?>>();
-        final List<GridColumn<?>> floatingColumns = new ArrayList<GridColumn<?>>();
+        final List<GridColumn<?>> allColumns = new ArrayList<>();
+        final List<GridColumn<?>> bodyColumns = new ArrayList<>();
+        final List<GridColumn<?>> floatingColumns = new ArrayList<>();
+
+        double viewHeight = 0;
+        final int rowCount = model.getRowCount();
+        final List<Double> rowHeights = new ArrayList<>();
+        for (GridRow row : model.getRows()) {
+            final double rowHeight = row.getHeight();
+            viewHeight = viewHeight + rowHeight;
+            rowHeights.add(rowHeight);
+        }
 
         final double vpX = bounds.getX();
         final double vpY = bounds.getY();
@@ -159,13 +180,13 @@ public class BaseGridRendererHelper {
         final GridRenderer renderer = view.getRenderer();
 
         //Simple bounds check
-        if (view.getX() > vpX + vpWidth) {
+        if (view.getComputedLocation().getX() > vpX + vpWidth) {
             return null;
-        } else if (view.getX() + view.getWidth() < vpX) {
+        } else if (view.getComputedLocation().getX() + view.getWidth() < vpX) {
             return null;
-        } else if (view.getY() > vpY + vpHeight) {
+        } else if (view.getComputedLocation().getY() > vpY + vpHeight) {
             return null;
-        } else if (view.getY() + view.getHeight() < vpY) {
+        } else if (view.getComputedLocation().getY() + viewHeight < vpY) {
             return null;
         }
 
@@ -173,57 +194,61 @@ public class BaseGridRendererHelper {
         boolean isFixedHeader = false;
         boolean isFloatingHeader = false;
         if (view.isSelected()) {
-            if (view.getY() < vpY) {
+            if (view.getComputedLocation().getY() < vpY) {
                 //GridWidget is selected and clipped at the top
-                if (view.getY() + view.getHeight() > vpY + renderer.getHeaderHeight()) {
+                if (view.getComputedLocation().getY() + viewHeight > vpY + renderer.getHeaderHeight()) {
                     //GridWidget is taller than the Header; add floating header
                     isFloatingHeader = true;
                 } else {
                     //GridWidget is shorter than the Header; add fixed header
                     isFixedHeader = true;
                 }
-            } else if (view.getY() <= vpY + vpHeight) {
+            } else if (view.getComputedLocation().getY() <= vpY + vpHeight) {
                 //GridWidget is selected and not clipped at the top; add fixed header
                 isFixedHeader = true;
             }
-        } else if (view.getY() + renderer.getHeaderHeight() > vpY && view.getY() < vpY + vpHeight) {
+        } else if (view.getComputedLocation().getY() + renderer.getHeaderHeight() > vpY && view.getComputedLocation().getY() < vpY + vpHeight) {
             //GridWidget is not selected; add fixed header
             isFixedHeader = true;
         }
 
         //Identify rows to render
-        GridRow row;
+        long currentTimeMillis = log(LOGGER, " - Pre- identify rows to render");
+
         int minVisibleRowIndex = 0;
         if (model.getRowCount() > 0) {
-            double clipTop = vpY - view.getY() - (isFloatingHeader ? 0.0 : renderer.getHeaderHeight());
-            while ((row = model.getRow(minVisibleRowIndex)).getHeight() < clipTop && minVisibleRowIndex < model.getRowCount() - 1) {
-                clipTop = clipTop - row.getHeight();
+            double clipTop = vpY - view.getComputedLocation().getY() - (isFloatingHeader ? 0.0 : renderer.getHeaderHeight());
+            while (rowHeights.get(minVisibleRowIndex) < clipTop && minVisibleRowIndex < rowCount - 1) {
+                clipTop = clipTop - rowHeights.get(minVisibleRowIndex);
                 minVisibleRowIndex++;
             }
         }
 
         int maxVisibleRowIndex = minVisibleRowIndex;
         if (model.getRowCount() > 0) {
-            double clipBottom = vpY - view.getY() - renderer.getHeaderHeight() + vpHeight - getRowOffset(minVisibleRowIndex);
-            while ((row = model.getRow(maxVisibleRowIndex)).getHeight() < clipBottom && maxVisibleRowIndex < model.getRowCount() - 1) {
-                clipBottom = clipBottom - row.getHeight();
+            double clipBottom = vpY - view.getComputedLocation().getY() - renderer.getHeaderHeight() + vpHeight - getRowOffset(minVisibleRowIndex, rowHeights);
+            while (rowHeights.get(maxVisibleRowIndex) < clipBottom && maxVisibleRowIndex < rowCount - 1) {
+                clipBottom = clipBottom - rowHeights.get(maxVisibleRowIndex);
                 maxVisibleRowIndex++;
             }
         }
+        log(LOGGER, " - Post- identify rows to render", currentTimeMillis);
 
         //Identify columns to render
+        currentTimeMillis = log(LOGGER, " - Pre- identify columns to render");
+
         double x = 0;
         for (GridColumn<?> column : model.getColumns()) {
             allColumns.add(column);
             final double floatingColumnsWidth = getWidth(floatingColumns);
-            if (view.getX() + x + column.getWidth() >= vpX + floatingColumnsWidth) {
-                if (view.getX() + x < vpX + vpWidth) {
+            if (view.getComputedLocation().getX() + x + column.getWidth() >= vpX + floatingColumnsWidth) {
+                if (view.getComputedLocation().getX() + x < vpX + vpWidth) {
                     bodyColumns.add(column);
                 }
             }
             if (view.isSelected()) {
                 if (column.isFloatable()) {
-                    if (view.getX() + x < vpX + floatingColumnsWidth) {
+                    if (view.getComputedLocation().getX() + x < vpX + floatingColumnsWidth) {
                         allColumns.remove(column);
                         bodyColumns.remove(column);
                         floatingColumns.add(column);
@@ -236,7 +261,7 @@ public class BaseGridRendererHelper {
         }
 
         //If the floating columns obscure the body columns remove the float and just show the body columns
-        if (view.getX() + x - vpX < getWidth(floatingColumns)) {
+        if (view.getComputedLocation().getX() + x - vpX < getWidth(floatingColumns)) {
             allColumns.clear();
             bodyColumns.clear();
             floatingColumns.clear();
@@ -244,8 +269,8 @@ public class BaseGridRendererHelper {
 
             x = 0;
             for (GridColumn<?> column : model.getColumns()) {
-                if (view.getX() + x + column.getWidth() >= vpX) {
-                    if (view.getX() + x < vpX + vpWidth) {
+                if (view.getComputedLocation().getX() + x + column.getWidth() >= vpX) {
+                    if (view.getComputedLocation().getX() + x < vpX + vpWidth) {
                         bodyColumns.add(column);
                     }
                 }
@@ -254,9 +279,11 @@ public class BaseGridRendererHelper {
                 }
             }
         }
+        log(LOGGER, " - Post- identify columns to render", currentTimeMillis);
 
         //Construct details of Floating and Body blocks
-        final double bodyOffsetY = getRowOffset(minVisibleRowIndex) + renderer.getHeaderHeight();
+        double visibleRowOffset = getRowOffset(minVisibleRowIndex, rowHeights);
+        final double bodyOffsetY = visibleRowOffset + renderer.getHeaderHeight();
         final double offsetX = (bodyColumns.size() > 0 ? getColumnOffset(bodyColumns.get(0)) : 0);
         final double floatingOffsetX = getFloatingColumnOffset();
 
@@ -275,17 +302,18 @@ public class BaseGridRendererHelper {
         // The minVisibleRowIndex corresponds to index zero and maxVisibleRowIndex corresponds to visibleRowOffsets.size() - 1.
         // This is useful to calculate the Y co-ordinate of each Row's top. It is calculated once and passed to
         // each column as an optimisation to prevent each column from recalculating the same values.
-        final List<Double> visibleRowOffsets = new ArrayList<Double>();
+        currentTimeMillis = log(LOGGER, " - Pre- calculate row offsets");
+
+        final List<Double> visibleRowOffsets = new ArrayList<>();
         if (model.getRowCount() > 0) {
-            double visibleRowOffset = getRowOffset(minVisibleRowIndex);
             for (int rowIndex = minVisibleRowIndex; rowIndex <= maxVisibleRowIndex; rowIndex++) {
                 visibleRowOffsets.add(visibleRowOffset);
-                visibleRowOffset = visibleRowOffset + model.getRow(rowIndex).getHeight();
+                visibleRowOffset = visibleRowOffset + rowHeights.get(rowIndex);
             }
         }
+        log(LOGGER, " - Post- calculate row offsets", currentTimeMillis);
 
         final int headerRowCount = model.getHeaderRowCount();
-
         final double headerHeight = renderer.getHeaderHeight();
         final double headerRowHeight = renderer.getHeaderRowHeight();
         final double headerRowsHeight = headerRowHeight * headerRowCount;
@@ -298,11 +326,13 @@ public class BaseGridRendererHelper {
                                         floatingBlockInformation,
                                         minVisibleRowIndex,
                                         maxVisibleRowIndex,
+                                        rowHeights,
                                         visibleRowOffsets,
                                         isFixedHeader,
                                         isFloatingHeader,
-                                        headerRowsHeight,
                                         headerRowCount,
+                                        headerRowHeight,
+                                        headerRowsHeight,
                                         headerRowsYOffset);
     }
 
@@ -310,7 +340,6 @@ public class BaseGridRendererHelper {
      * Get information about a column corresponding to a grid-relative x-coordinate. This method never returns null.
      * It returns a ColumnInformation object representing the column corresponding to the grid-relative x-coordinate;
      * or an empty ColumnInformation object if no corresponding column was found.
-     *
      * @param cx An x-coordinate relative to the GridWidget.
      * @return A non-null ColumnInformation object.
      */
@@ -373,35 +402,32 @@ public class BaseGridRendererHelper {
 
     /**
      * Get the visible bounds (canvas coordinate system) of the given GridWidget.
-     *
      * @return
      */
     private Bounds getVisibleBounds() {
-        final GridLayer gridLayer = ((DefaultGridLayer) view.getLayer());
+        final GridLayer gridLayer = ((GridLayer) view.getLayer());
         final Bounds bounds = gridLayer.getVisibleBounds();
         return bounds;
     }
 
     /**
      * Find the x-offset relative to the GridWidget origin where Floating columns are positioned.
-     *
      * @return
      */
     private double getFloatingColumnOffset() {
         final Bounds bounds = getVisibleBounds();
-        return bounds.getX() - view.getX();
+        return bounds.getX() - view.getComputedLocation().getX();
     }
 
     /**
      * Find the y-offset relative to the GridWidget origin where Floating Header is positioned.
-     *
      * @return
      */
     private double getHeaderOffsetY() {
         final double vpY = getVisibleBounds().getY();
         if (view.isSelected()) {
-            if (view.getY() < vpY && view.getY() + view.getHeight() > vpY + view.getRenderer().getHeaderHeight()) {
-                return vpY - view.getY();
+            if (view.getComputedLocation().getY() < vpY && view.getComputedLocation().getY() + view.getHeight() > vpY + view.getRenderer().getHeaderHeight()) {
+                return vpY - view.getComputedLocation().getY();
             }
         }
         return 0.0;
@@ -430,7 +456,6 @@ public class BaseGridRendererHelper {
 
         /**
          * The GridWidget's column corresponding to the grid-relative x-coordinate, or null if none was found.
-         *
          * @return
          */
         public GridColumn<?> getColumn() {
@@ -439,7 +464,6 @@ public class BaseGridRendererHelper {
 
         /**
          * The index of the GridWidget's column. This is equivalent to columns.indexOf(column).
-         *
          * @return
          */
         public int getUiColumnIndex() {
@@ -450,7 +474,6 @@ public class BaseGridRendererHelper {
          * The x-offset of the Column's left-hand edge relative to the GridWidget. i.e. column 0 has an x-offset of 0.
          * Floating columns canvas position is set dynamically depending on the GridWidget's position and the canvas's
          * Viewport. Therefore the x-offset of the first floating column is not zero but subject to the Viewport.
-         *
          * @return
          */
         public double getOffsetX() {
@@ -469,11 +492,13 @@ public class BaseGridRendererHelper {
         private final RenderingBlockInformation floatingBlockInformation;
         private final int minVisibleRowIndex;
         private final int maxVisibleRowIndex;
+        private final List<Double> allRowHeights;
         private final List<Double> visibleRowOffsets;
         private final boolean isFixedHeader;
         private final boolean isFloatingHeader;
+        private final int headerRowCount;
+        private final double headerRowHeight;
         private final double headerRowsHeight;
-        private final double headerRowCount;
         private final double headerRowsYOffset;
 
         public RenderingInformation(final Bounds bounds,
@@ -482,11 +507,13 @@ public class BaseGridRendererHelper {
                                     final RenderingBlockInformation floatingBlockInformation,
                                     final int minVisibleRowIndex,
                                     final int maxVisibleRowIndex,
+                                    final List<Double> allRowHeights,
                                     final List<Double> visibleRowOffsets,
                                     final boolean isFixedHeader,
                                     final boolean isFloatingHeader,
+                                    final int headerRowCount,
+                                    final double headerRowHeight,
                                     final double headerRowsHeight,
-                                    final double headerRowCount,
                                     final double headerRowsYOffset) {
             this.bounds = bounds;
             this.allColumns = allColumns;
@@ -494,11 +521,13 @@ public class BaseGridRendererHelper {
             this.floatingBlockInformation = floatingBlockInformation;
             this.minVisibleRowIndex = minVisibleRowIndex;
             this.maxVisibleRowIndex = maxVisibleRowIndex;
+            this.allRowHeights = allRowHeights;
             this.visibleRowOffsets = visibleRowOffsets;
             this.isFixedHeader = isFixedHeader;
             this.isFloatingHeader = isFloatingHeader;
-            this.headerRowsHeight = headerRowsHeight;
             this.headerRowCount = headerRowCount;
+            this.headerRowHeight = headerRowHeight;
+            this.headerRowsHeight = headerRowsHeight;
             this.headerRowsYOffset = headerRowsYOffset;
         }
 
@@ -526,6 +555,10 @@ public class BaseGridRendererHelper {
             return maxVisibleRowIndex;
         }
 
+        public List<Double> getAllRowHeights() {
+            return Collections.unmodifiableList(allRowHeights);
+        }
+
         public List<Double> getVisibleRowOffsets() {
             return Collections.unmodifiableList(visibleRowOffsets);
         }
@@ -538,12 +571,16 @@ public class BaseGridRendererHelper {
             return isFloatingHeader;
         }
 
-        public double getHeaderRowsHeight() {
-            return headerRowsHeight;
+        public int getHeaderRowCount() {
+            return headerRowCount;
         }
 
-        public double getHeaderRowCount() {
-            return headerRowCount;
+        public double getHeaderRowHeight() {
+            return headerRowHeight;
+        }
+
+        public double getHeaderRowsHeight() {
+            return headerRowsHeight;
         }
 
         public double getHeaderRowsYOffset() {

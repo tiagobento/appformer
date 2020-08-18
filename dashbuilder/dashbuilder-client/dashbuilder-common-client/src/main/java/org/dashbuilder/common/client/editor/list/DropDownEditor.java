@@ -35,6 +35,8 @@ import org.uberfire.client.mvp.UberView;
 import org.uberfire.ext.widgets.common.client.dropdown.LiveSearchCallback;
 import org.uberfire.ext.widgets.common.client.dropdown.LiveSearchDropDown;
 import org.uberfire.ext.widgets.common.client.dropdown.LiveSearchResults;
+import org.uberfire.ext.widgets.common.client.dropdown.LiveSearchService;
+import org.uberfire.ext.widgets.common.client.dropdown.SingleLiveSearchSelectionHandler;
 
 @Dependent
 public class DropDownEditor implements IsWidget, LeafAttributeEditor<String> {
@@ -69,7 +71,21 @@ public class DropDownEditor implements IsWidget, LeafAttributeEditor<String> {
     }
 
     public View view;
-    LiveSearchDropDown dropDown;
+    LiveSearchDropDown<String> dropDown;
+    LiveSearchService<String> searchService = new LiveSearchService<String>() {
+        @Override
+        public void search(String pattern, int maxResults, LiveSearchCallback<String> callback) {
+            getDropDownEntries(pattern, maxResults, callback);
+        }
+
+        @Override
+        public void searchEntry(String key, LiveSearchCallback<String> callback) {
+
+        }
+    };
+
+    SingleLiveSearchSelectionHandler<String> selectionHandler = new SingleLiveSearchSelectionHandler<>();
+
     Event<org.dashbuilder.common.client.event.ValueChangeEvent<String>> valueChangeEvent;
     Collection<Entry> entries = new ArrayList<>();
     String selectorHint;
@@ -88,8 +104,9 @@ public class DropDownEditor implements IsWidget, LeafAttributeEditor<String> {
     public void init() {
         view.init(this);
         view.setDropDown(dropDown);
+        dropDown.setClearSelectionEnabled(false);
         dropDown.setSearchEnabled(false);
-        dropDown.setSearchService(this::getDropDownEntries);
+        dropDown.init(searchService, selectionHandler);
         dropDown.setOnChange(this::onEntrySelected);
     }
 
@@ -98,11 +115,20 @@ public class DropDownEditor implements IsWidget, LeafAttributeEditor<String> {
         return view.asWidget();
     }
 
-    public void getDropDownEntries(String pattern, int maxResults, LiveSearchCallback callback) {
+    public void getDropDownEntries(String pattern, int maxResults, LiveSearchCallback<String> callback) {
         final LiveSearchResults results = new LiveSearchResults();
         entries.stream()
                 .filter(e -> e.getHint().contains(pattern))
                 .forEach(e -> results.add(e.getValue(), e.getHint()));
+        callback.afterSearch(results);
+    }
+
+    public void getExactEntry(String key, LiveSearchCallback<String> callback) {
+        final LiveSearchResults results = new LiveSearchResults(1);
+        entries.stream()
+                .filter(e -> e.getValue().equals(key))
+                .findAny()
+                .ifPresent(e -> results.add(e.getValue(), e.getHint()));
         callback.afterSearch(results);
     }
 
@@ -113,7 +139,7 @@ public class DropDownEditor implements IsWidget, LeafAttributeEditor<String> {
     }
 
     public String getSelectedValue() {
-        String hint = dropDown.getSelectedValue();
+        String hint = selectionHandler.getSelectedValue();
         Entry entry = getEntryByHint(hint);
         return entry.getValue();
     }
@@ -151,7 +177,7 @@ public class DropDownEditor implements IsWidget, LeafAttributeEditor<String> {
             for (Entry entry : entries) {
                 this.entries.add(entry);
                 if (entry.getValue().equals(value)) {
-                    this.dropDown.setSelectedItem(entry.getValue(), entry.getHint());
+                    this.dropDown.setSelectedItem(entry.getValue());
                 }
             }
         }
@@ -200,9 +226,9 @@ public class DropDownEditor implements IsWidget, LeafAttributeEditor<String> {
         this.value = value;
         Entry entry = getEntryByValue(value);
         if (entry != null) {
-            this.dropDown.setSelectedItem(value, entry.getHint());
+            this.dropDown.setSelectedItem(value);
         } else {
-            this.dropDown.setSelectedItem(selectorHint, selectorHint);
+            this.dropDown.setSelectedItem(selectorHint);
         }
     }
 }

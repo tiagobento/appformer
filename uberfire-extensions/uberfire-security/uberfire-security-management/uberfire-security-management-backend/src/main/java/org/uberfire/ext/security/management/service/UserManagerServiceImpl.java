@@ -17,8 +17,11 @@
 package org.uberfire.ext.security.management.service;
 
 import java.util.Collection;
+import java.util.List;
+
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 import org.jboss.errai.bus.server.annotations.Service;
@@ -28,9 +31,12 @@ import org.slf4j.LoggerFactory;
 import org.uberfire.ext.security.management.BackendUserSystemManager;
 import org.uberfire.ext.security.management.api.UserManager;
 import org.uberfire.ext.security.management.api.UserManagerSettings;
+import org.uberfire.ext.security.management.api.event.UserDeletedEvent;
 import org.uberfire.ext.security.management.api.exception.NoImplementationAvailableException;
 import org.uberfire.ext.security.management.api.exception.SecurityManagementException;
 import org.uberfire.ext.security.management.api.service.UserManagerService;
+
+import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull;
 
 /**
  * <p>The UberFire service implementation for UsersManager API.</p>
@@ -43,6 +49,9 @@ public class UserManagerServiceImpl implements UserManagerService {
 
     @Inject
     private BackendUserSystemManager userSystemManager;
+
+    @Inject
+    Event<UserDeletedEvent> userDeletedEvent;
 
     private UserManager service;
 
@@ -85,24 +94,23 @@ public class UserManagerServiceImpl implements UserManagerService {
     @Override
     public SearchResponse<User> search(SearchRequest request) {
         final UserManager serviceImpl = getService();
-
         // Delegate to the current service provider implementation.
-        SearchResponse<User> response = null;
-        try {
-            if (request.getPage() == 0) {
-                throw new IllegalArgumentException("First page must be 1.");
-            }
-            response = serviceImpl.search(request);
-        } catch (RuntimeException e) {
-            throw new SecurityManagementException(e);
+        if (request.getPage() == 0) {
+            throw new IllegalArgumentException("First page must be 1.");
         }
-        return response;
+        return serviceImpl.search(request);
     }
 
     @Override
     public User get(String identifier) {
         final UserManager serviceImpl = getService();
         return serviceImpl.get(identifier);
+    }
+
+    @Override
+    public List<User> getAll() throws SecurityManagementException {
+        final UserManager serviceImpl = getService();
+        return serviceImpl.getAll();
     }
 
     @Override
@@ -119,8 +127,13 @@ public class UserManagerServiceImpl implements UserManagerService {
 
     @Override
     public void delete(String... identifiers) {
+        checkNotNull("identifiers",
+                     identifiers);
         final UserManager serviceImpl = getService();
         serviceImpl.delete(identifiers);
+        for (String identifier : identifiers) {
+            userDeletedEvent.fire(new UserDeletedEvent(identifier));
+        }
     }
 
     @Override

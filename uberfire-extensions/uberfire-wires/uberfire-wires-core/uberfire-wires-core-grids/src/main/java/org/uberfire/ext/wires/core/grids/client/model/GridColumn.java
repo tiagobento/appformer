@@ -16,10 +16,13 @@
 package org.uberfire.ext.wires.core.grids.client.model;
 
 import java.util.List;
+import java.util.function.Consumer;
 
-import org.uberfire.client.callbacks.Callback;
+import org.uberfire.ext.wires.core.grids.client.widget.context.GridBodyCellEditContext;
 import org.uberfire.ext.wires.core.grids.client.widget.context.GridBodyCellRenderContext;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.columns.GridColumnRenderer;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.selections.CellSelectionStrategy;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.selections.impl.HeaderSingleCellSelectionStrategy;
 
 /**
  * Defines a Column within a grid.
@@ -47,7 +50,21 @@ public interface GridColumn<T> {
      */
     default void edit(final GridCell<T> cell,
                       final GridBodyCellRenderContext context,
-                      final Callback<GridCellValue<T>> callback) {
+                      final Consumer<GridCellValue<T>> callback) {
+    }
+
+    /**
+     * Edit the cell (normally in response to a mouse double-click event)
+     * @param cell
+     * @param context
+     * @param callback
+     */
+    default void edit(final GridCell<T> cell,
+                      final GridBodyCellEditContext context,
+                      final Consumer<GridCellValue<T>> callback) {
+        edit(cell,
+             (GridBodyCellRenderContext) context,
+             callback);
     }
 
     /**
@@ -194,5 +211,51 @@ public interface GridColumn<T> {
          * @param title
          */
         void setTitle(final String title);
+
+        /**
+         * Returns the CellSelectionStrategy to handle selections of the header cell.
+         * @return
+         */
+        default CellSelectionStrategy getSelectionStrategy() {
+            return HeaderSingleCellSelectionStrategy.INSTANCE;
+        }
+
+        /**
+         * Puts the {@link HeaderMetaData} into 'edit' mode.
+         * @param context The context of a Grid's cell header during the rendering phase.
+         */
+        default void edit(final GridBodyCellEditContext context) {
+          // do nothing by default
+        }
+    }
+
+    /**
+     * Get column width mode
+     * @return
+     */
+    ColumnWidthMode getColumnWidthMode();
+
+    /**
+     * Set column width mode
+     * @return
+     */
+    void setColumnWidthMode(ColumnWidthMode columnWidthMode);
+
+    /**
+     * Enum that identify the width mode of a column
+     */
+    enum ColumnWidthMode {
+        // FIXED means that no automatic resize will be done, only the user can manually resize it
+        FIXED,
+        // AUTO means that its width will be calculate to fit all the available space
+        AUTO;
+
+        static public boolean isAuto(GridColumn<?> column) {
+            return column != null && AUTO.equals(column.getColumnWidthMode());
+        }
+
+        static public boolean isFixed(GridColumn<?> column) {
+            return column != null && FIXED.equals(column.getColumnWidthMode());
+        }
     }
 }

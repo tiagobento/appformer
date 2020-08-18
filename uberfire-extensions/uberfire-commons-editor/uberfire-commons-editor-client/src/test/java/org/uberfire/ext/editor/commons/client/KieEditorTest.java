@@ -16,30 +16,43 @@
 
 package org.uberfire.ext.editor.commons.client;
 
+import java.util.Set;
+
 import com.google.gwtmockito.GwtMockitoTestRunner;
+import elemental2.promise.Promise;
 import org.jboss.errai.security.shared.api.identity.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.uberfire.backend.vfs.ObservablePath;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.backend.vfs.impl.ObservablePathImpl;
 import org.uberfire.client.mvp.PlaceManager;
+import org.uberfire.client.promise.Promises;
 import org.uberfire.client.workbench.type.ClientResourceType;
 import org.uberfire.ext.editor.commons.client.event.ConcurrentDeleteAcceptedEvent;
 import org.uberfire.ext.editor.commons.client.event.ConcurrentDeleteIgnoredEvent;
 import org.uberfire.ext.editor.commons.client.event.ConcurrentRenameAcceptedEvent;
 import org.uberfire.ext.editor.commons.client.event.ConcurrentRenameIgnoredEvent;
+import org.uberfire.ext.editor.commons.client.file.popups.DeletePopUpPresenter;
 import org.uberfire.ext.editor.commons.client.history.VersionRecordManager;
 import org.uberfire.ext.editor.commons.client.menu.MenuItems;
+import org.uberfire.ext.editor.commons.file.DefaultMetadata;
 import org.uberfire.ext.editor.commons.version.events.RestoreEvent;
 import org.uberfire.mocks.EventSourceMock;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.PlaceRequest;
+import org.uberfire.promise.SyncPromises;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(GwtMockitoTestRunner.class)
 public class KieEditorTest {
@@ -48,12 +61,17 @@ public class KieEditorTest {
     private BaseEditorView view;
     private RestoreEvent restoreEvent;
     private ObservablePath observablePath;
+    private Promises promises;
+    private DeletePopUpPresenter deletePopUpPresenter;
 
     @Before
     public void setUp() throws Exception {
         view = mock(BaseEditorView.class);
         restoreEvent = mock(RestoreEvent.class);
-        kieEditor = spy(new BaseEditor(view) {
+        promises = new SyncPromises();
+        deletePopUpPresenter = mock(DeletePopUpPresenter.class);
+
+        kieEditor = spy(new BaseEditor<String, DefaultMetadata>(view) {
 
             @Override
             protected void loadContent() {
@@ -65,8 +83,8 @@ public class KieEditorTest {
             }
 
             @Override
-            protected void makeMenuBar() {
-
+            protected Promise<Void> makeMenuBar() {
+                return promises.resolve();
             }
 
             @Override
@@ -92,6 +110,8 @@ public class KieEditorTest {
         kieEditor.concurrentDeleteAcceptedEvent = spy(new EventMock<>());
         kieEditor.versionRecordManager = mock(VersionRecordManager.class);
         kieEditor.notification = new EventMock<>();
+        kieEditor.promises = promises;
+        kieEditor.deletePopUpPresenter = deletePopUpPresenter;
         observablePath = mock(ObservablePath.class);
         PlaceRequest placeRequest = mock(PlaceRequest.class);
         ClientResourceType resourceType = mock(ClientResourceType.class);
@@ -149,7 +169,7 @@ public class KieEditorTest {
 
         verify(kieEditor,
                never()).save();
-        verify(kieEditor.versionRecordManager).restoreToCurrentVersion();
+        verify(kieEditor.versionRecordManager).restoreToCurrentVersion(true);
     }
 
     @Test
@@ -208,10 +228,12 @@ public class KieEditorTest {
             }
         };
 
+        final Set<MenuItems> menuItems = kieEditor.menuItems;
+
         kieEditor.init(new ObservablePathImpl(),
                        kieEditor.place,
                        kieEditor.type,
-                       kieEditor.menuItems.toArray(new MenuItems[0]));
+                       menuItems.toArray(new MenuItems[0]));
 
         kieEditor.onSave();
 
@@ -257,8 +279,8 @@ public class KieEditorTest {
 
     @Test
     public void testOnValidateMethodIsCalled() throws Exception {
-        kieEditor.onValidate();
-        verify(kieEditor).onValidate();
+        kieEditor.onValidate(mock(Command.class));
+        verify(kieEditor).onValidate(any(Command.class));
     }
 
     @Test
@@ -283,24 +305,51 @@ public class KieEditorTest {
 
     @Test
     public void testOnConcurrentDeleteIgnoreCommand() {
+        testOnConcurrentDeleteIgnoreCommand(false);
+    }
+
+    @Test
+    public void testOnConcurrentDeleteIgnoreCommandDeletePopupOpened() {
+        testOnConcurrentDeleteIgnoreCommand(true);
+    }
+
+    private void testOnConcurrentDeleteIgnoreCommand(final boolean isDeletePopupOpened) {
+
+        when(deletePopUpPresenter.isOpened()).thenReturn(isDeletePopupOpened);
+
         final Command onConcurrentDeleteIgnoreCommand = kieEditor.onConcurrentDeleteIgnoreCommand(observablePath);
 
         onConcurrentDeleteIgnoreCommand.execute();
 
         verify(kieEditor).disableMenus();
         verify(kieEditor.concurrentDeleteIgnoredEvent).fire(eq(new ConcurrentDeleteIgnoredEvent(observablePath)));
+
+        verify(deletePopUpPresenter, isDeletePopupOpened ? times(1) : never()).cancel();
     }
 
     @Test
     public void testOnConcurrentDeleteAcceptedCommand() {
+        testOnConcurrentDeleteAcceptedCommand(false);
+    }
+
+    @Test
+    public void testOnConcurrentDeleteAcceptedCommandDeletePopupOpened() {
+        testOnConcurrentDeleteAcceptedCommand(true);
+    }
+
+    private void testOnConcurrentDeleteAcceptedCommand(final boolean isDeletePopupOpened) {
+
+        when(deletePopUpPresenter.isOpened()).thenReturn(isDeletePopupOpened);
+
         final Command onConcurrentDeleteCloseCommand = kieEditor.onConcurrentDeleteCloseCommand(observablePath);
 
         onConcurrentDeleteCloseCommand.execute();
 
         verify(kieEditor.placeManager).closePlace(any(PlaceRequest.class));
         verify(kieEditor.concurrentDeleteAcceptedEvent).fire(eq(new ConcurrentDeleteAcceptedEvent(observablePath)));
-    }
 
+        verify(deletePopUpPresenter, isDeletePopupOpened ? times(1) : never()).cancel();
+    }
     public static class EventMock<T> extends EventSourceMock<T> {
 
         @Override

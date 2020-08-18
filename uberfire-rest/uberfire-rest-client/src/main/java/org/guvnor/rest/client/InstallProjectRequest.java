@@ -20,15 +20,16 @@ import org.jboss.errai.common.client.api.annotations.Portable;
 @Portable
 public class InstallProjectRequest extends JobRequest {
 
-    private String repositoryName;
+    private String spaceName;
     private String projectName;
+    private String branchName;
 
-    public String getRepositoryName() {
-        return repositoryName;
+    public String getSpaceName() {
+        return spaceName;
     }
 
-    public void setRepositoryName(String repositoryName) {
-        this.repositoryName = repositoryName;
+    public void setSpaceName(String spaceName) {
+        this.spaceName = spaceName;
     }
 
     public String getProjectName() {
@@ -37,5 +38,13 @@ public class InstallProjectRequest extends JobRequest {
 
     public void setProjectName(String projectName) {
         this.projectName = projectName;
+    }
+
+    public void setBranchName(String branchName) {
+        this.branchName = branchName;
+    }
+
+    public String getBranchName() {
+        return branchName;
     }
 }

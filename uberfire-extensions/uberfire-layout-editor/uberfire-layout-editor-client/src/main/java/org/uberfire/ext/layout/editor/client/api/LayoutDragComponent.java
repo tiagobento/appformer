@@ -16,7 +16,13 @@
 package org.uberfire.ext.layout.editor.client.api;
 
 import com.google.gwt.user.client.ui.IsWidget;
+import org.uberfire.ext.layout.editor.api.editor.LayoutComponent;
 import org.uberfire.ext.layout.editor.client.infra.DndDataJSONConverter;
+import org.uberfire.ext.properties.editor.model.PropertyEditorCategory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * This interface defines the main contract between the Layout Editor's module and components implementations.
@@ -26,6 +32,31 @@ public interface LayoutDragComponent {
     public static final String FORMAT = "text";
     static DndDataJSONConverter converter = new DndDataJSONConverter();
 
+    /**
+     * The CSS classes used to display the component's icon on the drag palette.
+     *
+     * @return A CSS class reference
+     */
+    default String getDragComponentIconClass() {
+        return "fa fa-arrows";
+    }
+
+    /**
+     * Get the list of properties (grouped into categories) supported by this drag component. These properties
+     * will be edited into the layout editor's properties panel and their values will be stored in the
+     * {@link org.uberfire.ext.layout.editor.api.editor.LayoutComponent} instance passed as a parameter.
+     *
+     * <p>This drag component can use this property edition/storage features to customize its display and/or behaviour.</p>
+     *
+     * @return A list of supported properties classified into several categories.
+     */
+    default List<PropertyEditorCategory> getPropertyCategories(LayoutComponent layoutComponent) {
+        return new ArrayList<>();
+    }
+
+    /**
+     * The title displayed in the component drag palette.
+     */
     String getDragComponentTitle();
 
     /**
@@ -51,6 +82,17 @@ public interface LayoutDragComponent {
      * @param ctx The context for the component being rendered
      */
     default void removeCurrentWidget(RenderingContext ctx){
+    }
+
+    /**
+     * Get a specific part of this widget.
+     * 
+     * @param partId
+     * @param componentContext
+     * @return
+     */
+    default Optional<IsWidget> getContentPart(String partId, RenderingContext componentContext) {
+        return Optional.empty();
     }
 
 }

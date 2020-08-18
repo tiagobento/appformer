@@ -1,12 +1,12 @@
 /*
  * Copyright 2016 Red Hat, Inc. and/or its affiliates.
- *  
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *  
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,12 +19,15 @@ package org.uberfire.ext.security.management.wildfly.properties;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.as.domain.management.security.PropertiesFileLoader;
@@ -51,6 +54,7 @@ import org.uberfire.ext.security.management.util.SecurityManagementUtils;
 
 /**
  * <p>Groups manager service provider implementation for JBoss Wildfly, when using default realm based on properties files.</p>
+ *
  * @since 0.8.0
  */
 public class WildflyGroupPropertiesManager extends BaseWildflyPropertiesManager implements GroupManager,
@@ -108,7 +112,9 @@ public class WildflyGroupPropertiesManager extends BaseWildflyPropertiesManager 
 
     @Override
     public void destroy() throws Exception {
-        this.groupsPropertiesFileLoader.stop();
+        if (groupsPropertiesFileLoader != null) {
+            this.groupsPropertiesFileLoader.stop();
+        }
     }
 
     @Override
@@ -129,6 +135,13 @@ public class WildflyGroupPropertiesManager extends BaseWildflyPropertiesManager 
             return createGroup(identifier);
         }
         throw new GroupNotFoundException(identifier);
+    }
+
+    @Override
+    public List<Group> getAll() throws SecurityManagementException {
+        return getAllGroups().stream()
+                .map(this::createGroup)
+                .collect(Collectors.toList());
     }
 
     public Set[] getGroupsAndRolesForUser(String username) {
@@ -189,6 +202,7 @@ public class WildflyGroupPropertiesManager extends BaseWildflyPropertiesManager 
 
     /**
      * Wildfly / EAP realms based on properties do not allow groups with empty users. So the groups are created using the method #assignUsers.
+     *
      * @param entity The entity to create.
      * @return A runtime instance for a group.
      * @throws SecurityManagementException
@@ -230,7 +244,7 @@ public class WildflyGroupPropertiesManager extends BaseWildflyPropertiesManager 
                 }
             });
         } catch (Exception e) {
-            LOG.error("Error removing the folowing group names: " + identifiers,
+            LOG.error("Error removing the folowing group names: " + Arrays.toString(identifiers),
                       e);
             throw new SecurityManagementException(e);
         }
@@ -416,7 +430,7 @@ public class WildflyGroupPropertiesManager extends BaseWildflyPropertiesManager 
 
         public WildflyGroupsPropertiesFileLoader(final String path,
                                                  final String relativeTo) {
-            super(path, relativeTo);
+            super(null, path, relativeTo);
             this.lineWriterPredicate = new PropertiesLineWriterPredicate(WildflyGroupsPropertiesFileLoader.this::cleanKey,
                                                                          false);
         }

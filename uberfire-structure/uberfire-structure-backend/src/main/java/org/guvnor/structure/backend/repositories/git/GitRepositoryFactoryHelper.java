@@ -3,7 +3,7 @@
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,23 +11,32 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.guvnor.structure.backend.repositories.git;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.guvnor.structure.repositories.EnvironmentParameters;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import org.guvnor.structure.backend.repositories.BranchAccessAuthorizer;
+import org.guvnor.structure.backend.repositories.git.hooks.PostCommitNotificationService;
+import org.guvnor.structure.organizationalunit.config.RepositoryInfo;
 import org.guvnor.structure.repositories.Repository;
-import org.guvnor.structure.server.config.ConfigGroup;
-import org.guvnor.structure.server.config.ConfigItem;
+import org.guvnor.structure.repositories.RepositoryExternalUpdateEvent;
 import org.guvnor.structure.server.config.PasswordService;
 import org.guvnor.structure.server.repositories.RepositoryFactoryHelper;
 import org.uberfire.io.IOService;
+import org.uberfire.spaces.SpacesAPI;
 
 import static org.guvnor.structure.repositories.impl.git.GitRepository.SCHEME;
+import static org.kie.soup.commons.validation.PortablePreconditions.checkNotEmpty;
 import static org.kie.soup.commons.validation.Preconditions.checkNotNull;
 
 @ApplicationScoped
@@ -37,7 +46,14 @@ public class GitRepositoryFactoryHelper implements RepositoryFactoryHelper {
 
     private IOService notIndexedIOService;
 
-    @Inject
+    private SpacesAPI spacesAPI;
+
+    private Event<RepositoryExternalUpdateEvent> repositoryExternalUpdate;
+
+    private PostCommitNotificationService postCommitNotificationService;
+
+    private BranchAccessAuthorizer branchAccessAuthorizer;
+
     private PasswordService secureService;
 
     public GitRepositoryFactoryHelper() {
@@ -45,42 +61,59 @@ public class GitRepositoryFactoryHelper implements RepositoryFactoryHelper {
 
     @Inject
     public GitRepositoryFactoryHelper(@Named("ioStrategy") IOService indexedIOService,
-                                      @Named("configIO") IOService notIndexedIOService) {
+                                      @Named("configIO") IOService notIndexedIOService,
+                                      SpacesAPI spacesAPI,
+                                      Event<RepositoryExternalUpdateEvent> repositoryExternalUpdate,
+                                      PostCommitNotificationService postCommitNotificationService,
+                                      BranchAccessAuthorizer branchAccessAuthorizer,
+                                      PasswordService secureService) {
         this.indexedIOService = indexedIOService;
         this.notIndexedIOService = notIndexedIOService;
+        this.spacesAPI = spacesAPI;
+        this.repositoryExternalUpdate = repositoryExternalUpdate;
+        this.postCommitNotificationService = postCommitNotificationService;
+        this.branchAccessAuthorizer = branchAccessAuthorizer;
+        this.secureService = secureService;
     }
 
     @Override
-    public boolean accept(final ConfigGroup repoConfig) {
-        checkNotNull("repoConfig",
-                     repoConfig);
-        final ConfigItem<String> schemeConfigItem = repoConfig.getConfigItem(EnvironmentParameters.SCHEME);
-        checkNotNull("schemeConfigItem",
-                     schemeConfigItem);
-        return SCHEME.equals(schemeConfigItem.getValue());
+    public boolean accept(RepositoryInfo repositoryInfo) {
+        checkNotNull("repositoryInfo",
+                     repositoryInfo);
+        final String schemeConfigItem = repositoryInfo.getScheme();
+        checkNotEmpty("schemeConfigItem",
+                      schemeConfigItem);
+        return SCHEME.toString().equals(schemeConfigItem);
     }
 
     @Override
-    public Repository newRepository(final ConfigGroup repoConfig) {
+    public Repository newRepository(RepositoryInfo repositoryInfo) {
+        validate(repositoryInfo);
 
-        validate(repoConfig);
+        boolean avoidIndex = repositoryInfo.isAvoidIndex();
 
-        ConfigItem<String> sValue = repoConfig.getConfigItem(EnvironmentParameters.AVOID_INDEX);
-
-        if (sValue != null && Boolean.valueOf(sValue.getValue())) {
+        if (avoidIndex) {
             return new GitRepositoryBuilder(notIndexedIOService,
-                                            secureService).build(repoConfig);
+                                            secureService,
+                                            spacesAPI,
+                                            repositoryExternalUpdate,
+                                            postCommitNotificationService,
+                                            branchAccessAuthorizer).build(repositoryInfo);
         }
 
         return new GitRepositoryBuilder(indexedIOService,
-                                        secureService).build(repoConfig);
+                                        secureService,
+                                        spacesAPI,
+                                        repositoryExternalUpdate,
+                                        postCommitNotificationService,
+                                        branchAccessAuthorizer).build(repositoryInfo);
     }
 
-    private void validate(ConfigGroup repoConfig) {
-        checkNotNull("repoConfig",
-                     repoConfig);
-        final ConfigItem<String> schemeConfigItem = repoConfig.getConfigItem(EnvironmentParameters.SCHEME);
-        checkNotNull("schemeConfigItem",
-                     schemeConfigItem);
+    private void validate(RepositoryInfo repositoryInfo) {
+        checkNotNull("repositoryInfo",
+                     repositoryInfo);
+        final String schemeConfigItem = repositoryInfo.getScheme();
+        checkNotEmpty("schemeConfigItem",
+                      schemeConfigItem);
     }
 }

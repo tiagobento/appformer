@@ -31,8 +31,8 @@ import org.uberfire.java.nio.file.attribute.FileStoreAttributeView;
 import org.uberfire.java.nio.file.attribute.FileTime;
 import org.uberfire.java.nio.file.spi.FileSystemProvider;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class SimpleWindowsFileStoreTest {
 
@@ -56,8 +56,14 @@ public class SimpleWindowsFileStoreTest {
         assertThat(fileStore.name()).isNotNull().isEqualTo("c:\\");
         assertThat(fileStore.type()).isNull();
         assertThat(fileStore.isReadOnly()).isFalse();
-        assertThat(fileStore.getTotalSpace()).isEqualTo(0L);
-        assertThat(fileStore.getUsableSpace()).isEqualTo(0L);
+
+        if (SimpleFileSystemProvider.OSType.currentOS().equals(SimpleFileSystemProvider.OSType.WINDOWS)) {
+            assertThat(fileStore.getTotalSpace()).isNotEqualTo(0L);
+            assertThat(fileStore.getUsableSpace()).isNotEqualTo(0L);
+        } else {
+            assertThat(fileStore.getTotalSpace()).isEqualTo(0L);
+            assertThat(fileStore.getUsableSpace()).isEqualTo(0L);
+        }
 
         assertThat(fileStore.supportsFileAttributeView(BasicFileAttributeView.class)).isTrue();
         assertThat(fileStore.supportsFileAttributeView(MyFileAttributeView.class)).isFalse();

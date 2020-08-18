@@ -16,6 +16,8 @@
 
 package org.uberfire.client.workbench.widgets.menu.megamenu;
 
+import java.util.function.Consumer;
+
 import org.jboss.errai.ioc.client.api.ManagedInstance;
 import org.jboss.errai.security.shared.api.identity.User;
 import org.junit.Before;
@@ -34,6 +36,7 @@ import org.uberfire.client.workbench.widgets.menu.megamenu.contextmenuitem.Child
 import org.uberfire.client.workbench.widgets.menu.megamenu.contextmenuitem.GroupContextMenuItemPresenter;
 import org.uberfire.client.workbench.widgets.menu.megamenu.menuitem.ChildMenuItemPresenter;
 import org.uberfire.client.workbench.widgets.menu.megamenu.menuitem.GroupMenuItemPresenter;
+import org.uberfire.experimental.service.auth.ExperimentalActivitiesAuthorizationManager;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.rpc.SessionInfo;
@@ -48,7 +51,13 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WorkbenchMegaMenuStandalonePresenterTest {
@@ -95,6 +104,9 @@ public class WorkbenchMegaMenuStandalonePresenterTest {
     @Mock
     private Workbench workbench;
 
+    @Mock
+    private ExperimentalActivitiesAuthorizationManager experimentalActivitiesAuthorizationManager;
+
     private WorkbenchMegaMenuStandalonePresenter presenter;
 
     @Before
@@ -113,7 +125,8 @@ public class WorkbenchMegaMenuStandalonePresenterTest {
                                                                  groupMenuItemPresenters,
                                                                  childContextMenuItemPresenters,
                                                                  groupContextMenuItemPresenters,
-                                                                 workbench));
+                                                                 workbench,
+                                                                 experimentalActivitiesAuthorizationManager));
         doReturn(mock(ChildMenuItemPresenter.class)).when(childMenuItemPresenters).get();
     }
 
@@ -147,7 +160,10 @@ public class WorkbenchMegaMenuStandalonePresenterTest {
         final PlaceRequest placeRequest = mock(PlaceRequest.class);
 
         when(activity.getIdentifier()).thenReturn(perspectiveId);
-        when(activity.getMenus()).thenReturn(contextMenus);
+        doAnswer(invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(contextMenus);
+            return null;
+        }).when(activity).getMenus(any());
         when(activity.isType(ActivityResourceType.PERSPECTIVE.name())).thenReturn(true);
         when(authzManager.authorize(contextMenus.getItems().get(0),
                                     identity)).thenReturn(true);

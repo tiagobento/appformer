@@ -17,9 +17,11 @@
 package org.uberfire.ext.metadata.backend.lucene.index.directory;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.codecs.Codec;
@@ -37,26 +39,52 @@ import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull
 public class DirectoryFactory implements LuceneIndexFactory {
 
     private static final String REPOSITORIES_ROOT_DIR = ".index";
+    public static final String CLUSTER_ID_SEGMENT_SEPARATOR = "/";
 
-    private final Map<KCluster, LuceneIndex> clusters = new ConcurrentHashMap<KCluster, LuceneIndex>();
+    private final Map<KCluster, LuceneIndex> clusters = new ConcurrentHashMap<>();
     private final DirectoryType type;
     private final Analyzer analyzer;
 
     public DirectoryFactory(final DirectoryType type,
                             final Analyzer analyzer) {
+        this(type,
+             analyzer,
+             defaultHostingDir());
+    }
+
+    public DirectoryFactory(final DirectoryType type,
+                            final Analyzer analyzer,
+                            final File hostingDir) {
         this.analyzer = analyzer;
         this.type = type;
-        final File[] files = defaultHostingDir().listFiles();
-        if (files != null && files.length > 0) {
-            for (final File file : files) {
-                if (file.isDirectory()) {
-                    final KCluster cluster = new KClusterImpl(file.getName());
-                    clusters.put(cluster,
-                                 type.newIndex(cluster,
-                                               newConfig(analyzer)));
-                }
-            }
-        }
+        this.loadIndexes(type,
+                         analyzer,
+                         hostingDir);
+    }
+
+    protected void loadIndexes(DirectoryType type,
+                               Analyzer analyzer,
+                               File hostingDir) {
+        listFiles(hostingDir)
+                .filter(File::isDirectory)
+                .flatMap(file -> listFiles(file))
+                .filter(File::isDirectory)
+                .flatMap(file -> listFiles(file))
+                .map(file -> new KClusterImpl(clusterIdOf(file)))
+                .forEach(cluster -> clusters.put(cluster,
+                                                 type.newIndex(cluster,
+                                                               newConfig(analyzer))));
+    }
+
+    protected static String clusterIdOf(File file) {
+        return file.getParentFile().getParentFile().getName() + CLUSTER_ID_SEGMENT_SEPARATOR +
+                file.getParentFile().getName() + CLUSTER_ID_SEGMENT_SEPARATOR +
+                file.getName();
+    }
+
+    private Stream<File> listFiles(final File hostingDir) {
+        final File[] files = hostingDir.listFiles();
+        return (files == null) ? Stream.empty() : Arrays.stream(files);
     }
 
     public static File defaultHostingDir() {

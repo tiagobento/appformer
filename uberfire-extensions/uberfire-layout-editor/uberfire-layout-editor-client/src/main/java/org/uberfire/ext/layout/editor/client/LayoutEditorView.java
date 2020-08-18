@@ -19,13 +19,20 @@ package org.uberfire.ext.layout.editor.client;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import org.jboss.errai.common.client.dom.Anchor;
+import org.jboss.errai.common.client.dom.HTMLElement;
+import org.jboss.errai.common.client.dom.ListItem;
+import org.jboss.errai.common.client.dom.DOMUtil;
 import org.jboss.errai.common.client.dom.Div;
 import org.jboss.errai.ui.client.local.api.IsElement;
 import org.jboss.errai.ui.shared.api.annotations.DataField;
+import org.jboss.errai.ui.shared.api.annotations.EventHandler;
 import org.jboss.errai.ui.shared.api.annotations.Templated;
 import org.uberfire.client.mvp.UberElement;
+import org.uberfire.ext.layout.editor.api.editor.LayoutTemplate;
 import org.uberfire.ext.layout.editor.client.components.container.Container;
-import org.uberfire.ext.layout.editor.client.widgets.LayoutDragComponentGroupPresenter;
+import org.uberfire.ext.layout.editor.client.resources.i18n.CommonConstants;
 
 @Templated
 @Dependent
@@ -36,31 +43,90 @@ public class LayoutEditorView
 
     @Inject
     @DataField
+    Div mainDiv;
+
+    @Inject
+    @DataField
     Div container;
 
     @Inject
     @DataField
-    Div components;
+    Div tabsDiv;
+
+    @Inject
+    @DataField
+    ListItem designTab;
+
+    @Inject
+    @DataField
+    ListItem previewTab;
+
+    @Inject
+    @DataField
+    Div designDiv;
+
+    @Inject
+    @DataField
+    Div previewDiv;
+
+    @Inject
+    @DataField
+    Anchor designAnchor;
+
+    @Inject
+    @DataField
+    Anchor previewAnchor;
 
     private LayoutEditorPresenter presenter;
 
     @Override
     public void init(LayoutEditorPresenter presenter) {
         this.presenter = presenter;
+        designAnchor.setTextContent(CommonConstants.INSTANCE.Editor());
+        previewAnchor.setTextContent(CommonConstants.INSTANCE.Preview());
     }
 
     @Override
-    public void setupContainer(UberElement<Container> container) {
+    public void setPreviewEnabled(boolean previewEnabled) {
+        tabsDiv.setHidden(!previewEnabled);
+        mainDiv.getStyle().setProperty("height", previewEnabled ? "95%" : "100%");
+    }
+
+    @Override
+    public void setupDesign(UberElement<Container> container) {
+        designDiv.setHidden(false);
+        previewDiv.setHidden(true);
+        designTab.setClassName("active");
+        previewTab.setClassName("");
         this.container.appendChild(container.getElement());
     }
 
     @Override
-    public void addDraggableComponentGroup(UberElement<LayoutDragComponentGroupPresenter> group) {
-        components.appendChild(group.getElement());
+    public void setDesignStyle(LayoutTemplate.Style pageStyle) {
+        designDiv.setClassName("le-design-container le-design-" + pageStyle.toString().toLowerCase());
     }
 
     @Override
-    public void removeDraggableComponentGroup(UberElement<LayoutDragComponentGroupPresenter> group) {
-        components.removeChild(group.getElement());
+    public void setupPreview(HTMLElement previewPanel) {
+        designDiv.setHidden(true);
+        previewDiv.setHidden(false);
+        designTab.setClassName("");
+        previewTab.setClassName("active");
+        DOMUtil.removeAllChildren(this.previewDiv);
+        this.previewDiv.appendChild(previewPanel);
+    }
+
+    @EventHandler("designTab")
+    private void designTabClicked(ClickEvent event) {
+        if (!designTab.getClassName().equals("active")) {
+            presenter.switchToDesignMode();
+        }
+    }
+
+    @EventHandler("previewTab")
+    private void previewTabClicked(ClickEvent event) {
+        if (!previewTab.getClassName().equals("active")) {
+            presenter.switchToPreviewMode();
+        }
     }
 }

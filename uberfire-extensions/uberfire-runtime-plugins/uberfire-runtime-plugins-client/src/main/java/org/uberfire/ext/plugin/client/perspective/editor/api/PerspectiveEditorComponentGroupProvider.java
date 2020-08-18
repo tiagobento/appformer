@@ -15,23 +15,40 @@
  */
 package org.uberfire.ext.plugin.client.perspective.editor.api;
 
-import org.uberfire.ext.layout.editor.client.api.LayoutDragComponent;
 import org.uberfire.ext.layout.editor.client.api.LayoutDragComponentGroup;
+import org.uberfire.ext.layout.editor.client.widgets.LayoutComponentPaletteGroupProvider;
 
 /**
  * Any class implementing this interface class is used to add an instance of {@link LayoutDragComponentGroup} to
  * the Perspective Editor's component palette.
  */
-public interface PerspectiveEditorComponentGroupProvider {
+public interface PerspectiveEditorComponentGroupProvider extends LayoutComponentPaletteGroupProvider,
+                                                                 Comparable {
 
     /**
-     * Return the name of the component group displayed in the component palette.
+     * How important is this group in relation to other groups available. For example, more relevant groups
+     * are displayed first in the component palette.
      */
-    String getName();
+    default Integer getOrder() {
+        return 0;
+    }
 
-    /**
-     * Get the {@link LayoutDragComponentGroup} containing the {@link LayoutDragComponent} instances
-     * listed under the group's category in the component palette.
-     */
-    LayoutDragComponentGroup getInstance();
+    @Override
+    default int compareTo(Object o) {
+        if (this == o) {
+            return 0;
+        }
+        if (o == null) {
+            return -1;
+        }
+        try {
+            PerspectiveEditorComponentGroupProvider other = (PerspectiveEditorComponentGroupProvider) o;
+            if (other.getOrder() == this.getOrder()) {
+                return this.getName().compareTo(other.getName());
+            }
+            return this.getOrder().compareTo(other.getOrder()) * -1;
+        } catch (ClassCastException e) {
+            return -1;
+        }
+    }
 }

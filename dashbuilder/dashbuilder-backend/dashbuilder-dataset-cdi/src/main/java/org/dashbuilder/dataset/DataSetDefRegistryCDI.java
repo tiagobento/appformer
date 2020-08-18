@@ -17,14 +17,12 @@ package org.dashbuilder.dataset;
 
 import java.io.File;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -49,7 +47,6 @@ import org.uberfire.io.IOService;
 import org.uberfire.java.nio.IOException;
 import org.uberfire.java.nio.base.options.CommentedOption;
 import org.uberfire.java.nio.file.FileSystem;
-import org.uberfire.java.nio.file.FileSystemAlreadyExistsException;
 import org.uberfire.java.nio.file.FileVisitResult;
 import org.uberfire.java.nio.file.Files;
 import org.uberfire.java.nio.file.Path;
@@ -57,8 +54,8 @@ import org.uberfire.java.nio.file.SimpleFileVisitor;
 import org.uberfire.java.nio.file.StandardDeleteOption;
 import org.uberfire.java.nio.file.attribute.BasicFileAttributes;
 
-import static org.kie.soup.commons.validation.PortablePreconditions.*;
-import static org.uberfire.java.nio.file.Files.*;
+import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull;
+import static org.uberfire.java.nio.file.Files.walkFileTree;
 
 /**
  * Data set definition registry implementation which stores data sets under GIT
@@ -90,6 +87,7 @@ public class DataSetDefRegistryCDI extends DataSetDefRegistryImpl implements CSV
     @Inject
     public DataSetDefRegistryCDI(@Config("10485760" /* 10 Mb */) int maxCsvLength,
                                  @Named("ioStrategy") IOService ioService,
+                                 @Named("datasetsFS") FileSystem fileSystem,
                                  DataSetProviderRegistryCDI dataSetProviderRegistry,
                                  SchedulerCDI scheduler,
                                  ExceptionManager exceptionManager,
@@ -103,6 +101,7 @@ public class DataSetDefRegistryCDI extends DataSetDefRegistryImpl implements CSV
         this.uuidGenerator = DataSetCore.get().getUuidGenerator();
         this.maxCsvLength = maxCsvLength;
         this.ioService = ioService;
+        this.fileSystem = fileSystem;
         this.exceptionManager = exceptionManager;
         this.dataSetDefModifiedEvent = dataSetDefModifiedEvent;
         this.dataSetDefRegisteredEvent = dataSetDefRegisteredEvent;
@@ -121,37 +120,30 @@ public class DataSetDefRegistryCDI extends DataSetDefRegistryImpl implements CSV
         return DataSetCore.get().getDataSetDefJSONMarshaller();
     }
 
+    @Override
     protected void onDataSetDefStale(DataSetDef def) {
         dataSetStaleEvent.fire(new DataSetStaleEvent(def));
     }
 
+    @Override
     protected void onDataSetDefModified(DataSetDef olDef,
                                         DataSetDef newDef) {
         dataSetDefModifiedEvent.fire(new DataSetDefModifiedEvent(olDef,
                                                                  newDef));
     }
 
+    @Override
     protected void onDataSetDefRegistered(DataSetDef newDef) {
         dataSetDefRegisteredEvent.fire(new DataSetDefRegisteredEvent(newDef));
     }
 
+    @Override
     protected void onDataSetDefRemoved(DataSetDef oldDef) {
         dataSetDefRemovedEvent.fire(new DataSetDefRemovedEvent(oldDef));
     }
 
     protected void initFileSystem() {
-        try {
-            fileSystem = ioService.newFileSystem(URI.create("default://datasets"),
-                                                 new HashMap<String, Object>() {{
-                                                     put("init",
-                                                         Boolean.TRUE);
-                                                     put("internal",
-                                                         Boolean.TRUE);
-                                                 }});
-        } catch (FileSystemAlreadyExistsException e) {
-            fileSystem = ioService.getFileSystem(URI.create("default://datasets"));
-        }
-        this.root = fileSystem.getRootDirectories().iterator().next();
+        root = fileSystem.getRootDirectories().iterator().next();
     }
 
     protected void registerDataSetDefs() {
@@ -264,7 +256,7 @@ public class DataSetDefRegistryCDI extends DataSetDefRegistryImpl implements CSV
     }
 
     public Collection<DataSetDef> listDataSetDefs() {
-        final Collection<DataSetDef> result = new ArrayList<DataSetDef>();
+        final Collection<DataSetDef> result = new ArrayList<>();
 
         if (ioService.exists(root)) {
             walkFileTree(checkNotNull("root",
@@ -495,5 +487,12 @@ public class DataSetDefRegistryCDI extends DataSetDefRegistryImpl implements CSV
 
     protected Path resolveCsvTempPath(CSVDataSetDef def) {
         return resolveTempPath(def.getUUID() + CSV_EXT);
+    }
+
+    void onDataSetDefRegisteredEvent(@Observes DataSetDefRegisteredEvent event) {
+        DataSetDef def = event.getDataSetDef();
+        dataSetDefMap.put(
+            def.getUUID(),
+            new DataSetDefEntry(def));
     }
 }

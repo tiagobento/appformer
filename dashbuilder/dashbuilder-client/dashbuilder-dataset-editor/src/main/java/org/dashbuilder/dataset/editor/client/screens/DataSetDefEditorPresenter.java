@@ -15,6 +15,14 @@
  */
 package org.dashbuilder.dataset.editor.client.screens;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
+import javax.enterprise.context.Dependent;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import org.dashbuilder.client.widgets.dataset.editor.DataSetEditor;
@@ -42,12 +50,17 @@ import org.jboss.errai.common.client.api.RemoteCallback;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.backend.vfs.ObservablePath;
 import org.uberfire.backend.vfs.Path;
-import org.uberfire.client.annotations.*;
+import org.uberfire.client.annotations.WorkbenchEditor;
+import org.uberfire.client.annotations.WorkbenchMenu;
+import org.uberfire.client.annotations.WorkbenchPartTitle;
+import org.uberfire.client.annotations.WorkbenchPartTitleDecoration;
+import org.uberfire.client.annotations.WorkbenchPartView;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.workbench.events.ChangeTitleWidgetEvent;
 import org.uberfire.client.workbench.widgets.common.ErrorPopupPresenter;
 import org.uberfire.ext.editor.commons.client.BaseEditor;
 import org.uberfire.ext.editor.commons.client.file.popups.SavePopUpPresenter;
+import org.uberfire.ext.editor.commons.file.DefaultMetadata;
 import org.uberfire.ext.editor.commons.service.support.SupportsCopy;
 import org.uberfire.ext.editor.commons.service.support.SupportsDelete;
 import org.uberfire.lifecycle.OnClose;
@@ -58,21 +71,17 @@ import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.events.NotificationEvent;
 import org.uberfire.workbench.model.menu.Menus;
 
-import javax.enterprise.context.Dependent;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull;
-import static org.uberfire.ext.editor.commons.client.menu.MenuItems.*;
+import static org.uberfire.ext.editor.commons.client.menu.MenuItems.COPY;
+import static org.uberfire.ext.editor.commons.client.menu.MenuItems.DELETE;
+import static org.uberfire.ext.editor.commons.client.menu.MenuItems.SAVE;
+import static org.uberfire.ext.editor.commons.client.menu.MenuItems.VALIDATE;
 import static org.uberfire.workbench.events.NotificationEvent.NotificationType.ERROR;
 import static org.uberfire.workbench.events.NotificationEvent.NotificationType.SUCCESS;
 
 @Dependent
 @WorkbenchEditor(identifier = "DataSetDefEditor", supportedTypes = {DataSetDefType.class}, priority = Integer.MAX_VALUE)
-public class DataSetDefEditorPresenter extends BaseEditor {
+public class DataSetDefEditorPresenter extends BaseEditor<DataSetDef, DefaultMetadata> {
 
     @Inject
     SyncBeanManager beanManager;
@@ -129,8 +138,8 @@ public class DataSetDefEditorPresenter extends BaseEditor {
     }
 
     @WorkbenchMenu
-    public Menus getMenus() {
-        return menus;
+    public void getMenus(final Consumer<Menus> menusConsumer) {
+        super.getMenus(menusConsumer);
     }
 
     @WorkbenchPartView
@@ -140,6 +149,7 @@ public class DataSetDefEditorPresenter extends BaseEditor {
 
     @OnMayClose
     public boolean onMayClose() {
+        workflow.flush();
         return super.mayClose(getCurrentModelHash());
     }
 
@@ -188,8 +198,7 @@ public class DataSetDefEditorPresenter extends BaseEditor {
         final DataSetProviderType type = dataSetDef.getProvider() != null ? dataSetDef.getProvider() : null;
         workflow = workflowFactory.edit(type);
         view.setWidget(workflow);
-        workflow.edit(dataSetDef,
-                      columnDefs).showPreviewTab();
+        workflow.edit(dataSetDef, columnDefs).showPreviewTab();
     }
 
     private void edit(final DataSet dataset) {
@@ -216,17 +225,16 @@ public class DataSetDefEditorPresenter extends BaseEditor {
     }
 
     @Override
-    protected Command onValidate() {
-        return () -> {
-            workflow.flush();
-            if (!workflow.hasErrors()) {
-                notification.fire(new NotificationEvent(DataSetAuthoringConstants.INSTANCE.validationOk(),
-                                                        SUCCESS));
-            } else {
-                notification.fire(new NotificationEvent(DataSetAuthoringConstants.INSTANCE.validationFailed(),
-                                                        ERROR));
-            }
-        };
+    protected void onValidate(final Command callFinished) {
+        workflow.flush();
+        if (!workflow.hasErrors()) {
+            notification.fire(new NotificationEvent(DataSetAuthoringConstants.INSTANCE.validationOk(),
+                                                    SUCCESS));
+        } else {
+            notification.fire(new NotificationEvent(DataSetAuthoringConstants.INSTANCE.validationFailed(),
+                                                    ERROR));
+        }
+        callFinished.execute();
     }
 
     @Override
@@ -253,8 +261,10 @@ public class DataSetDefEditorPresenter extends BaseEditor {
     }
 
     public int getCurrentModelHash() {
-        if (getDataSetDef() == null) return 0;
-        return getDataSetDef().getUUID().hashCode();
+        if (getDataSetDef() == null) {
+            return 0;
+        }
+        return getDataSetDef().hashCode();
     }
 
     public void disposeWorkflow() {
@@ -299,8 +309,8 @@ public class DataSetDefEditorPresenter extends BaseEditor {
                                                                     buildTitle()));
             view.hideBusyIndicator();
 
-            edit(dataSetDef,
-                 columns);
+            edit(dataSetDef, columns);
+            setOriginalHash(getCurrentModelHash());
         }
     }
 

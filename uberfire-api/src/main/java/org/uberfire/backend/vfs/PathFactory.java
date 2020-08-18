@@ -73,11 +73,10 @@ public final class PathFactory {
      * Examples:
      * <p>
      * <pre>
-     * default://master@repo/some/path/to/file.txt =>
-     * default://locks@system/repo/master/some/path/to/file.txt.ulock
+     * default://master@myteam/dora/src/main/resources/com/myteam/dora/sample.drl
+     *           branch@space/project/path/to/file.extension                      =>
+     * default://locks@system/system/myteam/master/dora/src/main/resources/com/myteam/dora/sample.drl
      *
-     * file:\\master@repo\some\path\to\file.txt =>
-     * file:\\locks@system\repo\master\some\path\to\file.txt.ulock
      * </pre>
      *
      * @param path the path of a file for which a lock should be created, must not be null.
@@ -88,7 +87,7 @@ public final class PathFactory {
                      path);
 
         final String systemUri = path.toURI().replaceFirst("(/|\\\\)([^/&^\\\\]*)@([^/&^\\\\]*)",
-                                                           "$1locks@system$1$3$1$2");
+                                                           "$1locks@system/system$1$3$1$2");
 
         return PathFactory.newPath("/",
                                    systemUri);
@@ -100,11 +99,9 @@ public final class PathFactory {
      * Examples:
      * <p>
      * <pre>
-     * default://locks@system/repo/master/some/path/to/file.txt.ulock =>
-     * default://master@repo/some/path/to/file.txt
-     *
-     * file:\\locks@system\repo\master\some\path\to\file.txt.ulock =>
-     * file:\\master@repo\some\path\to\file.txt
+     * default://locks@system/system/myteam/master/dora/src/main/resources/com/myteam/dora/sample.drl.ulock
+     * default://master@myteam/dora/src/main/resources/com/myteam/dora/sample.drl
+     *           branch@space/project/path/to/file.extension                      =>
      * </pre>
      *
      * @param lockPath the path of a lock, must not be null.
@@ -114,7 +111,7 @@ public final class PathFactory {
         checkNotNull("path",
                      lockPath);
 
-        final String uri = lockPath.toURI().replaceFirst("locks@system(/|\\\\)([^/&^\\\\]*)(/|\\\\)([^/&^\\\\]*)",
+        final String uri = lockPath.toURI().replaceFirst("locks@system/system(/|\\\\)([^/&^\\\\]*)(/|\\\\)([^/&^\\\\]*)",
                                                          "$4@$2");
 
         return PathFactory.newPath(lockPath.getFileName().replace(LOCK_FILE_EXTENSION,
@@ -135,7 +132,7 @@ public final class PathFactory {
         public PathImpl() {
         }
 
-        private PathImpl(final String fileName,
+        public PathImpl(final String fileName,
                          final String uri) {
             this(fileName,
                  uri,
@@ -201,7 +198,7 @@ public final class PathFactory {
 
             final Path path = (Path) o;
 
-            return uri.equals(path.toURI());
+            return this.toURI().equals(path.toURI());
         }
 
         @Override

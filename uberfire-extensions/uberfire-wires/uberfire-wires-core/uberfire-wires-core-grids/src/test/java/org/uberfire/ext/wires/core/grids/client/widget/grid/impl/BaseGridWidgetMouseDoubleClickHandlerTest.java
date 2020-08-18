@@ -16,74 +16,90 @@
 package org.uberfire.ext.wires.core.grids.client.widget.grid.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Optional;
 
+import com.ait.lienzo.client.core.event.AbstractNodeMouseEvent;
 import com.ait.lienzo.client.core.event.NodeMouseDoubleClickEvent;
 import com.ait.lienzo.client.core.shape.Group;
 import com.ait.lienzo.client.core.shape.Viewport;
 import com.ait.lienzo.client.core.types.Point2D;
 import com.ait.lienzo.test.LienzoMockitoTestRunner;
-import com.google.gwt.user.client.Command;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.uberfire.ext.wires.core.grids.client.model.GridColumn;
 import org.uberfire.ext.wires.core.grids.client.model.GridData;
+import org.uberfire.ext.wires.core.grids.client.widget.dnd.GridWidgetDnDHandlersState;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.GridWidget;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.NodeMouseEventHandler;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.GridRenderer;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.impl.BaseGridRendererHelper;
-import org.uberfire.ext.wires.core.grids.client.widget.layer.GridSelectionManager;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.impl.DefaultGridLayer;
-import org.uberfire.ext.wires.core.grids.client.widget.layer.pinning.GridPinnedModeManager;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyDouble;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(LienzoMockitoTestRunner.class)
-public class BaseGridWidgetMouseDoubleClickHandlerTest {
+public abstract class BaseGridWidgetMouseDoubleClickHandlerTest {
 
     @Mock
-    private GridWidget gridWidget;
+    protected Group header;
 
     @Mock
-    private Group header;
+    protected Viewport viewport;
 
     @Mock
-    private Viewport viewport;
+    protected DefaultGridLayer layer;
 
     @Mock
-    private DefaultGridLayer layer;
+    protected GridData uiModel;
 
     @Mock
-    private GridSelectionManager selectionManager;
+    protected GridWidget gridWidget;
 
     @Mock
-    private GridPinnedModeManager pinnedModeManager;
+    protected GridRenderer renderer;
 
     @Mock
-    private GridRenderer renderer;
+    protected DoubleClickEvent doubleClickEvent;
 
     @Mock
-    private NodeMouseDoubleClickEvent event;
+    protected BaseGridRendererHelper helper;
 
     @Mock
-    private GridData uiModel;
+    protected GridColumn<String> uiColumn;
 
     @Mock
-    private BaseGridRendererHelper helper;
+    protected Point2D relativeLocation;
 
     @Mock
-    private GridColumn<String> uiColumn;
+    private NodeMouseEventHandler eventHandler;
 
-    private BaseGridWidgetMouseDoubleClickHandler handler;
+    @Mock
+    private GridWidgetDnDHandlersState state;
+
+    protected NodeMouseDoubleClickEvent event;
+
+    private BaseGridWidgetMouseDoubleClickHandler mouseDoubleClickHandler;
 
     @Before
     public void setup() {
+        this.event = new NodeMouseDoubleClickEvent(doubleClickEvent);
+
         when(gridWidget.getViewport()).thenReturn(viewport);
         when(gridWidget.getModel()).thenReturn(uiModel);
         when(gridWidget.getRenderer()).thenReturn(renderer);
         when(gridWidget.getRendererHelper()).thenReturn(helper);
         when(gridWidget.getLayer()).thenReturn(layer);
         when(gridWidget.getHeader()).thenReturn(header);
+        when(gridWidget.getComputedLocation()).thenReturn(new Point2D(0.0, 0.0));
         when(renderer.getHeaderHeight()).thenReturn(64.0);
         when(renderer.getHeaderRowHeight()).thenReturn(32.0);
         when(uiModel.getHeaderRowCount()).thenReturn(2);
@@ -92,95 +108,48 @@ public class BaseGridWidgetMouseDoubleClickHandlerTest {
             add(uiColumn);
         }});
 
-        final BaseGridWidgetMouseDoubleClickHandler wrapped = new BaseGridWidgetMouseDoubleClickHandler(gridWidget,
-                                                                                                        selectionManager,
-                                                                                                        pinnedModeManager,
-                                                                                                        renderer);
-        handler = spy(wrapped);
+        when(state.getOperation()).thenReturn(GridWidgetDnDHandlersState.GridWidgetHandlersOperation.NONE);
+        when(layer.getGridWidgetHandlersState()).thenReturn(state);
+
+        final BaseGridRendererHelper.RenderingInformation ri = BaseGridWidgetRenderingTestUtils.makeRenderingInformation(uiModel, Collections.emptyList());
+        when(helper.getRenderingInformation()).thenReturn(ri);
+
+        final BaseGridRendererHelper.ColumnInformation ci = new BaseGridRendererHelper.ColumnInformation(uiColumn, 0, 0);
+        when(helper.getColumnInformation(anyDouble())).thenReturn(ci);
+
+        this.mouseDoubleClickHandler = new BaseGridWidgetMouseDoubleClickHandler(gridWidget, Collections.singletonList(eventHandler));
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void visibleGrid() {
+        when(gridWidget.isVisible()).thenReturn(true);
+
+        mouseDoubleClickHandler.onNodeMouseDoubleClick(event);
+
+        verify(eventHandler).onNodeMouseEvent(eq(gridWidget),
+                                              any(Point2D.class),
+                                              any(Optional.class),
+                                              any(Optional.class),
+                                              any(Optional.class),
+                                              any(Optional.class),
+                                              eq(event));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     public void skipInvisibleGrid() {
         when(gridWidget.isVisible()).thenReturn(false);
 
-        handler.onNodeMouseDoubleClick(event);
+        mouseDoubleClickHandler.onNodeMouseDoubleClick(event);
 
-        verify(handler,
-               never()).handleHeaderCellDoubleClick(any(NodeMouseDoubleClickEvent.class));
-        verify(handler,
-               never()).handleBodyCellDoubleClick(any(NodeMouseDoubleClickEvent.class));
-        verify(selectionManager,
-               never()).select(eq(gridWidget));
-    }
-
-    @Test
-    public void enterPinnedMode() {
-        when(gridWidget.isVisible()).thenReturn(true);
-
-        when(event.getX()).thenReturn(100);
-        when(event.getY()).thenReturn(100);
-
-        when(gridWidget.getLocation()).thenReturn(new Point2D(100,
-                                                              100));
-
-        handler.onNodeMouseDoubleClick(event);
-
-        verify(handler,
-               times(1)).handleHeaderCellDoubleClick(any(NodeMouseDoubleClickEvent.class));
-        verify(handler,
-               never()).handleBodyCellDoubleClick(any(NodeMouseDoubleClickEvent.class));
-        verify(pinnedModeManager,
-               times(1)).enterPinnedMode(eq(gridWidget),
-                                         any(Command.class));
-        verify(pinnedModeManager,
-               never()).exitPinnedMode(any(Command.class));
-    }
-
-    @Test
-    public void exitPinnedMode() {
-        when(gridWidget.isVisible()).thenReturn(true);
-        when(pinnedModeManager.isGridPinned()).thenReturn(true);
-
-        when(event.getX()).thenReturn(100);
-        when(event.getY()).thenReturn(100);
-
-        when(gridWidget.getLocation()).thenReturn(new Point2D(100,
-                                                              100));
-
-        handler.onNodeMouseDoubleClick(event);
-
-        verify(handler,
-               times(1)).handleHeaderCellDoubleClick(any(NodeMouseDoubleClickEvent.class));
-        verify(handler,
-               never()).handleBodyCellDoubleClick(any(NodeMouseDoubleClickEvent.class));
-        verify(pinnedModeManager,
-               never()).enterPinnedMode(any(GridWidget.class),
-                                        any(Command.class));
-        verify(pinnedModeManager,
-               times(1)).exitPinnedMode(any(Command.class));
-    }
-
-    @Test
-    public void basicCheckForBodyHandler() {
-        when(gridWidget.isVisible()).thenReturn(true);
-
-        when(event.getX()).thenReturn(100);
-        when(event.getY()).thenReturn(200);
-
-        when(gridWidget.getLocation()).thenReturn(new Point2D(100,
-                                                              100));
-        when(gridWidget.getHeight()).thenReturn(200.0);
-
-        final BaseGridRendererHelper.ColumnInformation ci = new BaseGridRendererHelper.ColumnInformation(uiColumn,
-                                                                                                         0,
-                                                                                                         0);
-        when(helper.getColumnInformation(any(Double.class))).thenReturn(ci);
-
-        handler.onNodeMouseDoubleClick(event);
-
-        verify(handler,
-               times(1)).handleHeaderCellDoubleClick(any(NodeMouseDoubleClickEvent.class));
-        verify(handler,
-               times(1)).handleBodyCellDoubleClick(any(NodeMouseDoubleClickEvent.class));
+        verify(eventHandler,
+               never()).onNodeMouseEvent(any(GridWidget.class),
+                                         any(Point2D.class),
+                                         any(Optional.class),
+                                         any(Optional.class),
+                                         any(Optional.class),
+                                         any(Optional.class),
+                                         any(AbstractNodeMouseEvent.class));
     }
 }

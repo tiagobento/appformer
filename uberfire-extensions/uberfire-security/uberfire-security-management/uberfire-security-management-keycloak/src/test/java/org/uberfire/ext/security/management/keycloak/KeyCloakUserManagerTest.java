@@ -22,17 +22,18 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.jboss.errai.security.shared.api.Group;
 import org.jboss.errai.security.shared.api.Role;
 import org.jboss.errai.security.shared.api.identity.User;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
@@ -40,27 +41,41 @@ import org.uberfire.ext.security.management.api.AbstractEntityManager;
 import org.uberfire.ext.security.management.api.Capability;
 import org.uberfire.ext.security.management.api.CapabilityStatus;
 import org.uberfire.ext.security.management.api.UserManager;
+import org.uberfire.ext.security.management.api.exception.RealmManagementNotAuthorizedException;
 import org.uberfire.ext.security.management.api.exception.UserNotFoundException;
+import org.uberfire.ext.security.management.keycloak.client.resource.RealmResource;
 import org.uberfire.ext.security.management.keycloak.client.resource.RoleMappingResource;
 import org.uberfire.ext.security.management.keycloak.client.resource.RoleScopeResource;
 import org.uberfire.ext.security.management.keycloak.client.resource.UserResource;
 
 import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class KeyCloakUserManagerTest extends DefaultKeyCloakTest {
 
-    @Spy
-    private KeyCloakUserManager usersManager = new KeyCloakUserManager();
+    private KeyCloakUserManager usersManager;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setup() throws Exception {
         super.setup();
-        doReturn(keycloakMock).when(usersManager).getKeyCloakInstance();
-        doReturn(realmResource).when(usersManager).getRealmResource();
-        usersManager.initialize(userSystemManager);
+        initUserManager();
+        doAnswer(invocationOnMock -> {
+            ((Consumer<RealmResource>) invocationOnMock.getArguments()[0]).accept(realmResource);
+            return null;
+        }).when(usersManager).consumeRealm(any(Consumer.class));
     }
 
     @Test
@@ -99,6 +114,13 @@ public class KeyCloakUserManagerTest extends DefaultKeyCloakTest {
                      USER_ATTRIBUTES);
     }
 
+    @Test(expected = RealmManagementNotAuthorizedException.class)
+    public void testUserNotAuthorized() throws Exception {
+        initUserManager();
+        doThrow(mockForbiddenResponse()).when(keycloakMock).realm();
+        usersManager.get(USERNAME);
+    }
+
     @Test
     public void testGetUser5() {
         String username = USERNAME + 5;
@@ -112,6 +134,11 @@ public class KeyCloakUserManagerTest extends DefaultKeyCloakTest {
         String username = USERNAME + 50;
         User user = usersManager.get(username);
         assertNull(user);
+    }
+    @Test
+    public void testGetAllUsers(){
+        List<User> users = usersManager.getAll();
+        Assert.assertEquals(usersCount,users.size());
     }
 
     @Test(expected = RuntimeException.class)
@@ -337,5 +364,11 @@ public class KeyCloakUserManagerTest extends DefaultKeyCloakTest {
         assertNotNull(email);
         assertEquals(email,
                      username + "@jboss.org");
+    }
+
+    private void initUserManager() throws Exception {
+        usersManager = spy(new KeyCloakUserManager());
+        doReturn(keycloakMock).when(usersManager).getKeyCloakInstance();
+        usersManager.initialize(userSystemManager);
     }
 }

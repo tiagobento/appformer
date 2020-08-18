@@ -48,8 +48,21 @@ public interface M2RepoService {
 
     /**
      * Get the repository's URL
-     * @param context The web-context of the webapp
      * @return A String representing the repository's URL relative to the container's root
      */
-    String getRepositoryURL(String context);
+    String getRepositoryURL();
+
+    /**
+     * Retrieve the kmodule.xml from the given Path.
+     * @param path The path to the file
+     * @return The kmodule.xml text
+     */
+    String getKModuleText(String path);
+
+    /**
+     * Retrieve the kie-deployment-descriptor.xml from the given Path.
+     * @param path The path to the file
+     * @return The kie-deployment-descriptor.xml text
+     */
+    String getKieDeploymentDescriptorText(String path);
 }

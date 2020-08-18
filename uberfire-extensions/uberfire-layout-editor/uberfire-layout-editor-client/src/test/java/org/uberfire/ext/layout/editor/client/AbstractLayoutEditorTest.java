@@ -25,23 +25,28 @@ import javax.enterprise.inject.Instance;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
+import org.jboss.errai.ioc.client.api.ManagedInstance;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.uberfire.client.mvp.LockRequiredEvent;
+import org.uberfire.ext.layout.editor.api.editor.LayoutComponent;
 import org.uberfire.ext.layout.editor.api.editor.LayoutTemplate;
 import org.uberfire.ext.layout.editor.client.api.ComponentDropEvent;
 import org.uberfire.ext.layout.editor.client.api.ComponentRemovedEvent;
 import org.uberfire.ext.layout.editor.client.components.columns.Column;
 import org.uberfire.ext.layout.editor.client.components.columns.ColumnWithComponents;
 import org.uberfire.ext.layout.editor.client.components.columns.ComponentColumn;
+import org.uberfire.ext.layout.editor.client.components.columns.ComponentColumnPart;
 import org.uberfire.ext.layout.editor.client.components.container.Container;
 import org.uberfire.ext.layout.editor.client.components.rows.EmptyDropRow;
 import org.uberfire.ext.layout.editor.client.components.rows.Row;
-import org.uberfire.ext.layout.editor.client.infra.DnDManager;
-import org.uberfire.ext.layout.editor.client.infra.LayoutDragComponentHelper;
-import org.uberfire.ext.layout.editor.client.infra.UniqueIDGenerator;
+import org.uberfire.ext.layout.editor.client.event.LayoutEditorElementSelectEvent;
+import org.uberfire.ext.layout.editor.client.event.LayoutEditorElementUnselectEvent;
+import org.uberfire.ext.layout.editor.client.infra.*;
 import org.uberfire.mocks.EventSourceMock;
 
 import static org.mockito.Mockito.*;
@@ -52,6 +57,7 @@ public abstract class AbstractLayoutEditorTest {
     public static final String SAMPLE_FULL_FLUID_LAYOUT = "org/uberfire/ext/layout/editor/client/sampleFullFluidLayout.txt";
     public static final String SAMPLE_FULL_PAGE_LAYOUT = "org/uberfire/ext/layout/editor/client/sampleFullPageLayout.txt";
     public static final String SINGLE_ROW_COMPONENT_LAYOUT = "org/uberfire/ext/layout/editor/client/singleRowComponentLayout.txt";
+    public static final String SINGLE_ROW_COMPONENT_LAYOUT_WITH_PARTS = "org/uberfire/ext/layout/editor/client/singleRowComponentLayoutWithParts.txt";
     public static final String SINGLE_ROW_TWO_COMPONENTS_LAYOUT = "org/uberfire/ext/layout/editor/client/singleRowTwoComponentsLayout.txt";
     public static final String FULL_LAYOUT_FLUID = "org/uberfire/ext/layout/editor/client/fullLayoutFluid.txt";
     public static final String FULL_LAYOUT_PAGE = "org/uberfire/ext/layout/editor/client/fullLayoutPage.txt";
@@ -72,14 +78,34 @@ public abstract class AbstractLayoutEditorTest {
     protected Container.View view;
 
     @Mock
-    protected LayoutDragComponentHelper helper;
+    protected LayoutDragComponentHelper dragHelper;
+
+    @Mock
+    protected LayoutEditorCssHelper cssHelper;
 
     @Mock
     protected EventSourceMock<ComponentDropEvent> componentDropEventMock;
     @Mock
+    protected EventSourceMock<LayoutEditorElementSelectEvent> layoutElementSelectEventMock;
+    @Mock
+    protected EventSourceMock<LayoutEditorElementUnselectEvent> layoutElementUnselectEventMock;
+    @Mock
     protected EventSourceMock<ComponentRemovedEvent> componentRemoveEventMock;
+    @Mock
+    protected EventSourceMock<LayoutEditorElementSelectEvent> rowSelectedEvent;
+    @Mock
+    protected EventSourceMock<LayoutEditorElementUnselectEvent> rowUnselectedEvent;
+    @Mock
+    protected EventSourceMock<LayoutEditorElementSelectEvent> columnSelectedEvent;
+    @Mock
+    protected EventSourceMock<LayoutEditorElementUnselectEvent> columnUnselectedEvent;
+    @Mock
+    protected EventSourceMock<LockRequiredEvent> lockRequiredEventMock;
+    @Mock
+    protected LayoutEditorFocusController layoutEditorFocusController;
+
     protected EmptyDropRow emptyDropRow = new EmptyDropRow(mock(EmptyDropRow.View.class),
-                                                           helper);
+            dragHelper);
 
     @Spy
     protected DnDManager dnDManager;
@@ -88,9 +114,15 @@ public abstract class AbstractLayoutEditorTest {
 
     public Container createContainer() {
         return new Container(view,
+                             cssHelper,
                              rowInstance,
                              emptyDropRowInstance,
-                             componentDropEventMock) {
+                             componentDropEventMock,
+                             layoutElementSelectEventMock,
+                             layoutElementUnselectEventMock,
+                             lockRequiredEventMock,
+                             dnDManager,
+                             layoutEditorFocusController) {
             private UniqueIDGenerator idGenerator = new UniqueIDGenerator();
 
             @Override
@@ -102,7 +134,7 @@ public abstract class AbstractLayoutEditorTest {
             @Override
             protected Row createInstanceRow() {
                 Row row = rowProducer();
-                row.setup(idGenerator.createRowID("container"),
+                row.setup(null, idGenerator.createRowID("container"),
                           LayoutTemplate.Style.PAGE);
                 return row;
             }
@@ -118,19 +150,29 @@ public abstract class AbstractLayoutEditorTest {
                        null,
                        null,
                        dnDManager,
-                       helper,
+                       dragHelper,
+                       cssHelper,
                        componentDropEventMock,
                        componentRemoveEventMock,
-                       null) {
+                       null,
+                       rowSelectedEvent,
+                       rowUnselectedEvent,
+                       layoutEditorFocusController) {
             private UniqueIDGenerator idGenerator = new UniqueIDGenerator();
 
             @Override
             protected ComponentColumn createComponentColumnInstance() {
 
+                ManagedInstance managedInstanceMock = mock(ManagedInstance.class);
+                when(managedInstanceMock.get()).thenReturn(new ComponentColumnPart());
                 ComponentColumn componentColumn = new ComponentColumn(mock(ComponentColumn.View.class),
                                                                       dnDManager,
-                                                                      helper,
-                                                                      mock(Event.class)) {
+                                                                      dragHelper,
+                                                                      mock(Event.class),
+                                                                      columnSelectedEvent,
+                                                                      columnUnselectedEvent,
+                                                                      mock(Event.class),
+                                                                      managedInstanceMock) {
                     @Override
                     protected boolean hasConfiguration() {
                         return false;
@@ -146,7 +188,8 @@ public abstract class AbstractLayoutEditorTest {
                         mock(ColumnWithComponents.View.class),
                         null,
                         dnDManager,
-                        helper,
+                        dragHelper,
+                        mock(Event.class),
                         mock(Event.class)) {
                     @Override
                     protected Row createInstanceRow() {
@@ -204,6 +247,7 @@ public abstract class AbstractLayoutEditorTest {
     public void setup() {
         container = createContainer();
         container.setup();
+        when(dragHelper.getLayoutComponentFromDrop(any())).thenReturn(new LayoutComponent());
     }
 
     protected LayoutTemplate loadLayout(String singleRowComponentLayout) throws Exception {

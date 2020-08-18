@@ -3,18 +3,25 @@
     "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0/distro-source/core/src/gwt-module.dtd">
 <module>
   <inherits name="org.uberfire.UberfireClientAll"/>
+  <inherits name="org.uberfire.ext.widgets.core.UberfireWidgetsCore"/>
   <inherits name="org.uberfire.client.views.PatternFlyTheme"/>
 
   <inherits name="org.uberfire.ext.plugin.RuntimePluginClient"/>
   <inherits name="org.uberfire.ext.security.management.UberfireSecurityManagementWorkbench"/>
   <inherits name="org.uberfire.ext.preferences.UberfirePreferences"/>
+  <inherits name="org.uberfire.ssh.UberfireSSHClient"/>
 
+  <!-- Experimental -->
+  <inherits name="org.uberfire.experimental.UberfireExperimentalAPI"/>
+  <inherits name="org.uberfire.experimental.UberfireExperimentalClient"/>
+
+  <inherits name="org.dashbuilder.DashbuilderKieServerAPI"/>
   <inherits name="org.dashbuilder.DashbuilderClientAll"/>
+  <inherits name="org.dashbuilder.DashbuilderKieServerClient"/>
   <inherits name="org.dashbuilder.DisplayerEditor"/>
-  <inherits name="org.dashbuilder.renderer.GChartsRenderer"/>
-  <inherits name="org.dashbuilder.renderer.LienzoChartsRenderer"/>
   <inherits name="org.dashbuilder.renderer.ChartJsRenderer"/>
-
+  <inherits name="org.dashbuilder.renderer.C3Renderer"/>
+  
   <source path='client'/>
   <source path='shared'/>
 

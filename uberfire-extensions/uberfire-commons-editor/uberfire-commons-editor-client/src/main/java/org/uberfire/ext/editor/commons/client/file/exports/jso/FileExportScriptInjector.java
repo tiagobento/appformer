@@ -18,6 +18,7 @@ package org.uberfire.ext.editor.commons.client.file.exports.jso;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
+
 import javax.enterprise.context.ApplicationScoped;
 
 import com.google.gwt.core.client.ScriptInjector;
@@ -34,8 +35,8 @@ import org.uberfire.ext.editor.commons.client.file.exports.FileExportResources;
 @ApplicationScoped
 public class FileExportScriptInjector {
 
-    public static final String NS = "org.uberfire.ext.editor.commons.client.file.exports.jso.";
     public static final String NS_SEPARATOR = ".";
+    public static final String NS = "window" + NS_SEPARATOR;
     public static final String JS_OBJ_SUFFIX = " || {};";
 
     private final Consumer<String> scriptInjector;
@@ -51,16 +52,18 @@ public class FileExportScriptInjector {
     public void inject() {
         final String fileSaver = getFileSaverSource();
         final String jsPdf = getJsPdfSource();
+        final String c2sSource = getC2SSource();
         scriptInjector.accept("var " + fileSaver + "\n" +
-                                      jsPdf + "\n");
+                                      jsPdf + "\n" +
+                                      c2sSource + "\n");
     }
 
     private String getFileSaverSource() {
         final String fsScript = FileExportResources.INSTANCE.fileSaver().getText();
         final String fsNsObject = buildNamespaceObject(NS + "JsFileSaver.saveAs");
-        return fsNsObject + " = function(blob, fileName) {" + "\n" +
+        return fsNsObject + " = function(blob, fileName, disableAutoBOM) {" + "\n" +
                 fsScript + "\n" +
-                "return saveAs(blob, fileName);};";
+                "return saveAs(blob, fileName, disableAutoBOM);};";
     }
 
     private String getJsPdfSource() {
@@ -70,6 +73,10 @@ public class FileExportScriptInjector {
                 jsPdfScript + "\n" +
                 "var saveAs = " + NS + "JsFileSaver.saveAs; " +
                 "return new jsPDF(settings);};";
+    }
+
+    private String getC2SSource() {
+        return FileExportResources.INSTANCE.canvas2svg().getText();
     }
 
     private static void inject(final String raw) {

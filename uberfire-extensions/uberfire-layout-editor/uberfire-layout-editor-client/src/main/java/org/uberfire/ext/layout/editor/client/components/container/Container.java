@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import javax.annotation.PostConstruct;
@@ -30,25 +31,28 @@ import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 
+import org.uberfire.client.mvp.LockRequiredEvent;
 import org.uberfire.client.mvp.UberElement;
+import org.uberfire.ext.layout.editor.api.css.CssValue;
 import org.uberfire.ext.layout.editor.api.editor.LayoutRow;
 import org.uberfire.ext.layout.editor.api.editor.LayoutTemplate;
 import org.uberfire.ext.layout.editor.client.api.ComponentDropEvent;
 import org.uberfire.ext.layout.editor.client.api.ComponentDropType;
+import org.uberfire.ext.layout.editor.client.api.LayoutEditorElement;
+import org.uberfire.ext.layout.editor.client.api.LayoutEditorElementType;
 import org.uberfire.ext.layout.editor.client.components.columns.Column;
 import org.uberfire.ext.layout.editor.client.components.rows.EmptyDropRow;
 import org.uberfire.ext.layout.editor.client.components.rows.Row;
 import org.uberfire.ext.layout.editor.client.components.rows.RowDnDEvent;
 import org.uberfire.ext.layout.editor.client.components.rows.RowDrop;
-import org.uberfire.ext.layout.editor.client.infra.BeanHelper;
-import org.uberfire.ext.layout.editor.client.infra.ColumnDrop;
-import org.uberfire.ext.layout.editor.client.infra.LayoutTemplateAdapter;
-import org.uberfire.ext.layout.editor.client.infra.RowResizeEvent;
-import org.uberfire.ext.layout.editor.client.infra.UniqueIDGenerator;
+import org.uberfire.ext.layout.editor.client.event.LayoutEditorElementSelectEvent;
+import org.uberfire.ext.layout.editor.client.event.LayoutEditorElementUnselectEvent;
+import org.uberfire.ext.layout.editor.client.infra.*;
+import org.uberfire.ext.properties.editor.model.PropertyEditorCategory;
 import org.uberfire.mvp.ParameterizedCommand;
 
 @Dependent
-public class Container {
+public class Container implements LayoutEditorElement {
 
     private final Instance<Row> rowInstance;
     private final Instance<EmptyDropRow> emptyDropRowInstance;
@@ -56,6 +60,7 @@ public class Container {
     private LayoutTemplate layoutTemplate;
     private String id;
     private UniqueIDGenerator idGenerator = new UniqueIDGenerator();
+    private LayoutEditorCssHelper layoutCssHelper;
     private List<Row> rows = new ArrayList<>();
     private EmptyDropRow emptyDropRow;
     private String layoutName;
@@ -64,16 +69,37 @@ public class Container {
     private Map<String, String> properties = new HashMap<>();
     private Event<ComponentDropEvent> componentDropEvent;
     private LayoutTemplate.Style pageStyle = LayoutTemplate.Style.FLUID;
+    private Event<LayoutEditorElementSelectEvent> containerSelectEvent;
+    private Event<LayoutEditorElementUnselectEvent> containerUnselectEvent;
+    private Event<LockRequiredEvent> lockRequiredEvent;
+    private DnDManager dndManager;
+    private boolean selectable = false;
+    private boolean selected = false;
+    private Supplier<Boolean> lockSupplier = () -> false;
+
+    LayoutEditorFocusController layoutEditorFocusController;
 
     @Inject
     public Container(final View view,
+                     LayoutEditorCssHelper layoutCssHelper,
                      Instance<Row> rowInstance,
                      Instance<EmptyDropRow> emptyDropRowInstance,
-                     Event<ComponentDropEvent> componentDropEvent) {
+                     Event<ComponentDropEvent> componentDropEvent,
+                     Event<LayoutEditorElementSelectEvent> containerSelectEvent,
+                     Event<LayoutEditorElementUnselectEvent> containerUnselectEvent,
+                     Event<LockRequiredEvent> lockRequiredEvent,
+                     DnDManager dndManager,
+                     LayoutEditorFocusController layoutEditorFocusController) {
+        this.layoutCssHelper = layoutCssHelper;
         this.rowInstance = rowInstance;
         this.emptyDropRowInstance = emptyDropRowInstance;
         this.view = view;
         this.componentDropEvent = componentDropEvent;
+        this.containerSelectEvent = containerSelectEvent;
+        this.containerUnselectEvent = containerUnselectEvent;
+        this.lockRequiredEvent = lockRequiredEvent;
+        this.dndManager = dndManager;
+        this.layoutEditorFocusController = layoutEditorFocusController;
         this.id = idGenerator.createContainerID();
     }
 
@@ -97,6 +123,53 @@ public class Container {
             destroy(row);
         }
         rows = new ArrayList<>();
+    }
+
+    public void setLockSupplier(Supplier<Boolean> lockSupplier) {
+        this.lockSupplier = lockSupplier;
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public LayoutEditorElementType geElementType() {
+        return LayoutEditorElementType.CONTAINER;
+    }
+
+    @Override
+    public LayoutEditorElement getParentElement() {
+        return null;
+    }
+
+    @Override
+    public void setSelectable(boolean selectable) {
+        this.selectable = selectable;
+        view.setSelectEnabled(selectable);
+    }
+
+    public boolean isSelectable() {
+        return selectable;
+    }
+
+    @Override
+    public boolean isSelected() {
+        return selected;
+    }
+
+    @Override
+    public void setSelected(boolean status) {
+        if (isSelectable()) {
+            if (status) {
+                selected = true;
+                view.setSelected(true);
+            } else {
+                selected = false;
+                view.setSelected(false);
+            }
+        }
     }
 
     private void createEmptyDropRow() {
@@ -138,6 +211,8 @@ public class Container {
             createEmptyDropRow();
         }
         setupResizeRows();
+        setupCssProperties();
+        layoutEditorFocusController.setTargetContainerView(view);
     }
 
     public void reset() {
@@ -146,7 +221,7 @@ public class Container {
         emptyTitleText = null;
         emptySubTitleText = null;
         layoutName = null;
-        properties = null;
+        properties.clear();;
         emptyDropRow = null;
         pageStyle = LayoutTemplate.Style.FLUID;
     }
@@ -187,11 +262,16 @@ public class Container {
                  createRemoveRowCommand(),
                  createRemoveComponentCommand(),
                  createCurrentLayoutTemplateSupplier(),
+                 getLockSupplier(),
                  height);
         row.withOneColumn(drop.getComponent(),
                           drop.newComponent());
         view.addRow(row.getView());
         return row;
+    }
+
+    public Supplier<Boolean> getLockSupplier() {
+        return () -> lockSupplier.get();
     }
 
     Supplier<LayoutTemplate> createCurrentLayoutTemplateSupplier() {
@@ -256,6 +336,7 @@ public class Container {
             }
             rows = updatedRows;
             getView();
+            lockRequiredEvent.fire(new LockRequiredEvent());
         };
     }
 
@@ -285,11 +366,20 @@ public class Container {
         addNewRow(row,
                   dropRow,
                   updatedRows);
+        // notifying dndManager that the move has finished!
+        dndManager.endComponentMove();
     }
 
     private void removeOldComponent(Column column) {
-        for (Row row : rows) {
-            row.removeChildColumn(column);
+
+        // Search the row that contains the column
+        Optional<Row> rowOptional = rows.stream()
+                .filter(row -> row.cointainsColumn(column))
+                .findAny();
+
+        // If the row is present remove it!
+        if (rowOptional.isPresent()) {
+            rowOptional.get().removeChildColumn(column);
         }
     }
 
@@ -395,13 +485,15 @@ public class Container {
                  layoutRow,
                  createRemoveRowCommand(),
                  createRemoveComponentCommand(),
-                 createCurrentLayoutTemplateSupplier());
+                 createCurrentLayoutTemplateSupplier(),
+                 getLockSupplier());
         return row;
     }
 
     protected Row createInstanceRow() {
         Row row = rowInstance.get();
-        row.setup(idGenerator.createRowID(id),
+        row.setSelectable(selectable);
+        row.setup(this, idGenerator.createRowID(id),
                   pageStyle);
         return row;
     }
@@ -416,8 +508,32 @@ public class Container {
         return properties.get(key);
     }
 
+    @Override
     public Map<String, String> getProperties() {
         return properties;
+    }
+
+    @Override
+    public void setProperty(String property, String value) {
+        properties.put(property, value);
+        setupCssProperties();
+    }
+
+    @Override
+    public void removeProperty(String property) {
+        properties.remove(property);
+        setupCssProperties();
+    }
+
+    @Override
+    public void clearProperties() {
+        properties.clear();
+        setupCssProperties();
+    }
+
+    @Override
+    public List<PropertyEditorCategory> getPropertyCategories() {
+        return layoutCssHelper.getContainerPropertyCategories(this);
     }
 
     public LayoutTemplate toLayoutTemplate() {
@@ -430,6 +546,7 @@ public class Container {
     }
 
     void updateView() {
+        layoutEditorFocusController.recordFocus();
         cleanupEmptyRows();
         setupPageStyle();
         setupResizeRows();
@@ -488,7 +605,7 @@ public class Container {
         if (hasDownSibling(index,
                            rows)) {
             Row downSibling = rows.get(index + 1);
-            return downSibling.getHeight() > 2;
+            return downSibling.getHeight() > 1;
         }
         return false;
     }
@@ -500,7 +617,7 @@ public class Container {
 
     private boolean canResizeUp(int index,
                                 List<Row> rows) {
-        return (rows.get(index - 1).getHeight() > 2);
+        return (rows.get(index - 1).getHeight() > 1);
     }
 
     private boolean firstRow(int index) {
@@ -513,26 +630,38 @@ public class Container {
         }
     }
 
+    private void setupCssProperties() {
+        List<CssValue> cssValueList = layoutCssHelper.readCssValues(properties);
+        view.applyCssValues(cssValueList);
+    }
+
     public View getView() {
         updateView();
         return view;
     }
 
     public void resizeRows(@Observes RowResizeEvent resize) {
-        Row resizedRow = getRow(resize);
-        if (resizedRow != null) {
-            Row affectedRow = null;
-            if (resize.isUP()) {
-                affectedRow = lookUpForUpperNeighbor(resizedRow);
-            } else {
-                affectedRow = lookUpForBottomNeighbor(resizedRow);
+        if (resizeEventIsinThisContainer(resize)) {
+
+            Row resizedRow = getRow(resize);
+            if (resizedRow != null) {
+                Row affectedRow = null;
+                if (resize.isUP()) {
+                    affectedRow = lookUpForUpperNeighbor(resizedRow);
+                } else {
+                    affectedRow = lookUpForBottomNeighbor(resizedRow);
+                }
+                if (affectedRow != null) {
+                    resizedRow.incrementHeight();
+                    affectedRow.reduceHeight();
+                }
             }
-            if (affectedRow != null) {
-                resizedRow.incrementHeight();
-                affectedRow.reduceHeight();
-            }
+            setupResizeRows();
         }
-        setupResizeRows();
+    }
+
+    private boolean resizeEventIsinThisContainer(@Observes RowResizeEvent resize) {
+        return resize.getContainerHash() == hashCode();
     }
 
     private Row lookUpForUpperNeighbor(Row resizedRow) {
@@ -551,7 +680,7 @@ public class Container {
 
     private Row getRow(RowResizeEvent resize) {
         for (Row row : getRows()) {
-            if (resize.getRowID() == row.getId()) {
+            if (resize.getRowHash() == row.hashCode()) {
                 return row;
             }
         }
@@ -570,6 +699,20 @@ public class Container {
         return pageStyle;
     }
 
+    public void onSelected() {
+        if (isSelectable()) {
+            if (selected) {
+                containerUnselectEvent.fire(new LayoutEditorElementUnselectEvent(this));
+            } else {
+                containerSelectEvent.fire(new LayoutEditorElementSelectEvent(this));
+            }
+        }
+    }
+    
+    public List<Row> getChildElements() {
+        return rows;
+    }
+
     public interface View extends UberElement<Container> {
 
         void addRow(UberElement<Row> view);
@@ -579,5 +722,12 @@ public class Container {
         void addEmptyRow(UberElement<EmptyDropRow> emptyDropRow);
 
         void pageMode();
+
+        void setSelectEnabled(boolean enabled);
+
+        void setSelected(boolean selected);
+
+        void applyCssValues(List<CssValue> cssValues);
     }
+
 }

@@ -31,10 +31,12 @@ import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.mvp.UberElement;
 import org.uberfire.client.workbench.Workbench;
 import org.uberfire.client.workbench.events.PerspectiveChange;
+import org.uberfire.client.workbench.widgets.menu.MenuItemVisibilityHandler;
 import org.uberfire.client.workbench.widgets.menu.base.WorkbenchBaseMenuPresenter;
 import org.uberfire.client.workbench.widgets.menu.base.WorkbenchBaseMenuUtils;
 import org.uberfire.client.workbench.widgets.menu.base.WorkbenchBaseMenuView;
 import org.uberfire.client.workbench.widgets.menu.megamenu.base.CanBeDisabled;
+import org.uberfire.client.workbench.widgets.menu.megamenu.base.CanHide;
 import org.uberfire.client.workbench.widgets.menu.megamenu.base.HasChildren;
 import org.uberfire.client.workbench.widgets.menu.megamenu.base.Selectable;
 import org.uberfire.client.workbench.widgets.menu.megamenu.brand.MegaMenuBrand;
@@ -44,12 +46,14 @@ import org.uberfire.client.workbench.widgets.menu.megamenu.menuitem.ChildMenuIte
 import org.uberfire.client.workbench.widgets.menu.megamenu.menuitem.GroupMenuItemPresenter;
 import org.uberfire.client.workbench.widgets.menu.megamenu.visitor.WorkbenchMegaMenuContextMenuVisitor;
 import org.uberfire.client.workbench.widgets.menu.megamenu.visitor.WorkbenchMegaMenuVisitor;
+import org.uberfire.experimental.service.auth.ExperimentalActivitiesAuthorizationManager;
 import org.uberfire.mvp.Command;
 import org.uberfire.rpc.SessionInfo;
 import org.uberfire.security.ResourceRef;
 import org.uberfire.security.authz.AuthorizationManager;
 import org.uberfire.workbench.model.ActivityResourceType;
 import org.uberfire.workbench.model.menu.MenuCustom;
+import org.uberfire.workbench.model.menu.MenuItemPerspective;
 import org.uberfire.workbench.model.menu.MenuPosition;
 import org.uberfire.workbench.model.menu.Menus;
 
@@ -64,6 +68,8 @@ public class WorkbenchMegaMenuPresenter extends WorkbenchBaseMenuPresenter {
         void clearContextMenu();
 
         void setHomeLinkAction(Command command);
+
+        void setBrandImageAction(Command command);
 
         String getDefaultMenuText();
 
@@ -112,10 +118,12 @@ public class WorkbenchMegaMenuPresenter extends WorkbenchBaseMenuPresenter {
     private ManagedInstance<ChildContextMenuItemPresenter> childContextMenuItemPresenters;
     private ManagedInstance<GroupContextMenuItemPresenter> groupContextMenuItemPresenters;
     private Workbench workbench;
+    private ExperimentalActivitiesAuthorizationManager experimentalActivitiesAuthorizationManager;
 
     Map<String, Selectable> selectableMenuItemByIdentifier = new HashMap<>();
     Map<String, HasChildren> hasChildrenMenuItemByIdentifier = new HashMap<>();
     Map<String, CanBeDisabled> canBeDisabledMenuItemByIdentifier = new HashMap<>();
+    Map<String, CanHide> canHideMenuItemByIdentifier = new HashMap<>();
 
     public WorkbenchMegaMenuPresenter(final AuthorizationManager authzManager,
                                       final PerspectiveManager perspectiveManager,
@@ -130,7 +138,8 @@ public class WorkbenchMegaMenuPresenter extends WorkbenchBaseMenuPresenter {
                                       final ManagedInstance<GroupMenuItemPresenter> groupMenuItemPresenters,
                                       final ManagedInstance<ChildContextMenuItemPresenter> childContextMenuItemPresenters,
                                       final ManagedInstance<GroupContextMenuItemPresenter> groupContextMenuItemPresenters,
-                                      final Workbench workbench) {
+                                      final Workbench workbench,
+                                      final ExperimentalActivitiesAuthorizationManager experimentalActivitiesAuthorizationManager) {
         this.authzManager = authzManager;
         this.perspectiveManager = perspectiveManager;
         this.activityManager = activityManager;
@@ -145,6 +154,7 @@ public class WorkbenchMegaMenuPresenter extends WorkbenchBaseMenuPresenter {
         this.childContextMenuItemPresenters = childContextMenuItemPresenters;
         this.groupContextMenuItemPresenters = groupContextMenuItemPresenters;
         this.workbench = workbench;
+        this.experimentalActivitiesAuthorizationManager = experimentalActivitiesAuthorizationManager;
 
         setup();
     }
@@ -207,10 +217,9 @@ public class WorkbenchMegaMenuPresenter extends WorkbenchBaseMenuPresenter {
         final ChildMenuItemPresenter childMenuItemPresenter = childMenuItemPresenters.get();
         childMenuItemPresenter.setup(label,
                                      command);
-        selectableMenuItemByIdentifier.put(id,
-                                           childMenuItemPresenter);
-        canBeDisabledMenuItemByIdentifier.put(id,
-                                              childMenuItemPresenter);
+        selectableMenuItemByIdentifier.put(id, childMenuItemPresenter);
+        canBeDisabledMenuItemByIdentifier.put(id, childMenuItemPresenter);
+        canHideMenuItemByIdentifier.put(id, childMenuItemPresenter);
 
         if (parentId == null || parentId.isEmpty()) {
             if (MenuPosition.RIGHT.equals(position)) {
@@ -321,21 +330,22 @@ public class WorkbenchMegaMenuPresenter extends WorkbenchBaseMenuPresenter {
     }
 
     protected void addPerspectiveMenus(final PerspectiveActivity perspective) {
-        final String perspectiveId = perspective.getIdentifier();
-        final Menus menus = perspective.getMenus();
-        view.clearContextMenu();
-        if (menus != null) {
-            menus.accept(new AuthFilterMenuVisitor(authzManager,
-                                                   identity,
-                                                   new WorkbenchMegaMenuContextMenuVisitor(this,
-                                                                                           placeManager,
-                                                                                           perspectiveId)));
+        perspective.getMenus(menus -> {
+            final String perspectiveId = perspective.getIdentifier();
+            view.clearContextMenu();
+            if (menus != null) {
+                menus.accept(new AuthFilterMenuVisitor(authzManager,
+                                                       identity,
+                                                       new WorkbenchMegaMenuContextMenuVisitor(this,
+                                                                                               placeManager,
+                                                                                               perspectiveId)));
 
-            synchronizeUIWithMenus(menus.getItems());
-        }
+                synchronizeUIWithMenus(menus.getItems());
+            }
+        });
     }
 
-    protected void onPerspectiveChange(final PerspectiveChange perspectiveChange) {
+    public void onPerspectiveChange(final PerspectiveChange perspectiveChange) {
         final Activity activity = activityManager.getActivity(perspectiveChange.getPlaceRequest());
         if (activity != null && activity.isType(ActivityResourceType.PERSPECTIVE.name())) {
             addPerspectiveMenus((PerspectiveActivity) activity);
@@ -379,14 +389,21 @@ public class WorkbenchMegaMenuPresenter extends WorkbenchBaseMenuPresenter {
 
     void setupHomeLink() {
         view.setHomeLinkAction(() -> {
-            final PerspectiveActivity homePerspectiveActivity = workbench.getHomePerspectiveActivity();
-            if (homePerspectiveActivity != null) {
-                final String homePerspectiveIdentifier = homePerspectiveActivity.getIdentifier();
-                if (hasAccessToPerspective(homePerspectiveIdentifier)) {
-                    placeManager.goTo(homePerspectiveIdentifier);
-                }
-            }
+            goToHomePerspective();
         });
+        view.setBrandImageAction(() -> {
+            goToHomePerspective();
+        });
+    }
+
+    private void goToHomePerspective() {
+        final PerspectiveActivity homePerspectiveActivity = workbench.getHomePerspectiveActivity();
+        if (homePerspectiveActivity != null) {
+            final String homePerspectiveIdentifier = homePerspectiveActivity.getIdentifier();
+            if (hasAccessToPerspective(homePerspectiveIdentifier)) {
+                placeManager.goTo(homePerspectiveIdentifier);
+            }
+        }
     }
 
     boolean hasAccessToPerspective(final String perspectiveId) {
@@ -394,5 +411,25 @@ public class WorkbenchMegaMenuPresenter extends WorkbenchBaseMenuPresenter {
                                                   ActivityResourceType.PERSPECTIVE);
         return authorizationManager.authorize(resourceRef,
                                               sessionInfo.getIdentity());
+    }
+
+    public void setupSetVisibleMenuItem(MenuItemPerspective menuItemPerspective) {
+        String perspectiveId = menuItemPerspective.getPlaceRequest().getIdentifier();
+        boolean visible = experimentalActivitiesAuthorizationManager.authorizeActivityId(perspectiveId);
+
+        changeMenuItemVisibility(perspectiveId, visible);
+
+        registerVisibilityChangeHandler(new MenuItemVisibilityHandler(perspectiveId, this::changeMenuItemVisibility));
+    }
+
+    private void changeMenuItemVisibility(String id, boolean visible) {
+        CanHide canHide = canHideMenuItemByIdentifier.get(id);
+        if (canHide != null) {
+            if (visible) {
+                canHide.show();
+            } else {
+                canHide.hide();
+            }
+        }
     }
 }

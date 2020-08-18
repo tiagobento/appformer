@@ -16,9 +16,9 @@
 
 package org.uberfire.client.exporter;
 
-import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.HashSet;
+
 import javax.enterprise.context.ApplicationScoped;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -28,6 +28,9 @@ import org.uberfire.client.editor.type.JSClientResourceType;
 import org.uberfire.client.editor.type.JSNativeClientResourceType;
 import org.uberfire.client.plugin.JSNativePlugin;
 import org.uberfire.client.workbench.type.ClientResourceType;
+import org.uberfire.jsbridge.client.cdi.SingletonBeanDefinition;
+import org.uberfire.workbench.category.Category;
+import org.uberfire.workbench.category.Others;
 
 import static org.jboss.errai.ioc.client.QualifierUtil.DEFAULT_QUALIFIERS;
 
@@ -41,14 +44,16 @@ public class ResourceTypeDefinitionJSExporter implements UberfireJSExporter {
                                              "id")) {
             final SyncBeanManager beanManager = IOC.getBeanManager();
             final JSNativeClientResourceType newNativeClientResourceType = beanManager.lookupBean(JSNativeClientResourceType.class).getInstance();
+            final Category category = beanManager.lookupBean(Others.class).getInstance();
             newNativeClientResourceType.build(obj);
-            JSClientResourceType jsClientResourceType = new JSClientResourceType(newNativeClientResourceType);
-            beanManager.registerBean(new SingletonBeanDef<ClientResourceType, JSClientResourceType>(jsClientResourceType,
-                                                                                                    ClientResourceType.class,
-                                                                                                    new HashSet<Annotation>(Arrays.asList(DEFAULT_QUALIFIERS)),
-                                                                                                    jsClientResourceType.getId(),
-                                                                                                    true,
-                                                                                                    JSClientResourceType.class));
+            JSClientResourceType jsClientResourceType = new JSClientResourceType(newNativeClientResourceType,
+                                                                                 category);
+            beanManager.registerBean(new SingletonBeanDefinition<ClientResourceType, JSClientResourceType>(jsClientResourceType,
+                                                                   ClientResourceType.class,
+                                                                   new HashSet<>(Arrays.asList(DEFAULT_QUALIFIERS)),
+                                                                   jsClientResourceType.getId(),
+                                                                   true,
+                                                                   JSClientResourceType.class));
         }
     }
 

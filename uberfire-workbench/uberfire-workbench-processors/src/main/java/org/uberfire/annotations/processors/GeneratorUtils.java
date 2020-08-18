@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.inject.Qualifier;
 import javax.lang.model.element.AnnotationMirror;
@@ -122,6 +123,38 @@ public class GeneratorUtils {
         }
 
         return zeroArgMethod;
+    }
+
+    public static ExecutableElement getSetContentMethodName(TypeElement classElement, ProcessingEnvironment processingEnvironment) {
+        return getUniqueAnnotatedMethod(
+                classElement,
+                processingEnvironment,
+                APIModule.getSetContentClass(),
+                new TypeMirror[]{
+                        processingEnvironment.getElementUtils().getTypeElement("elemental2.promise.Promise").asType()
+                },
+                new String[]{"java.lang.String", "java.lang.String"});
+    }
+
+    public static ExecutableElement getGetContentMethodName(TypeElement classElement, ProcessingEnvironment processingEnvironment) {
+        return getUniqueAnnotatedMethod(classElement,
+                                        processingEnvironment,
+                                        APIModule.getGetContentClass(),
+                                        new TypeMirror[]{
+                                                processingEnvironment.getElementUtils().getTypeElement("elemental2.promise.Promise").asType()
+                                        },
+                                        NO_PARAMS);
+    }
+
+
+    public static ExecutableElement getGetPreviewMethodName(TypeElement classElement, ProcessingEnvironment processingEnvironment) {
+        return getUniqueAnnotatedMethod(classElement,
+                                        processingEnvironment,
+                                        APIModule.getGetPreviewClass(),
+                                        new TypeMirror[]{
+                                                processingEnvironment.getElementUtils().getTypeElement("elemental2.promise.Promise").asType()
+                                        },
+                                        NO_PARAMS);
     }
 
     /**
@@ -1151,14 +1184,12 @@ public class GeneratorUtils {
     }
 
     // Lookup a public method name with the given annotation. The method must be
-    // public, non-static, have a return-type of WorkbenchMenuBar and take zero
-    // parameters.
+    // public, non-static, void and take one parameter.
     private static String getMenuBarMethodName(final TypeElement classElement,
                                                final ProcessingEnvironment processingEnvironment,
                                                final String annotationName) throws GenerationException {
         final Types typeUtils = processingEnvironment.getTypeUtils();
         final Elements elementUtils = processingEnvironment.getElementUtils();
-        final TypeMirror requiredReturnType = elementUtils.getTypeElement("org.uberfire.workbench.model.menu.Menus").asType();
         final List<ExecutableElement> methods = ElementFilter.methodsIn(classElement.getEnclosedElements());
 
         ExecutableElement match = null;
@@ -1172,11 +1203,10 @@ public class GeneratorUtils {
                               annotationName) == null) {
                 continue;
             }
-            if (!typeUtils.isAssignable(actualReturnType,
-                                        requiredReturnType)) {
+            if (TypeKind.VOID != actualReturnType.getKind()) {
                 continue;
             }
-            if (e.getParameters().size() != 0) {
+            if (e.getParameters().size() != 1) {
                 continue;
             }
             if (e.getModifiers().contains(Modifier.STATIC)) {
@@ -1353,19 +1383,21 @@ public class GeneratorUtils {
     }
 
     public static String formatAssociatedResources(final Collection<String> resourceTypes) {
+        final String newLine = System.getProperty("line.separator");
+
         if (resourceTypes == null || resourceTypes.size() == 0) {
             return null;
         }
 
         final StringBuilder sb = new StringBuilder();
 
-        sb.append("@AssociatedResources").append("({\n");
+        sb.append("@AssociatedResources").append("({" + newLine);
         for (final String resourceType : resourceTypes) {
-            sb.append("    ").append(resourceType).append(".class").append(",\n");
+            sb.append("    ").append(resourceType).append(".class").append("," + newLine);
         }
-        sb.delete(sb.length() - 2,
+        sb.delete(sb.length() - (newLine.length() + 1),
                   sb.length());
-        sb.append("\n})\n");
+        sb.append(newLine + "})" + newLine);
 
         return sb.toString();
     }

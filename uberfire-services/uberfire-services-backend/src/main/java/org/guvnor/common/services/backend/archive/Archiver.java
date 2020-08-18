@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.zip.ZipEntry;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -91,10 +92,28 @@ public class Archiver {
 
         static protected String resolve(final String subPath,
                                         final String originalPath) {
+
+            final String fileName = resolveOriginalFileName(subPath,
+                                                            originalPath);
+
+            if (fileName.startsWith("/")) {
+                return "project" + fileName;
+            } else {
+                return fileName;
+            }
+        }
+
+        static private String resolveOriginalFileName(final String subPath,
+                                                      final String originalPath) {
             if ("/".equals(originalPath)) {
                 return subPath.substring(originalPath.length());
             } else {
-                return getBaseFolder(originalPath) + subPath.substring(originalPath.length() + 1);
+                String fileSubPath = subPath.substring(originalPath.length());
+                if (fileSubPath.charAt(0) == '/') {
+                    fileSubPath = fileSubPath.substring(1);
+                }
+
+                return getBaseFolder(originalPath) + fileSubPath;
             }
         }
 

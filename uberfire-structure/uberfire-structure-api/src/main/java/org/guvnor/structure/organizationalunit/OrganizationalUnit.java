@@ -3,7 +3,7 @@
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -17,10 +17,12 @@ package org.guvnor.structure.organizationalunit;
 
 import java.util.Collection;
 
+import org.guvnor.structure.contributors.Contributor;
 import org.guvnor.structure.repositories.Repository;
 import org.guvnor.structure.security.OrgUnitResourceType;
 import org.uberfire.commons.data.Cacheable;
 import org.uberfire.security.authz.RuntimeContentResource;
+import org.uberfire.spaces.Space;
 
 public interface OrganizationalUnit extends RuntimeContentResource,
                                             Cacheable {
@@ -28,6 +30,10 @@ public interface OrganizationalUnit extends RuntimeContentResource,
     OrgUnitResourceType RESOURCE_TYPE = new OrgUnitResourceType();
 
     String getName();
+
+    String getDescription();
+
+    Space getSpace();
 
     String getOwner();
 
@@ -37,5 +43,9 @@ public interface OrganizationalUnit extends RuntimeContentResource,
 
     Collection<String> getGroups();
 
-    Collection<String> getContributors();
+    Collection<Contributor> getContributors();
+
+    boolean isDeleted();
+
+    void setDescription(String description);
 }

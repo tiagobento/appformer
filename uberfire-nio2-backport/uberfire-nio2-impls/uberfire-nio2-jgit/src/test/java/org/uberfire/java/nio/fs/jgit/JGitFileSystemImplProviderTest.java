@@ -17,6 +17,7 @@
 package org.uberfire.java.nio.fs.jgit;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
@@ -63,6 +65,8 @@ import org.uberfire.java.nio.file.WatchService;
 import org.uberfire.java.nio.file.attribute.BasicFileAttributeView;
 import org.uberfire.java.nio.file.attribute.BasicFileAttributes;
 import org.uberfire.java.nio.file.attribute.FileTime;
+import org.uberfire.java.nio.file.extensions.FileSystemHooks;
+import org.uberfire.java.nio.fs.jgit.manager.JGitFileSystemsManager;
 import org.uberfire.java.nio.fs.jgit.util.Git;
 import org.uberfire.java.nio.fs.jgit.util.GitImpl;
 import org.uberfire.java.nio.fs.jgit.util.commands.Commit;
@@ -75,9 +79,9 @@ import org.uberfire.java.nio.fs.jgit.util.model.PathType;
 import static junit.framework.Assert.assertNotSame;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.fest.assertions.api.Assertions.fail;
-import static org.fest.assertions.api.Assertions.failBecauseExceptionWasNotThrown;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 import static org.uberfire.java.nio.file.StandardDeleteOption.NON_EMPTY_DIRECTORIES;
@@ -100,7 +104,7 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
 
     @Test
     @Ignore
-    public void testDaemob() throws InterruptedException {
+    public void testDaemob() {
         final URI newRepo = URI.create("git://repo-name");
 
         final Map<String, ?> env = new HashMap<String, Object>() {{
@@ -111,8 +115,7 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
         FileSystem fs = provider.newFileSystem(newRepo,
                                                env);
 
-        WatchService ws = null;
-        ws = fs.newWatchService();
+        WatchService ws = fs.newWatchService();
         final Path path = fs.getRootDirectories().iterator().next();
         path.register(ws,
                       StandardWatchEventKind.ENTRY_CREATE,
@@ -254,13 +257,13 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
         for (final Path root : fs.getRootDirectories()) {
             if (root.toAbsolutePath().toUri().toString().contains("upstream")) {
                 assertThat(provider.newDirectoryStream(root,
-                                                       null)).isNotEmpty().hasSize(2);
+                                                       null)).hasSize(2);
             } else if (root.toAbsolutePath().toUri().toString().contains("origin")) {
                 assertThat(provider.newDirectoryStream(root,
-                                                       null)).isNotEmpty().hasSize(1);
+                                                       null)).hasSize(1);
             } else {
                 assertThat(provider.newDirectoryStream(root,
-                                                       null)).isNotEmpty().hasSize(2);
+                                                       null)).hasSize(2);
             }
         }
 
@@ -487,7 +490,7 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
 
         final Path path = provider.getPath(URI.create("git://master@new-get-repo-name/home"));
 
-        assertThat(path).isNotNull();
+        AssertionsForClassTypes.assertThat(path).isNotNull();
         assertThat(path.getRoot().toString()).isEqualTo("/");
         Path root = path.getRoot();
         Path path1 = root.toRealPath();
@@ -495,7 +498,7 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
         assertThat(path.toString()).isEqualTo("/home");
 
         final Path pathRelative = provider.getPath(URI.create("git://master@new-get-repo-name/:home"));
-        assertThat(pathRelative).isNotNull();
+        AssertionsForClassTypes.assertThat(pathRelative).isNotNull();
         assertThat(pathRelative.toRealPath().toUri().toString()).isEqualTo("git://master@new-get-repo-name/:home");
         assertThat(pathRelative.getRoot().toString()).isEqualTo("");
         assertThat(pathRelative.toString()).isEqualTo("home");
@@ -522,12 +525,12 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
 
         final Path path = provider.getPath(URI.create("git://origin/master@new-complex-get-repo-name/home"));
 
-        assertThat(path).isNotNull();
+        AssertionsForClassTypes.assertThat(path).isNotNull();
         assertThat(path.getRoot().toString()).isEqualTo("/");
         assertThat(path.toString()).isEqualTo("/home");
 
         final Path pathRelative = provider.getPath(URI.create("git://origin/master@new-complex-get-repo-name/:home"));
-        assertThat(pathRelative).isNotNull();
+        AssertionsForClassTypes.assertThat(pathRelative).isNotNull();
         assertThat(pathRelative.getRoot().toString()).isEqualTo("");
         assertThat(pathRelative.toString()).isEqualTo("home");
     }
@@ -541,18 +544,18 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
 
         final Path path1 = provider.getPath(URI.create("git://new-complex-get-repo-name/composed/home"));
 
-        assertThat(path1).isNotNull();
+        AssertionsForClassTypes.assertThat(path1).isNotNull();
         assertThat(path1.getRoot().toString()).isEqualTo("/");
         assertThat(path1.toString()).isEqualTo("/home");
 
         final Path path = provider.getPath(URI.create("git://origin/master@new-complex-get-repo-name/composed/home"));
 
-        assertThat(path).isNotNull();
+        AssertionsForClassTypes.assertThat(path).isNotNull();
         assertThat(path.getRoot().toString()).isEqualTo("/");
         assertThat(path.toString()).isEqualTo("/home");
 
         final Path pathRelative = provider.getPath(URI.create("git://origin/master@new-complex-get-repo-name/composed/:home"));
-        assertThat(pathRelative).isNotNull();
+        AssertionsForClassTypes.assertThat(pathRelative).isNotNull();
         assertThat(pathRelative.getRoot().toString()).isEqualTo("");
         assertThat(pathRelative.toString()).isEqualTo("home");
     }
@@ -592,12 +595,7 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
 
         final Path path = provider.getPath(URI.create("git://master@inputstream-test-repo/myfile.txt"));
 
-        final InputStream inputStream = provider.newInputStream(path);
-        assertThat(inputStream).isNotNull();
-
-        final String content = new Scanner(inputStream).useDelimiter("\\A").next();
-
-        inputStream.close();
+        final String content = extractContent(path);
 
         assertThat(content).isNotNull().isEqualTo("temp\n.origin\n.content");
     }
@@ -638,12 +636,7 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
 
         final Path path = provider.getPath(URI.create("git://master@xinputstream-test-repo/path/to/file/myfile.txt"));
 
-        final InputStream inputStream = provider.newInputStream(path);
-        assertThat(inputStream).isNotNull();
-
-        final String content = new Scanner(inputStream).useDelimiter("\\A").next();
-
-        inputStream.close();
+        final String content = extractContent(path);
 
         assertThat(content).isNotNull().isEqualTo("temp\n.origin\n.content");
     }
@@ -875,6 +868,38 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
     }
 
     @Test
+    public void testDeleteShouldRemoveEmptyParentDir() throws IOException {
+
+        final URI doraRepo = URI.create("git://parentDir/dora-repo");
+        FileSystem doraFS = provider.newFileSystem(doraRepo,
+                                                   EMPTY_ENV);
+
+        final File doraRepoDir = ((JGitFileSystemProxy) doraFS).getGit().getRepository().getDirectory();
+
+        final File parentDir = doraRepoDir.getParentFile();
+        final File gitProviderDir = provider.getGitRepoContainerDir();
+
+        final URI doraRepo1 = URI.create("git://parentDir/dora-repo1");
+        FileSystem doraFS1 = provider.newFileSystem(doraRepo1,
+                                                    EMPTY_ENV);
+        final File dora1RepoDir = ((JGitFileSystemProxy) doraFS1).getGit().getRepository().getDirectory();
+
+        final File parentDir1 = doraRepoDir.getParentFile();
+
+        assertEquals(parentDir, parentDir1);
+
+        provider.delete(doraFS.getPath(null));
+        assertFalse(doraRepoDir.exists());
+        assertTrue(parentDir.exists());
+        assertTrue(gitProviderDir.exists());
+
+        provider.delete(doraFS1.getPath(null));
+        assertFalse(dora1RepoDir.exists());
+        assertTrue(parentDir1.exists());
+        assertTrue(gitProviderDir.exists());
+    }
+
+    @Test
     public void testDelete() throws IOException {
         final URI newRepo = URI.create("git://delete1-test-repo");
         provider.newFileSystem(newRepo,
@@ -1062,7 +1087,7 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
     }
 
     @Test
-    public void testCreateDirectory() throws Exception {
+    public void testCreateDirectory() {
         final URI newRepo = URI.create("git://xcreatedir-test-repo");
         provider.newFileSystem(newRepo,
                                EMPTY_ENV);
@@ -2097,6 +2122,174 @@ public class JGitFileSystemImplProviderTest extends AbstractTestInfra {
 
         assertEquals(fsComposedName1,
                      objectRepositoryResolver.resolveFileSystem(fsComposedName1.getGit().getRepository()));
+    }
+
+    @Test
+    public void extractFSHooksTest() {
+        Map<String, Object> env = new HashMap<>();
+
+        Object hook = (FileSystemHooks.FileSystemHook) context -> { };
+
+        env.put("dora", "bento");
+        env.put(FileSystemHooks.ExternalUpdate.name(), hook);
+
+        Map<FileSystemHooks, ?> fileSystemHooksMap = JGitFileSystemProvider.extractFSHooks(env);
+
+        assertEquals(1, fileSystemHooksMap.size());
+        assertTrue(fileSystemHooksMap.keySet().contains(FileSystemHooks.ExternalUpdate));
+        assertEquals(hook, fileSystemHooksMap.get(FileSystemHooks.ExternalUpdate));
+    }
+
+    @Test
+    public void extractCheckBranchAccessHookTest() {
+        Map<String, Object> env = new HashMap<>();
+
+        Object hook = (FileSystemHooks.FileSystemHook) context -> { };
+
+        env.put("dora", "bento");
+        env.put(FileSystemHooks.BranchAccessCheck.name(), hook);
+
+        Map<FileSystemHooks, ?> fileSystemHooksMap = JGitFileSystemProvider.extractFSHooks(env);
+
+        assertEquals(1, fileSystemHooksMap.size());
+        assertTrue(fileSystemHooksMap.keySet().contains(FileSystemHooks.BranchAccessCheck));
+        assertEquals(hook, fileSystemHooksMap.get(FileSystemHooks.BranchAccessCheck));
+    }
+
+    @Test
+    public void testCloseFileSystem() {
+
+        JGitFileSystemProvider fsProvider = spy(new JGitFileSystemProvider(getGitPreferences()) {
+
+            @Override
+            protected void setupFileSystemsManager() {
+                fsManager = mock(JGitFileSystemsManager.class);
+                when(fsManager.allTheFSAreClosed()).thenReturn(true);
+            }
+        });
+
+        fsProvider.onCloseFileSystem(mock(JGitFileSystem.class));
+
+        verify(fsProvider, times(1)).shutdownEventsManager();
+    }
+
+    @Test
+    public void moveBranchesTest() throws IOException {
+        final URI newRepo = URI.create("git://movebranch-repo");
+        provider.newFileSystem(newRepo,
+                               EMPTY_ENV);
+
+        {
+            final Path path = provider.getPath(URI.create("git://another-branch@movebranch-repo/dorinha.txt"));
+
+            final OutputStream outStream = provider.newOutputStream(path);
+            outStream.write("little baby another-branch".getBytes());
+            outStream.close();
+        }
+
+        final Path source = provider.getPath(URI.create("git://another-branch@movebranch-repo/"));
+        final Path target = provider.getPath(URI.create("git://another-branch-moved@movebranch-repo/"));
+
+        provider.move(source,
+                      target);
+
+        Throwable extractContentCall = catchThrowable(() -> extractContent(provider.getPath(URI.create("git://another-branch@movebranch-repo/dorinha.txt"))));
+
+        assertThat(extractContentCall).isInstanceOf(NoSuchFileException.class);
+
+        final String contentMoved = extractContent(provider.getPath(URI.create("git://another-branch-moved@movebranch-repo/dorinha.txt")));
+
+        assertThat(contentMoved).isNotNull().isEqualTo("little baby another-branch");
+    }
+
+    @Test
+    public void moveBranchesNotAtTheSameFSShouldNotBeAllowedTest() throws IOException {
+        final URI newRepo = URI.create("git://movebranch-repo");
+        provider.newFileSystem(newRepo,
+                               EMPTY_ENV);
+
+        final URI anotherRepo = URI.create("git://another-repo");
+        provider.newFileSystem(anotherRepo,
+                               EMPTY_ENV);
+
+        {
+            final Path path = provider.getPath(URI.create("git://another-branch@movebranch-repo/dorinha.txt"));
+
+            final OutputStream outStream = provider.newOutputStream(path);
+            outStream.write("little baby another-branch".getBytes());
+            outStream.close();
+        }
+
+        final Path source = provider.getPath(URI.create("git://another-branch@movebranch-repo/"));
+        final Path target = provider.getPath(URI.create("git://another-branch-moved@another-repo/"));
+
+        assertThatThrownBy(() -> provider.move(source, target))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    public void copyBranchesNotAtTheSameFSShouldNotBeAllowedTest() throws IOException {
+        final URI newRepo = URI.create("git://movebranch-repo");
+        provider.newFileSystem(newRepo,
+                               EMPTY_ENV);
+
+        final URI anotherRepo = URI.create("git://another-repo");
+        provider.newFileSystem(anotherRepo,
+                               EMPTY_ENV);
+
+        {
+            final Path path = provider.getPath(URI.create("git://another-branch@movebranch-repo/dorinha.txt"));
+
+            final OutputStream outStream = provider.newOutputStream(path);
+            outStream.write("little baby another-branch".getBytes());
+            outStream.close();
+        }
+
+        final Path source = provider.getPath(URI.create("git://another-branch@movebranch-repo/"));
+        final Path target = provider.getPath(URI.create("git://another-branch-moved@another-repo/"));
+
+        assertThatThrownBy(() -> provider.copy(source, target))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    public void copyBranchesTest() throws IOException {
+        final URI newRepo = URI.create("git://movebranch-repo");
+        provider.newFileSystem(newRepo,
+                               EMPTY_ENV);
+
+        {
+            final Path path = provider.getPath(URI.create("git://another-branch@movebranch-repo/dorinha.txt"));
+
+            final OutputStream outStream = provider.newOutputStream(path);
+            outStream.write("little baby another-branch".getBytes());
+            outStream.close();
+        }
+
+        final Path source = provider.getPath(URI.create("git://another-branch@movebranch-repo/"));
+        final Path target = provider.getPath(URI.create("git://another-branch-moved@movebranch-repo/"));
+
+        provider.copy(source,
+                      target);
+
+        final String originalContent = extractContent(provider.getPath(URI.create("git://another-branch@movebranch-repo/dorinha.txt")));
+
+        assertThat(originalContent).isNotNull().isEqualTo("little baby another-branch");
+
+        final String contentMoved = extractContent(provider.getPath(URI.create("git://another-branch-moved@movebranch-repo/dorinha.txt")));
+
+        assertThat(contentMoved).isNotNull().isEqualTo("little baby another-branch");
+    }
+
+    private String extractContent(Path path) throws IOException {
+        final InputStream inputStream = provider.newInputStream(path);
+        assertThat(inputStream).isNotNull();
+
+        final String content = new Scanner(inputStream).useDelimiter("\\A").next();
+
+        inputStream.close();
+
+        return content;
     }
 
     private interface MyAttrs extends BasicFileAttributes {

@@ -3,7 +3,7 @@
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -42,13 +42,15 @@ public class InstallProjectCmd extends AbstractJobCommand {
         JobResult result = null;
         try {
             result = helper.installProject(jobRequest.getJobId(),
-                                           jobRequest.getRepositoryName(),
-                                           jobRequest.getProjectName());
+                                           jobRequest.getSpaceName(),
+                                           jobRequest.getProjectName(),
+                                           jobRequest.getBranchName());
         } finally {
             JobStatus status = result != null ? result.getStatus() : JobStatus.SERVER_ERROR;
-            logger.debug("-----installProject--- , repositoryName: {}, project name: {} [{}]",
-                         jobRequest.getRepositoryName(),
+            logger.debug("-----installProject--- , ouName: {}, project name: {}, branch name: {} [{}]",
+                         jobRequest.getSpaceName(),
                          jobRequest.getProjectName(),
+                         jobRequest.getBranchName(),
                          status);
         }
         return result;

@@ -16,6 +16,9 @@
 
 package org.uberfire.preferences.backend;
 
+import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull;
+import static org.uberfire.java.nio.file.Files.walkFileTree;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -23,6 +26,7 @@ import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -40,13 +44,12 @@ import org.uberfire.preferences.shared.PreferenceScope;
 import org.uberfire.preferences.shared.PreferenceScopeFactory;
 import org.uberfire.preferences.shared.PreferenceScopeTypes;
 import org.uberfire.preferences.shared.PreferenceStorage;
+import org.uberfire.preferences.shared.event.PreferenceUpdatedEvent;
 import org.uberfire.preferences.shared.impl.PreferenceScopeResolutionStrategyInfo;
 import org.uberfire.preferences.shared.impl.PreferenceScopedValue;
 import org.uberfire.preferences.shared.impl.exception.InvalidPreferenceScopeException;
 import org.uberfire.rpc.SessionInfo;
-
-import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull;
-import static org.uberfire.java.nio.file.Files.walkFileTree;
+import org.uberfire.spaces.SpacesAPI;
 
 @ApplicationScoped
 public class PreferenceStorageImpl implements PreferenceStorage {
@@ -54,6 +57,9 @@ public class PreferenceStorageImpl implements PreferenceStorage {
     public static final String FILE_FORMAT = ".preferences";
     public static final int FILE_FORMAT_SIZE = FILE_FORMAT.length();
     private static final Logger logger = LoggerFactory.getLogger(PreferenceStorageImpl.class);
+
+    private SpacesAPI spaces;
+
     private IOService ioService;
 
     private SessionInfo sessionInfo;
@@ -63,6 +69,8 @@ public class PreferenceStorageImpl implements PreferenceStorage {
     private PreferenceScopeFactory scopeFactory;
 
     private ObjectStorage objectStorage;
+    
+    private Event<PreferenceUpdatedEvent> preferenceUpdatedEvent;
 
     protected PreferenceStorageImpl() {
     }
@@ -72,18 +80,23 @@ public class PreferenceStorageImpl implements PreferenceStorage {
                                  final SessionInfo sessionInfo,
                                  @Customizable final PreferenceScopeTypes scopeTypes,
                                  final PreferenceScopeFactory scopeFactory,
-                                 final ObjectStorage objectStorage) {
+                                 final ObjectStorage objectStorage,
+                                 final SpacesAPI spaces,
+                                 final Event<PreferenceUpdatedEvent> preferenceUpdatedEvent) {
         this.ioService = ioService;
         this.sessionInfo = sessionInfo;
         this.scopeTypes = scopeTypes;
         this.scopeFactory = scopeFactory;
         this.objectStorage = objectStorage;
+        this.spaces = spaces;
+        this.preferenceUpdatedEvent = preferenceUpdatedEvent;
     }
 
     @PostConstruct
     public void init() {
-        final String rootPath = "git://preferences";
-        objectStorage.init(rootPath);
+        objectStorage.init(spaces.resolveFileSystemURI(SpacesAPI.Scheme.DEFAULT,
+                                                       SpacesAPI.DEFAULT_SPACE,
+                                                       "preferences"));
     }
 
     @Override
@@ -150,7 +163,9 @@ public class PreferenceStorageImpl implements PreferenceStorage {
                       final Object value) {
         objectStorage.write(buildScopedPreferencePath(preferenceScope,
                                                       key),
-                            value);
+                                                      value);
+        preferenceUpdatedEvent.fire(new PreferenceUpdatedEvent(key, 
+                                                               value));
     }
 
     @Override

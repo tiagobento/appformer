@@ -16,13 +16,15 @@
 package org.dashbuilder.client.navigation.impl;
 
 import java.util.List;
+import java.util.Optional;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 import org.dashbuilder.client.navigation.NavigationManager;
 import org.dashbuilder.client.navigation.event.NavItemGotoEvent;
-import org.dashbuilder.client.navigation.event.NavTreeChangedEvent;
+import org.dashbuilder.navigation.event.NavTreeChangedEvent;
 import org.dashbuilder.client.navigation.event.NavTreeLoadedEvent;
 import org.dashbuilder.navigation.NavItem;
 import org.dashbuilder.navigation.NavTree;
@@ -78,7 +80,12 @@ public class NavigationManagerImpl implements NavigationManager {
 
     @Override
     public NavTree getNavTree() {
-        return navTree == null ? defaultNavTree : navTree;
+        return !hasNavTree() ? defaultNavTree : navTree;
+    }
+
+    @Override
+    public boolean hasNavTree() {
+        return Optional.ofNullable(navTree).isPresent();
     }
 
     @Override
@@ -107,5 +114,10 @@ public class NavigationManagerImpl implements NavigationManager {
         if (navController.canRead(navItem)) {
             navItemGotoEvent.fire(new NavItemGotoEvent(navItem));
         }
+    }
+
+    @Override
+    public void update(NavTree navTree) {
+        this.defaultNavTree = navTree;
     }
 }

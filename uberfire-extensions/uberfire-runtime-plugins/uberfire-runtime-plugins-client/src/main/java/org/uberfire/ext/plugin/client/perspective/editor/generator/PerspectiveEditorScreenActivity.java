@@ -16,10 +16,14 @@
 
 package org.uberfire.ext.plugin.client.perspective.editor.generator;
 
+import java.util.function.Consumer;
+
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Panel;
+import org.jboss.errai.common.client.ui.ElementWrapperWidget;
 import org.uberfire.client.mvp.WorkbenchScreenActivity;
+import org.uberfire.ext.layout.editor.api.editor.LayoutInstance;
 import org.uberfire.ext.layout.editor.api.editor.LayoutTemplate;
 import org.uberfire.ext.layout.editor.client.generator.LayoutGenerator;
 import org.uberfire.mvp.PlaceRequest;
@@ -121,8 +125,8 @@ public class PerspectiveEditorScreenActivity implements WorkbenchScreenActivity 
     }
 
     @Override
-    public Menus getMenus() {
-        return null;
+    public void getMenus(final Consumer<Menus> menusConsumer) {
+        menusConsumer.accept(null);
     }
 
     @Override
@@ -132,9 +136,10 @@ public class PerspectiveEditorScreenActivity implements WorkbenchScreenActivity 
 
     @Override
     public void onOpen() {
+        LayoutInstance layoutInstance = layoutGenerator.build(layoutTemplate);
         mainPanel.clear();
         mainPanel.getElement().addClassName("uf-perspective-component");
-        mainPanel.add(layoutGenerator.build(layoutTemplate));
+        mainPanel.add(ElementWrapperWidget.getWidget(layoutInstance.getElement()));
     }
 
     @Override

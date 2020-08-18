@@ -16,6 +16,7 @@
 package org.uberfire.client.mvp;
 
 import java.util.Collection;
+import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
@@ -28,6 +29,7 @@ import org.uberfire.backend.vfs.ObservablePath;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.workbench.WorkbenchLayout;
 import org.uberfire.client.workbench.widgets.menu.WorkbenchMenuBar;
+import org.uberfire.mvp.BiParameterizedCommand;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.PathPlaceRequest;
@@ -130,8 +132,20 @@ public class PluginPlaceManagerImpl implements PlaceManager {
     }
 
     @Override
+    public void goTo(String id,
+                     HTMLElement addTo) {
+        fail();
+    }
+
+    @Override
     public void goTo(PlaceRequest place,
                      HTMLElement addTo) {
+        fail();
+    }
+
+    @Override
+    public void goTo(PlaceRequest place,
+                     elemental2.dom.HTMLElement addTo) {
         fail();
     }
 
@@ -173,6 +187,12 @@ public class PluginPlaceManagerImpl implements PlaceManager {
     }
 
     @Override
+    public void closePlace(final PlaceRequest placeToClose,
+                           final Command doAfterClose) {
+        fail();
+    }
+
+    @Override
     public void tryClosePlace(final PlaceRequest placeToClose,
                               final Command onAfterClose) {
         fail();
@@ -205,13 +225,48 @@ public class PluginPlaceManagerImpl implements PlaceManager {
     }
 
     @Override
+    public boolean canClosePlace(final PlaceRequest place) {
+        fail();
+        return false;
+    }
+
+    @Override
+    public boolean canCloseAllPlaces() {
+        fail();
+        return false;
+    }
+
+    @Override
+    public List<PlaceRequest> getUncloseablePlaces() {
+        fail();
+        return null;
+    }
+
+    @Override
     public void registerOnOpenCallback(final PlaceRequest place,
-                                       final Command command) {
+                                       final Command callback) {
         fail();
     }
 
     @Override
-    public void unregisterOnOpenCallback(final PlaceRequest place) {
+    public void unregisterOnOpenCallbacks(final PlaceRequest place) {
+        fail();
+    }
+
+    @Override
+    public void registerOnCloseCallback(final PlaceRequest place,
+                                        final Command callback) {
+        fail();
+    }
+
+    @Override
+    public void unregisterOnCloseCallbacks(final PlaceRequest place) {
+        fail();
+    }
+
+    @Override
+    public void registerPerspectiveCloseChain(final String perspectiveIdentifier,
+                                              final BiParameterizedCommand<Command, PlaceRequest> closeChain) {
         fail();
     }
 
@@ -222,7 +277,13 @@ public class PluginPlaceManagerImpl implements PlaceManager {
     }
 
     @Override
-    public Command getOpenCallback(PlaceRequest place) {
+    public List<Command> getOnOpenCallbacks(final PlaceRequest place) {
+        fail();
+        return null;
+    }
+
+    @Override
+    public List<Command> getOnCloseCallbacks(final PlaceRequest place) {
         fail();
         return null;
     }

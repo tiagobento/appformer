@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.uberfire</groupId>
     <artifactId>uberfire-parent</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>7.43.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -35,7 +35,6 @@
     <module>uberfire-workbench-client-views-patternfly</module>
     <module>uberfire-workbench-processors</module>
     <module>uberfire-workbench-processors-tests</module>
-<!--    <module>uberfire-workbench-client-tests</module>-->
   </modules>
 
 </project>

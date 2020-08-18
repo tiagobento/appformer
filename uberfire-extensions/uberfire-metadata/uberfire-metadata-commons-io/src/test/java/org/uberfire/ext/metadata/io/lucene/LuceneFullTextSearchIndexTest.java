@@ -45,7 +45,7 @@ import static org.uberfire.ext.metadata.engine.MetaIndexEngine.FULL_TEXT_FIELD;
 import static org.uberfire.ext.metadata.io.KObjectUtil.toKCluster;
 
 @RunWith(org.jboss.byteman.contrib.bmunit.BMUnitRunner.class)
-@BMScript(value = "byteman/lucene.btm")
+@BMScript(dir = "byteman", value = "lucene.btm")
 public class LuceneFullTextSearchIndexTest extends BaseIndexTest {
 
     @Override
@@ -59,10 +59,12 @@ public class LuceneFullTextSearchIndexTest extends BaseIndexTest {
 
             ioService = new IOServiceIndexedImpl(config.getIndexEngine(),
                                                  Executors.newCachedThreadPool(new DescriptiveThreadFactory()),
+                                                 indexersFactory(),
+                                                 indexerDispatcherFactory(config.getIndexEngine()),
                                                  DublinCoreView.class,
                                                  VersionAttributeView.class);
 
-            IndexersFactory.addIndexer(new MockIndexer());
+            indexersFactory().addIndexer(new MockIndexer());
         }
         return ioService;
     }
@@ -81,7 +83,7 @@ public class LuceneFullTextSearchIndexTest extends BaseIndexTest {
 
         waitForCountDown(10000);
 
-        final String index = toKCluster(path1.getFileSystem()).getClusterId();
+        final String index = toKCluster(path1).getClusterId();
 
         {
 

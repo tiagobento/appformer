@@ -14,7 +14,17 @@
  */
 package org.dashbuilder.displayer.client.widgets;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.util.Arrays;
+
 import javax.enterprise.event.Event;
 
 import org.dashbuilder.dataset.DataSetLookupConstraints;
@@ -23,24 +33,23 @@ import org.dashbuilder.dataset.group.AggregateFunctionType;
 import org.dashbuilder.dataset.uuid.UUIDGenerator;
 import org.dashbuilder.displayer.DisplayerConstraints;
 import org.dashbuilder.displayer.DisplayerSettings;
-import org.dashbuilder.displayer.DisplayerSettingsBuilder;
 import org.dashbuilder.displayer.DisplayerSettingsFactory;
 import org.dashbuilder.displayer.DisplayerSubType;
 import org.dashbuilder.displayer.DisplayerType;
 import org.dashbuilder.displayer.client.Displayer;
 import org.dashbuilder.displayer.client.DisplayerLocator;
+import org.dashbuilder.displayer.client.RendererLibrary;
+import org.dashbuilder.displayer.client.RendererManager;
 import org.dashbuilder.displayer.client.events.DataSetLookupChangedEvent;
 import org.dashbuilder.displayer.client.events.DisplayerEditorClosedEvent;
 import org.dashbuilder.displayer.client.events.DisplayerEditorSavedEvent;
+import org.dashbuilder.displayer.client.events.DisplayerSettingsChangedEvent;
 import org.dashbuilder.displayer.client.prototypes.DisplayerPrototypes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DisplayerEditorTest {
@@ -50,6 +59,12 @@ public class DisplayerEditorTest {
 
     @Mock
     DataSetClientServices clientServices;
+    
+    @Mock 
+    RendererManager rendererManager;
+    
+    @Mock
+    RendererLibrary rendererLibrary;
 
     @Mock
     DisplayerLocator displayerLocator;
@@ -98,31 +113,38 @@ public class DisplayerEditorTest {
 
     @Mock
     DataSetLookupConstraints lookupConstraints;
+    
+    @Mock
+    DisplayerSettingsChangedEvent displayerSettingsChangedEvent;
 
     DisplayerEditor presenter = null;
 
     @Before
     public void init() throws Exception {
-        when(displayerPrototypes.getProto(any(DisplayerType.class))).thenReturn(displayerSettings);
+        when(displayerPrototypes.getProto(any(DisplayerType.class), any(DisplayerSubType.class))).thenReturn(displayerSettings);
         when(displayerSettings.cloneInstance()).thenReturn(tableSettings);
         when(displayerLocator.lookupDisplayer(displayerSettings)).thenReturn(displayer);
         when(displayerLocator.lookupDisplayer(tableSettings)).thenReturn(tableDisplayer);
         when(displayer.getDisplayerConstraints()).thenReturn(displayerConstraints);
         when(displayerConstraints.getDataSetLookupConstraints()).thenReturn(lookupConstraints);
+        when(rendererManager.getDefaultRenderer(any())).thenReturn(rendererLibrary);
 
         presenter = new DisplayerEditor(view, clientServices, displayerLocator, displayerPrototypes,
-                typeSelector, lookupEditor, settingsEditor, editorStatus, displayerHtmlEditor, saveEvent, closeEvent);
+                typeSelector, lookupEditor, settingsEditor, editorStatus, displayerHtmlEditor, saveEvent, 
+                closeEvent, rendererManager);
 
     }
 
     @Test
     public void testBrandNewDisplayer() {
         when(view.getBrandNewDisplayerTitle()).thenReturn("New displayer");
+        presenter.setDisplayerType(DisplayerType.SELECTOR);
+        presenter.setDisplayerSubType(DisplayerSubType.SELECTOR_DROPDOWN);
         presenter.init(null);
 
         assertEquals(presenter.isBrandNewDisplayer(), true);
         verify(displayerSettings).setTitle("New displayer");
-        verify(displayerPrototypes).getProto(any(DisplayerType.class));
+        verify(displayerPrototypes).getProto(DisplayerType.SELECTOR, DisplayerSubType.SELECTOR_DROPDOWN);
         verify(displayerLocator).lookupDisplayer(displayerSettings);
         verify(displayer).draw();
 
@@ -252,5 +274,25 @@ public class DisplayerEditorTest {
         presenter.onDataSetLookupChanged(new DataSetLookupChangedEvent(settings2.getDataSetLookup()));
         verify(settingsEditor).init(any());
         assertEquals(presenter.getDisplayerSettings().getColumnSettingsList().size(), 0);
+    }
+    
+    @Test
+    public void rendererSettingChangedTest() {
+        String otherRenderer = "otherRenderer";
+        when(displayerSettingsChangedEvent.getDisplayerSettings()).thenReturn(displayerSettings);
+        
+        presenter.onDisplayerSettingsChanged(displayerSettingsChangedEvent);
+        verify(settingsEditor, times(0)).init(any());
+        
+        when(displayerSettings.getRenderer()).thenReturn(otherRenderer);
+        presenter.onDisplayerSettingsChanged(displayerSettingsChangedEvent);
+        verify(settingsEditor).init(any());
+        assertEquals(otherRenderer, presenter.getCurrentRenderer());
+        
+        reset(displayerSettings);
+        when(displayerSettings.getRenderer()).thenReturn(null);
+        presenter.onDisplayerSettingsChanged(displayerSettingsChangedEvent);
+        assertEquals(otherRenderer, presenter.getCurrentRenderer());
+        
     }
 }

@@ -23,6 +23,7 @@
   <inherits name='org.uberfire.ext.editor.commons.UberfireCommonsEditorAPI'/>
   <inherits name='org.guvnor.common.services.workingset.GuvnorWorkingsetAPI'/>
   <inherits name='org.guvnor.common.services.GuvnorServicesAPI'/>
+  <inherits name='org.guvnor.structure.GuvnorStructureAPI' />
 
   <source path='builder'/>
   <source path='context'/>
@@ -31,7 +32,9 @@
   <source path='model'/>
   <source path="security" />
   <source path='service'/>
-  <source path='social' />
+  <source path='categories' />
   <source path='preferences' />
+  <source path='roles' />
+  <source path='utils' />
 
 </module>

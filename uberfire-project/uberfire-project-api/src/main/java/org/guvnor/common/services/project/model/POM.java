@@ -30,14 +30,15 @@ public class POM {
     private GAV gav;
     private String name;
     private String description;
+    private String url;
 
     private String packaging;
 
     private Build build;
 
-    private List<Dependency> dependencies = new ArrayList<Dependency>();
-    private List<Repository> repositories = new ArrayList<Repository>();
-    private List<String> modules = new ArrayList<String>();
+    private List<Dependency> dependencies = new ArrayList<>();
+    private List<MavenRepository> repositories = new ArrayList<>();
+    private List<String> modules = new ArrayList<>();
 
     public POM() {
         this.gav = new GAV();
@@ -47,25 +48,31 @@ public class POM {
     public POM(final GAV gav) {
         this(null,
              null,
-             gav);
+             null,
+             gav,
+             false);
     }
 
     public POM(final String name,
                final String description,
-               final GAV gav) {
-        super();
-        this.name = name;
-        this.description = description;
-        this.gav = gav;
+               final String url,
+               final GAV gav
+               ) {
+        this(name,
+             description,
+             url,
+             gav,
+             false);
     }
 
     public POM(final String name,
                final String description,
+               final String url,
                final GAV gav,
                final boolean multiModule) {
-        super();
         this.name = name;
         this.description = description;
+        this.url = url;
         this.gav = gav;
         if (multiModule) {
             packaging = "pom";
@@ -84,11 +91,11 @@ public class POM {
         this.dependencies = dependencies;
     }
 
-    public void addRepository(Repository repository) {
-        repositories.add(repository);
+    public void addRepository(MavenRepository mavenRepository) {
+        repositories.add(mavenRepository);
     }
 
-    public List<Repository> getRepositories() {
+    public List<MavenRepository> getRepositories() {
         return repositories;
     }
 
@@ -110,6 +117,14 @@ public class POM {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     public GAV getParent() {
@@ -137,7 +152,7 @@ public class POM {
     }
 
     public boolean isMultiModule() {
-        return packaging.equals("pom");
+        return "pom".equals(packaging);
     }
 
     public void setPackaging(String packaging) {
@@ -198,6 +213,8 @@ public class POM {
         result = 31 * result + (gav != null ? gav.hashCode() : 0);
         result = ~~result;
         result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = ~~result;
+        result = 31 * result + (url != null ? url.hashCode() : 0);
         result = ~~result;
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = ~~result;

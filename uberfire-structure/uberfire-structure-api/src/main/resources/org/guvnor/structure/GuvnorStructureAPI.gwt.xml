@@ -5,15 +5,15 @@
 
   <inherits name="org.jboss.errai.bus.ErraiBus"/>
   <inherits name="org.uberfire.java.nio.UberfireNIO2Model"/>
-  <inherits name="org.ext.uberfire.social.activities.SocialActivitiesAPI" />
+  <inherits name="org.uberfire.UberfireAPI"/>
 
   <source path="config"/>
+  <source path="contributors"/>
   <source path="deployment"/>
   <source path="events"/>
   <source path="navigator"/>
   <source path="organizationalunit"/>
   <source path="repositories"/>
   <source path="security" />
-  <source path="social" />
 
 </module>

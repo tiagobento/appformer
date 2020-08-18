@@ -16,15 +16,8 @@
 
 package org.uberfire.java.nio.fs.jgit;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.RandomAccessFile;
-import java.net.URI;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,10 +28,13 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.ReceiveCommand;
+import org.eclipse.jgit.transport.UploadPack;
+import org.jboss.errai.security.shared.api.identity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.uberfire.java.nio.IOException;
@@ -52,8 +48,12 @@ import org.uberfire.java.nio.file.PatternSyntaxException;
 import org.uberfire.java.nio.file.WatchEvent;
 import org.uberfire.java.nio.file.WatchService;
 import org.uberfire.java.nio.file.attribute.UserPrincipalLookupService;
+import org.uberfire.java.nio.file.extensions.FileSystemHookExecutionContext;
+import org.uberfire.java.nio.file.extensions.FileSystemHooks;
+import org.uberfire.java.nio.file.extensions.FileSystemHooksConstants;
 import org.uberfire.java.nio.file.spi.FileSystemProvider;
 import org.uberfire.java.nio.fs.jgit.util.Git;
+import org.uberfire.java.nio.fs.jgit.util.extensions.JGitFSHooks;
 import org.uberfire.java.nio.fs.jgit.util.model.CommitInfo;
 import org.uberfire.java.nio.fs.jgit.ws.JGitFileSystemsEventsManager;
 
@@ -70,25 +70,29 @@ public class JGitFileSystemImpl implements JGitFileSystem {
                                                                                                  "version")));
     private final JGitFileSystemProvider provider;
     private final Git git;
-    private final String toStringContent;
+    private String toStringContent;
     private boolean isClosed = false;
     private final FileStore fileStore;
     private final String name;
     private final CredentialsProvider credential;
+    private final Map<FileSystemHooks, ?> fsHooks;
     private final AtomicInteger numberOfCommitsSinceLastGC = new AtomicInteger(0);
     private FileSystemState state = FileSystemState.NORMAL;
     private CommitInfo batchCommitInfo = null;
     private Map<Path, Boolean> hadCommitOnBatchState = new ConcurrentHashMap<>();
-    private Map<String, NotificationModel> oldHeadsOfPendingDiffs = new ConcurrentHashMap<>();
-    private Lock lock;
+    private JGitFileSystemLock lock;
     private JGitFileSystemsEventsManager fsEventsManager;
+
+    private List<WatchEvent<?>> postponedWatchEvents = Collections.synchronizedList(new ArrayList<>());
 
     public JGitFileSystemImpl(final JGitFileSystemProvider provider,
                               final Map<String, String> fullHostNames,
                               final Git git,
+                              final JGitFileSystemLock lock,
                               final String name,
                               final CredentialsProvider credential,
-                              JGitFileSystemsEventsManager fsEventsManager) {
+                              JGitFileSystemsEventsManager fsEventsManager,
+                              Map<FileSystemHooks, ?> fsHooks) {
         this.fsEventsManager = fsEventsManager;
         this.provider = checkNotNull("provider",
                                      provider);
@@ -97,24 +101,13 @@ public class JGitFileSystemImpl implements JGitFileSystem {
         this.name = checkNotEmpty("name",
                                   name);
 
-        this.lock = new Lock(git.getRepository().getDirectory().toURI());
+        this.lock = checkNotNull("lock",
+                                 lock);
         this.credential = checkNotNull("credential",
                                        credential);
+        this.fsHooks = fsHooks;
         this.fileStore = new JGitFileStore(this.git.getRepository());
-        if (fullHostNames != null && !fullHostNames.isEmpty()) {
-            final StringBuilder sb = new StringBuilder();
-            final Iterator<Map.Entry<String, String>> iterator = fullHostNames.entrySet().iterator();
-            while (iterator.hasNext()) {
-                final Map.Entry<String, String> entry = iterator.next();
-                sb.append(entry.getKey()).append("://").append(entry.getValue()).append("/").append(name);
-                if (iterator.hasNext()) {
-                    sb.append("\n");
-                }
-            }
-            toStringContent = sb.toString();
-        } else {
-            toStringContent = "git://" + name;
-        }
+        setPublicURI(fullHostNames);
     }
 
     @Override
@@ -246,7 +239,7 @@ public class JGitFileSystemImpl implements JGitFileSystem {
                         final String... more)
             throws InvalidPathException {
         checkClosed();
-        if (first == null || first.trim().isEmpty()) {
+        if (first == null || first.trim().isEmpty() || first.trim().equals("/")) {
             return new JGitFSPath(this);
         }
 
@@ -481,113 +474,89 @@ public class JGitFileSystemImpl implements JGitFileSystem {
         lock.unlock();
     }
 
-    //testing purposes
-    public boolean isLocked() {
-        return lock.isLocked();
+    public JGitFileSystemLock getLock() {
+        return lock;
     }
 
-    public static class Lock {
+    @Override
+    public void addPostponedWatchEvents(List<WatchEvent<?>> postponedWatchEvents) {
+        this.postponedWatchEvents.addAll(postponedWatchEvents);
+    }
 
-        private ReentrantLock lock = new ReentrantLock(true);
-        private FileLock physicalLock;
-        private java.nio.file.Path lockFile;
-        private FileChannel fileChannel;
+    @Override
+    public List<WatchEvent<?>> getPostponedWatchEvents() {
+        return postponedWatchEvents;
+    }
 
-        public Lock(URI repoURI) {
-            this.lockFile = createLockInfra(repoURI);
-        }
+    @Override
+    public void clearPostponedWatchEvents() {
+        this.postponedWatchEvents = Collections.synchronizedList(new ArrayList<>());
+    }
 
-        public void lock() {
-            lock.lock();
+    @Override
+    public boolean hasPostponedEvents() {
+        return !getPostponedWatchEvents().isEmpty();
+    }
 
-            if (needToCreatePhysicalLock()) {
-                physicalLockOnFS();
-            }
-        }
+    @Override
+    public boolean hasBeenInUse() {
+        return lock.hasBeenInUse();
+    }
 
-        private boolean needToCreatePhysicalLock() {
-            return ((physicalLock == null || !physicalLock.isValid()) && lock.getHoldCount() == 1);
-        }
-
-        public boolean isLocked() {
-            return lock.isLocked();
-        }
-
-        public void unlock() {
-            if (lock.isLocked()) {
-                if (releasePhysicalLock()) {
-                    physicalUnLockOnFS();
-                }
-                lock.unlock();
-            }
-        }
-
-        private boolean releasePhysicalLock() {
-            return physicalLock != null && physicalLock.isValid() && lock.isLocked() && lock.getHoldCount() == 1;
-        }
-
-        java.nio.file.Path createLockInfra(URI uri) {
-            java.nio.file.Path lockFile = null;
-            try {
-                java.nio.file.Path repo = Paths.get(uri);
-                lockFile = repo.resolve("db.lock");
-                Files.createFile(lockFile);
-            } catch (FileAlreadyExistsException ignored) {
-            } catch (Exception e) {
-                LOGGER.error("Error building lock infra [" + toString() + "]",
-                             e);
-            }
-            return lockFile;
-        }
-
-        void physicalLockOnFS() {
-            try {
-                File file = lockFile.toFile();
-                RandomAccessFile raf = new RandomAccessFile(file,
-                                                            "rw");
-                fileChannel = raf.getChannel();
-                physicalLock = fileChannel.lock();
-            } catch (FileNotFoundException e) {
-                LOGGER.error("Error during lock of FS [" + toString() + "]",
-                             e);
-            } catch (java.io.IOException e) {
-                LOGGER.error("Error during lock of FS [" + toString() + "]",
-                             e);
-            }
-        }
-
-        void physicalUnLockOnFS() {
-            try {
-                physicalLock.release();
-                fileChannel.close();
-                fileChannel = null;
-                physicalLock = null;
-            } catch (java.io.IOException e) {
-                LOGGER.error("Error during unlock of FS [" + toString() + "]",
-                             e);
-            }
+    @Override
+    public void notifyExternalUpdate() {
+        Object hook = fsHooks.get(FileSystemHooks.ExternalUpdate);
+        if (hook != null) {
+            JGitFSHooks.executeFSHooks(hook, FileSystemHooks.ExternalUpdate, new FileSystemHookExecutionContext(name));
         }
     }
 
     @Override
-    public void addOldHeadsOfPendingDiffs(String branchName,
-                                          NotificationModel notificationModel) {
-        oldHeadsOfPendingDiffs.put(branchName,
-                                   notificationModel);
+    public void notifyPostCommit(int exitCode) {
+        Object hook = fsHooks.get(FileSystemHooks.PostCommit);
+        if (hook != null) {
+            FileSystemHookExecutionContext ctx = new FileSystemHookExecutionContext(name);
+            ctx.addParam(FileSystemHooksConstants.POST_COMMIT_EXIT_CODE, exitCode);
+
+            JGitFSHooks.executeFSHooks(hook, FileSystemHooks.ExternalUpdate, ctx);
+        }
     }
 
     @Override
-    public Map<String, NotificationModel> getOldHeadsOfPendingDiffs() {
-        return oldHeadsOfPendingDiffs;
+    public void checkBranchAccess(final ReceiveCommand command,
+                                  final User user) {
+        Object hook = fsHooks.get(FileSystemHooks.BranchAccessCheck);
+        if (hook != null) {
+            FileSystemHookExecutionContext ctx = new FileSystemHookExecutionContext(name);
+            ctx.addParam(FileSystemHooksConstants.RECEIVE_COMMAND, command);
+            ctx.addParam(FileSystemHooksConstants.USER, user);
+
+            JGitFSHooks.executeFSHooks(hook, FileSystemHooks.BranchAccessCheck, ctx);
+        }
     }
 
     @Override
-    public boolean hasOldHeadsOfPendingDiffs() {
-        return !oldHeadsOfPendingDiffs.isEmpty();
+    public void filterBranchAccess(final UploadPack uploadPack,
+                                   final User user) {
+        Object hook = fsHooks.get(FileSystemHooks.BranchAccessFilter);
+        if (hook != null) {
+            FileSystemHookExecutionContext ctx = new FileSystemHookExecutionContext(name);
+            ctx.addParam(FileSystemHooksConstants.UPLOAD_PACK, uploadPack);
+            ctx.addParam(FileSystemHooksConstants.USER, user);
+
+            JGitFSHooks.executeFSHooks(hook, FileSystemHooks.BranchAccessFilter, ctx);
+        }
     }
 
     @Override
-    public void clearOldHeadsOfPendingDiffs() {
-        oldHeadsOfPendingDiffs = new ConcurrentHashMap<>();
+    public void setPublicURI(Map<String, String> fullHostNames) {
+        if (fullHostNames != null && !fullHostNames.isEmpty()) {
+            toStringContent = fullHostNames.entrySet()
+                    .stream()
+                    .map(e -> e.getKey() + "://" + e.getValue() + "/" + name)
+                    .collect(Collectors.joining("\n"));
+        } else {
+            toStringContent = "git://" + name;
+        }
     }
 }

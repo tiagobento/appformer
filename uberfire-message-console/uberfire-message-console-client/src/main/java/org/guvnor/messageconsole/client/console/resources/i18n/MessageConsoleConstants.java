@@ -30,11 +30,11 @@ public interface MessageConsoleConstants extends Messages {
 
     String FileName();
 
-    String MessageConsole();
-
     String RefreshMessageConsole();
 
     String ClearMessageConsole();
+
+    String CopyMessageConsole();
 
     String Refreshing();
 
@@ -43,4 +43,8 @@ public interface MessageConsoleConstants extends Messages {
     String WarningLevelTitle();
 
     String InfoLevelTitle();
+
+    String MessagesCopiedToClipboard();
+
+    String MessagesNotCopiedToClipboard();
 }

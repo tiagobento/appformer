@@ -3,7 +3,7 @@
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -20,16 +20,9 @@ import org.jboss.errai.common.client.api.annotations.Portable;
 @Portable
 public class TestProjectRequest extends JobRequest {
 
-    private String repositoryName;
     private String projectName;
-
-    public String getRepositoryName() {
-        return repositoryName;
-    }
-
-    public void setRepositoryName(String repositoryName) {
-        this.repositoryName = repositoryName;
-    }
+    private String spaceName;
+    private String branchName;
 
     public String getProjectName() {
         return projectName;
@@ -37,5 +30,21 @@ public class TestProjectRequest extends JobRequest {
 
     public void setProjectName(String projectName) {
         this.projectName = projectName;
+    }
+
+    public String getSpaceName() {
+        return spaceName;
+    }
+
+    public void setSpaceName(String spaceName) {
+        this.spaceName = spaceName;
+    }
+
+    public void setBranchName(String branchName) {
+	    this.branchName = branchName;
+    }
+
+    public String getBranchName() {
+	    return branchName;
     }
 }

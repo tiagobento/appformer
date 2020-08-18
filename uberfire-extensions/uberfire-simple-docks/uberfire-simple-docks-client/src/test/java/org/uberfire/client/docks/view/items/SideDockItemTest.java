@@ -19,17 +19,24 @@ package org.uberfire.client.docks.view.items;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwtmockito.GwtMockitoTestRunner;
 import org.gwtbootstrap3.client.ui.Button;
+import org.gwtbootstrap3.client.ui.Tooltip;
+import org.gwtbootstrap3.client.ui.constants.Placement;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.uberfire.client.workbench.docks.UberfireDock;
 import org.uberfire.client.workbench.docks.UberfireDockPosition;
 import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;
+import org.uberfire.mvp.impl.DefaultPlaceRequest;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 @RunWith(GwtMockitoTestRunner.class)
 public class SideDockItemTest {
@@ -51,12 +58,16 @@ public class SideDockItemTest {
         dockWithFontIcon = new UberfireDock(UberfireDockPosition.EAST,
                                             "BRIEFCASE",
                                             placeRequest,
-                                            "").withSize(450).withLabel("dock");
+                                            "")
+                .withSize(450)
+                .withLabel("dock");
         dockWithImageIcon = new UberfireDock(UberfireDockPosition.EAST,
                                              imageResource,
                                              imageResourceFocused,
                                              placeRequest,
-                                             "").withSize(450).withLabel("dock");
+                                             "")
+                .withSize(450)
+                .withLabel("dock");
 
         sideDockWithFontIcon = spy(new SideDockItem(dockWithFontIcon,
                                                     emptyCommand,
@@ -73,19 +84,6 @@ public class SideDockItemTest {
     public void createSideDockItemWithFontIconTest() {
         sideDockWithFontIcon.createButton();
 
-        verify(sideDockWithFontIcon).configureIcon(any(Button.class),
-                                                   eq((ImageResource) null));
-        verify(sideDockWithFontIcon,
-               never()).configureImageIcon(any(Button.class),
-                                           any(ImageResource.class));
-    }
-
-    @Test
-    public void createSideDockItemFocusedWithFontIconTest() {
-        sideDockWithFontIcon.getPopup().createButton(sideDockWithFontIcon);
-
-        verify(sideDockWithFontIcon).configureIcon(any(Button.class),
-                                                   eq((ImageResource) null));
         verify(sideDockWithFontIcon).configureIcon(any(Button.class),
                                                    eq((ImageResource) null));
         verify(sideDockWithFontIcon,
@@ -122,19 +120,6 @@ public class SideDockItemTest {
     }
 
     @Test
-    public void createSideDockItemFocusedWithImageIconTest() {
-        sideDockWithImageIcon.getPopup().createButton(sideDockWithImageIcon);
-
-        InOrder ordenatedVerification = inOrder(sideDockWithImageIcon);
-        ordenatedVerification.verify(sideDockWithImageIcon).configureText(any(Button.class),
-                                                                          anyString());
-        ordenatedVerification.verify(sideDockWithImageIcon).configureIcon(any(Button.class),
-                                                                          eq(imageResourceFocused));
-        ordenatedVerification.verify(sideDockWithImageIcon).configureImageIcon(any(Button.class),
-                                                                               eq(imageResourceFocused));
-    }
-
-    @Test
     public void openSouthDockItemWithImageIconTest() {
         sideDockWithImageIcon.open();
 
@@ -147,6 +132,46 @@ public class SideDockItemTest {
         sideDockWithImageIcon.close();
 
         verify(sideDockWithImageIcon).configureImageIcon(any(Button.class),
+
                                                          eq(imageResource));
+    }
+
+    @Test
+    public void createSideDockItemWithTooltipTest() {
+        final String dock_screenID = "SCREEN_ID";
+        final String dock_label = "DOCK TITLE";
+        final String dock_tooltip = "DOCK TOOLTIP";
+
+        UberfireDock dock1 = new UberfireDock(UberfireDockPosition.EAST,
+                                              "BRIEFCASE",
+                                              placeRequest,
+                                              "")
+                .withLabel(dock_label)
+                .withTooltip(dock_tooltip);
+        SideDockItem tested1 = spy(new SideDockItem(dock1, emptyCommand, emptyCommand));
+        tested1.createButton();
+        verify(tested1).configureTooltip(any(Tooltip.class), eq(dock_tooltip));
+
+        UberfireDock dock2 = new UberfireDock(UberfireDockPosition.EAST,
+                                              "BRIEFCASE",
+                                              placeRequest,
+                                              "")
+                .withLabel(dock_label);
+        SideDockItem tested2 = spy(new SideDockItem(dock2, emptyCommand, emptyCommand));
+        tested2.createButton();
+        verify(tested2).configureTooltip(any(Tooltip.class), eq(dock_label));
+
+        UberfireDock dock3 = new UberfireDock(UberfireDockPosition.EAST,
+                                              "BRIEFCASE",
+                                              new DefaultPlaceRequest(dock_screenID),
+                                              "");
+        SideDockItem tested3 = spy(new SideDockItem(dock3, emptyCommand, emptyCommand));
+        tested3.createButton();
+        verify(tested3).configureTooltip(any(Tooltip.class), eq(dock_screenID));
+
+        Tooltip tooltip = new Tooltip();
+        sideDockWithImageIcon.configureTooltip(tooltip, sideDockWithImageIcon.getLabel());
+        assertEquals(sideDockWithImageIcon.getLabel(), tooltip.getTitle());
+        assertEquals(Placement.LEFT, tooltip.getPlacement());
     }
 }

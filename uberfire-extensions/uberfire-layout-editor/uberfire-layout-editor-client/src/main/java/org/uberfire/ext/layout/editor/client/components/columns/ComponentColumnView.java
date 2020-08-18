@@ -16,12 +16,14 @@
 
 package org.uberfire.ext.layout.editor.client.components.columns;
 
+import java.util.List;
 import java.util.function.Supplier;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.Window;
 import org.jboss.errai.common.client.dom.Div;
 import org.jboss.errai.common.client.dom.Document;
 import org.jboss.errai.common.client.dom.HTMLElement;
@@ -34,12 +36,15 @@ import org.uberfire.client.mvp.UberElement;
 import org.uberfire.client.workbench.docks.UberfireDocksInteractionEvent;
 import org.uberfire.ext.layout.editor.api.editor.LayoutComponent;
 import org.uberfire.ext.layout.editor.api.editor.LayoutTemplate;
+import org.uberfire.ext.layout.editor.client.api.LayoutDragComponent;
 import org.uberfire.ext.layout.editor.client.api.RenderingContext;
 import org.uberfire.ext.layout.editor.client.infra.ColumnDrop;
 import org.uberfire.ext.layout.editor.client.infra.ContainerResizeEvent;
-import org.uberfire.ext.layout.editor.client.infra.DragComponentEndEvent;
 import org.uberfire.ext.layout.editor.client.infra.DragHelperComponentColumn;
+import org.uberfire.ext.layout.editor.client.infra.LayoutEditorFocusController;
+import org.uberfire.ext.layout.editor.client.resources.i18n.CommonConstants;
 import org.uberfire.ext.layout.editor.client.widgets.KebabWidget;
+import org.uberfire.ext.properties.editor.model.PropertyEditorCategory;
 import org.uberfire.mvp.Command;
 
 import static org.jboss.errai.common.client.dom.DOMUtil.addCSSClass;
@@ -90,6 +95,8 @@ public class ComponentColumnView
     @Inject
     private Document document;
     private ColumnDrop.Orientation contentDropOrientation;
+    @Inject
+    LayoutEditorFocusController layoutEditorFocusController;
 
     @Inject
     private DragHelperComponentColumn helper;
@@ -100,7 +107,14 @@ public class ComponentColumnView
     }
 
     @Override
+    public List<PropertyEditorCategory> getPropertyCategories() {
+        return helper.getLayoutDragComponentProperties();
+    }
+
+    @Override
     public void setupWidget() {
+        String txt = presenter.isSelectable() ? CommonConstants.INSTANCE.SelectColumnHint() : CommonConstants.INSTANCE.DragColumnHint();
+        content.setTitle(txt);
         setupEvents();
         setupKebabWidget();
         setupOnResize();
@@ -137,7 +151,9 @@ public class ComponentColumnView
     }
 
     void setupOnResize() {
-        document.getBody().setOnresize(event -> calculateWidth());
+        Window.addResizeHandler(event -> {
+            calculateWidth();
+        });
     }
 
     public void dockSelectEvent(@Observes UberfireDocksInteractionEvent event) {
@@ -215,6 +231,7 @@ public class ComponentColumnView
             }
         });
         colUp.setOndrop(e -> {
+            e.preventDefault();
             if (contentDropOrientation != null) {
                 presenter.onDrop(contentDropOrientation,
                                  extractDndData(e));
@@ -232,6 +249,7 @@ public class ComponentColumnView
 
     private void setupColDownEvents() {
         colDown.setOndrop(e -> {
+            e.preventDefault();
             if (contentDropOrientation != null) {
                 presenter.onDrop(contentDropOrientation,
                                  extractDndData(e));
@@ -342,6 +360,10 @@ public class ComponentColumnView
             removeCSSClass(colDown,
                            "componentDropInColumnPreview");
         });
+        content.setOnclick(e -> {
+            e.preventDefault();
+            presenter.onSelected();
+        });
         content.setOnmouseout(e -> {
             removeCSSClass(content,
                            "componentMovePreview");
@@ -351,7 +373,6 @@ public class ComponentColumnView
             addCSSClass(content,
                         "componentMovePreview");
         });
-
         content.setOndragend(e -> {
             e.stopPropagation();
             removeCSSClass(row,
@@ -515,6 +536,7 @@ public class ComponentColumnView
             HTMLElement previewWidget = getPreviewElement();
             content.appendChild(kebabWidget.getElement());
             content.appendChild(previewWidget);
+            layoutEditorFocusController.restoreFocus();
         });
     }
 
@@ -536,6 +558,17 @@ public class ComponentColumnView
     public void setup(LayoutComponent layoutComponent,
                       LayoutTemplate.Style pageStyle) {
         helper.setup(layoutComponent, pageStyle);
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+        removeCSSClass(content, "componentMovePreview");
+        String txt = presenter.isSelectable() ? CommonConstants.INSTANCE.SelectColumnHint() : CommonConstants.INSTANCE.DragColumnHint();
+        content.setTitle(txt);
+        if (selected) {
+            addCSSClass(content, "componentMovePreview");
+            content.setTitle(CommonConstants.INSTANCE.UnselectColumnHint());
+        }
     }
 
     private HTMLElement getPreviewElement() {
@@ -566,8 +599,15 @@ public class ComponentColumnView
         return (dragOverY - top) < (bottom - dragOverY);
     }
 
-    public void cleanUp(@Observes DragComponentEndEvent dragComponentEndEvent) {
+    @Override
+    public void notifyDragEnd() {
         removeCSSClass(colUp,
                        "componentDropInColumnPreview");
     }
+
+    @Override
+    public LayoutDragComponent getLayoutDragComponent() {
+        return helper.getLayoutDragComponent();
+    }
+
 }

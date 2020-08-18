@@ -21,7 +21,7 @@
   <parent>
     <artifactId>uberfire-security-management</artifactId>
     <groupId>org.uberfire</groupId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>7.43.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -32,9 +32,9 @@
   <description>Uberfire Security Management - Provider Implementation for KeyCloak</description>
 
   <dependencies>
-    
+
     <!-- Uberfire related. -->
-    
+
     <dependency>
       <groupId>org.uberfire</groupId>
       <artifactId>uberfire-api</artifactId>
@@ -81,7 +81,7 @@
       <groupId>org.jboss.errai</groupId>
       <artifactId>errai-security-server</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.jboss.errai</groupId>
       <artifactId>errai-bus</artifactId>
@@ -104,35 +104,44 @@
     </dependency>
 
     <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-core-asl</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.keycloak</groupId>
       <artifactId>keycloak-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-common</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>com.sun.activation</groupId>
+          <artifactId>jakarta.activation</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>jcl-over-slf4j</artifactId>
     </dependency>
 
     <!-- Test scope. -->
-    
+
     <dependency>
       <groupId>org.uberfire</groupId>
       <artifactId>uberfire-security-management-backend</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-
 
   </dependencies>
 

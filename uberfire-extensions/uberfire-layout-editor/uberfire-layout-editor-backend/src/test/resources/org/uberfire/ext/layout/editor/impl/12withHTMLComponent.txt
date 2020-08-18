@@ -8,6 +8,7 @@
   "rows": [
     {
       "height": "12",
+      "properties": {},
       "layoutColumns": [
         {
           "span": "12",
@@ -17,7 +18,8 @@
               "dragTypeName": "org.uberfire.ext.plugin.client.perspective.editor.layout.editor.HTMLLayoutDragComponent",
               "properties": {
                 "HTML_CODE": "\u003ch1\u003eyo\u003c/h1\u003e"
-              }
+              },
+              "parts": []
             }
           ]
         }

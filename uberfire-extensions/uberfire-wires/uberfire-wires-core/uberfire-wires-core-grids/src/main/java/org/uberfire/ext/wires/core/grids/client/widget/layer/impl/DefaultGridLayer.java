@@ -20,12 +20,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.ait.lienzo.client.core.event.NodeMouseDownEvent;
-import com.ait.lienzo.client.core.event.NodeMouseDownHandler;
 import com.ait.lienzo.client.core.event.NodeMouseMoveEvent;
 import com.ait.lienzo.client.core.event.NodeMouseUpEvent;
 import com.ait.lienzo.client.core.shape.IPrimitive;
@@ -51,6 +51,7 @@ import org.uberfire.ext.wires.core.grids.client.widget.grid.GridWidget;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.animation.GridWidgetScrollIntoViewAnimation;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.impl.GridWidgetConnector;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.GridLayer;
+import org.uberfire.ext.wires.core.grids.client.widget.layer.GridWidgetRegistry;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.pinning.TransformMediator;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.pinning.impl.BoundaryTransformMediator;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.pinning.impl.DefaultPinnedModeManager;
@@ -58,7 +59,8 @@ import org.uberfire.ext.wires.core.grids.client.widget.layer.pinning.impl.Defaul
 /**
  * Default implementation of GridLayer
  */
-public class DefaultGridLayer extends Layer implements GridLayer {
+public class DefaultGridLayer extends Layer implements GridLayer,
+                                                       GridWidgetRegistry {
 
     //This is helpful when debugging rendering issues to set the bounds smaller than the Viewport
     private static final int PADDING = 0;
@@ -68,7 +70,8 @@ public class DefaultGridLayer extends Layer implements GridLayer {
     private final GridWidgetDnDHandlersState state = new GridWidgetDnDHandlersState();
     private final TransformMediator defaultTransformMediator = new BoundaryTransformMediator();
     private final DefaultPinnedModeManager pinnedModeManager = new DefaultPinnedModeManager(this);
-    private Set<GridWidget> gridWidgets = new HashSet<GridWidget>();
+    private Set<GridWidget> explicitGridWidgets = new LinkedHashSet<>();
+    private Set<GridWidget> registeredGridWidgets = new LinkedHashSet<>();
     private Map<GridWidgetConnector, Line> gridWidgetConnectors = new HashMap<>();
     private final GridLayerRedrawManager.PrioritizedCommand REDRAW = new GridLayerRedrawManager.PrioritizedCommand(Integer.MIN_VALUE) {
         @Override
@@ -86,12 +89,9 @@ public class DefaultGridLayer extends Layer implements GridLayer {
                                      0);
 
         //Column DnD handlers
-        this.mouseDownHandler = new GridWidgetDnDMouseDownHandler(this,
-                                                                  state);
-        this.mouseMoveHandler = new GridWidgetDnDMouseMoveHandler(this,
-                                                                  state);
-        this.mouseUpHandler = new GridWidgetDnDMouseUpHandler(this,
-                                                              state);
+        this.mouseDownHandler = getGridWidgetDnDMouseDownHandler();
+        this.mouseMoveHandler = getGridWidgetDnDMouseMoveHandler();
+        this.mouseUpHandler = getGridWidgetDnDMouseUpHandler();
         addNodeMouseDownHandler(mouseDownHandler);
         addNodeMouseMoveHandler(mouseMoveHandler);
         addNodeMouseUpHandler(mouseUpHandler);
@@ -103,20 +103,32 @@ public class DefaultGridLayer extends Layer implements GridLayer {
         // We do this rather than setFocus on GridPanel as the FocusImplSafari implementation of
         // FocusPanel sets focus at unpredictable times which can lead to SingletonDOMElements
         // loosing focus after they've been attached to the DOM and hence disappearing.
-        addNodeMouseDownHandler(new NodeMouseDownHandler() {
-            @Override
-            public void onNodeMouseDown(final NodeMouseDownEvent event) {
-                for (GridWidget gridWidget : gridWidgets) {
-                    for (GridColumn<?> gridColumn : gridWidget.getModel().getColumns()) {
-                        if (gridColumn instanceof HasSingletonDOMElementResource) {
-                            ((HasSingletonDOMElementResource) gridColumn).flush();
-                            ((HasSingletonDOMElementResource) gridColumn).destroyResources();
-                            batch();
-                        }
+        addNodeMouseDownHandler((event) -> {
+            for (GridWidget gridWidget : getGridWidgets()) {
+                for (GridColumn<?> gridColumn : gridWidget.getModel().getColumns()) {
+                    if (gridColumn instanceof HasSingletonDOMElementResource) {
+                        ((HasSingletonDOMElementResource) gridColumn).flush();
+                        ((HasSingletonDOMElementResource) gridColumn).destroyResources();
+                        batch();
                     }
                 }
             }
         });
+    }
+
+    protected GridWidgetDnDMouseDownHandler getGridWidgetDnDMouseDownHandler() {
+        return new GridWidgetDnDMouseDownHandler(this,
+                                                 state);
+    }
+
+    protected GridWidgetDnDMouseMoveHandler getGridWidgetDnDMouseMoveHandler() {
+        return new GridWidgetDnDMouseMoveHandler(this,
+                                                 state);
+    }
+
+    protected GridWidgetDnDMouseUpHandler getGridWidgetDnDMouseUpHandler() {
+        return new GridWidgetDnDMouseUpHandler(this,
+                                               state);
     }
 
     @Override
@@ -136,6 +148,10 @@ public class DefaultGridLayer extends Layer implements GridLayer {
 
     @Override
     public Layer draw() {
+        //Clear all transient registrations added as the Layer is rendered
+        registeredGridWidgets.clear();
+        registeredGridWidgets.addAll(explicitGridWidgets);
+
         //We use Layer.batch() to ensure rendering is tied to the browser's requestAnimationFrame()
         //however this calls back into Layer.draw() so update dependent Shapes here.
         updateGridWidgetConnectors();
@@ -197,10 +213,16 @@ public class DefaultGridLayer extends Layer implements GridLayer {
         for (IPrimitive<?> c : all) {
             if (c instanceof GridWidget) {
                 final GridWidget gridWidget = (GridWidget) c;
-                gridWidgets.add(gridWidget);
+                register(gridWidget);
+                explicitGridWidgets.add(gridWidget);
                 addGridWidgetConnectors();
             }
         }
+    }
+
+    @Override
+    public void register(final GridWidget gridWidget) {
+        registeredGridWidgets.add(gridWidget);
     }
 
     @Override
@@ -213,7 +235,7 @@ public class DefaultGridLayer extends Layer implements GridLayer {
     }
 
     private void addGridWidgetConnectors() {
-        for (GridWidget gridWidget : gridWidgets) {
+        for (GridWidget gridWidget : explicitGridWidgets) {
             final GridData gridModel = gridWidget.getModel();
             for (GridColumn<?> gridColumn : gridModel.getColumns()) {
                 if (gridColumn.isVisible()) {
@@ -249,7 +271,7 @@ public class DefaultGridLayer extends Layer implements GridLayer {
 
     private GridWidget getLinkedGridWidget(final GridColumn<?> linkedGridColumn) {
         GridWidget linkedGridWidget = null;
-        for (GridWidget gridWidget : gridWidgets) {
+        for (GridWidget gridWidget : explicitGridWidgets) {
             final GridData gridModel = gridWidget.getModel();
             if (gridModel.getColumns().contains(linkedGridColumn)) {
                 linkedGridWidget = gridWidget;
@@ -296,10 +318,16 @@ public class DefaultGridLayer extends Layer implements GridLayer {
         for (IPrimitive<?> c : all) {
             if (c instanceof GridWidget) {
                 final GridWidget gridWidget = (GridWidget) c;
-                gridWidgets.remove(gridWidget);
+                deregister(gridWidget);
+                explicitGridWidgets.remove(gridWidget);
                 removeGridWidgetConnectors(gridWidget);
             }
         }
+    }
+
+    @Override
+    public void deregister(final GridWidget gridWidget) {
+        registeredGridWidgets.remove(gridWidget);
     }
 
     private void removeGridWidgetConnectors(final GridWidget gridWidget) {
@@ -319,15 +347,16 @@ public class DefaultGridLayer extends Layer implements GridLayer {
 
     @Override
     public Layer removeAll() {
-        gridWidgets.clear();
+        explicitGridWidgets.clear();
         gridWidgetConnectors.clear();
+        registeredGridWidgets.clear();
         return super.removeAll();
     }
 
     @Override
     public void select(final GridWidget selectedGridWidget) {
         boolean selectionChanged = false;
-        for (GridWidget gridWidget : gridWidgets) {
+        for (GridWidget gridWidget : getGridWidgets()) {
             if (gridWidget.isSelected()) {
                 if (!gridWidget.equals(selectedGridWidget)) {
                     selectionChanged = true;
@@ -362,7 +391,7 @@ public class DefaultGridLayer extends Layer implements GridLayer {
         if (!isGridPinned()) {
             return;
         }
-        for (GridWidget gw : gridWidgets) {
+        for (GridWidget gw : explicitGridWidgets) {
             gw.setAlpha(gw.equals(gridWidget) ? 1.0 : 0.0);
             gw.setVisible(gw.equals(gridWidget));
         }
@@ -402,7 +431,7 @@ public class DefaultGridLayer extends Layer implements GridLayer {
 
     @Override
     public Set<GridWidget> getGridWidgets() {
-        return Collections.unmodifiableSet(gridWidgets);
+        return Collections.unmodifiableSet(registeredGridWidgets);
     }
 
     @Override

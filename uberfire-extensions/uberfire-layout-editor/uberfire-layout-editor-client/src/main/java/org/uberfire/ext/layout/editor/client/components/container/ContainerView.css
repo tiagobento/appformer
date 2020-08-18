@@ -13,12 +13,22 @@
 }
 
 .page-container{
-    height:90%;
+    height:100%;
 }
 
 .container-empty {
     padding: 0px;
-    height:90%;
+    height:100%;
+}
+
+.container-header {
+    height: 15px;
+    cursor: pointer;
+    margin-top: -15px;
+}
+
+.container-selected {
+    border-color: #33a6cc !important;
 }
 
 .resolution {

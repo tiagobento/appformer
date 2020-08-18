@@ -21,14 +21,15 @@
 
   <inherits name="org.uberfire.client.views.PatternFly"/>
   <inherits name="org.uberfire.java.nio.UberfireNIO2Model"/>
+  <inherits name="org.uberfire.experimental.UberfireExperimentalClient"/>
 
   <source path='tab'/>
   <source path='mock'/>
   <source path='listbar'/>
   <public path='js'/>
   
-  <script src='jquery-1.12.0.js'></script>
-  <script src='bootstrap-3.3.6.min.js'></script>
+  <script src='jquery-1.12.4.min.js'></script>
+  <script src='bootstrap-3.4.1.min.js'></script>
   
   <add-linker name='xs'/>
   

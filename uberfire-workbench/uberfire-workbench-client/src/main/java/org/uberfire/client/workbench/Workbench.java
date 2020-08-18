@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
@@ -30,27 +29,26 @@ import javax.inject.Inject;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.logical.shared.ResizeEvent;
-import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Window.ClosingEvent;
-import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import org.jboss.errai.bus.client.api.ClientMessageBus;
-import org.jboss.errai.bus.client.framework.ClientMessageBusImpl;
 import org.jboss.errai.ioc.client.api.AfterInitialization;
 import org.jboss.errai.ioc.client.api.EnabledByProperty;
 import org.jboss.errai.ioc.client.api.EntryPoint;
+import org.jboss.errai.ioc.client.api.ManagedInstance;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.jboss.errai.security.shared.api.identity.User;
 import org.slf4j.Logger;
 import org.uberfire.backend.vfs.Path;
+import org.uberfire.client.mvp.ActivityBeansCache;
 import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.resources.WorkbenchResources;
+import org.uberfire.client.resources.i18n.WorkbenchConstants;
+import org.uberfire.client.util.UserAgent;
 import org.uberfire.client.workbench.events.ApplicationReadyEvent;
+import org.uberfire.mvp.Command;
 import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
 import org.uberfire.mvp.impl.PathPlaceRequest;
@@ -125,15 +123,11 @@ public class Workbench {
     private Event<ApplicationReadyEvent> appReady;
     private boolean isStandaloneMode = false;
     @Inject
+    private ActivityBeansCache activityBeansCache;
+    @Inject
     private SyncBeanManager iocManager;
     @Inject
     private PlaceManager placeManager;
-    private final Command workbenchCloseCommand = new Command() {
-        @Override
-        public void execute() {
-            placeManager.closeAllPlaces(); // would be preferable to close current perspective, which should be recursive
-        }
-    };
     @Inject
     private PermissionManager permissionManager;
     @Inject
@@ -148,6 +142,21 @@ public class Workbench {
     @Inject
     private Logger logger;
     private SessionInfo sessionInfo = null;
+    @Inject
+    private ManagedInstance<WorkbenchCustomStandalonePerspectiveDefinition> workbenchCustomStandalonePerspectiveDefinition;
+
+    final ParameterizedCommand<Window.ClosingEvent> workbenchClosingCommand = (Window.ClosingEvent event) -> {
+        if (!placeManager.canCloseAllPlaces()) {
+            // Setting a non-null message will make the browser to present a confirmation dialog that asks the user
+            // whether or not they wish to navigate away from the page. The message in the dialog, however,
+            // is not customizable anymore mainly due to scammers using such a message to trick people.
+            // Thus, each browser shows its own message. If the user has an outdated browser, then our custom
+            // message might be shown.
+            event.setMessage(WorkbenchConstants.INSTANCE.closingWindowMessage());
+        }
+    };
+
+    final Command workbenchCloseCommand = () -> placeManager.closeAllPlaces(); // would be preferable to close current perspective, which should be recursive
 
     /**
      * Requests that the workbench does not attempt to create any UI parts until the given responsible party has
@@ -208,73 +217,102 @@ public class Workbench {
 
     private void bootstrap() {
         logger.info("Starting workbench...");
-        ((SessionInfoImpl) currentSession()).setId(((ClientMessageBusImpl) bus).getSessionId());
-
-        layout.setMarginWidgets(isStandaloneMode,
-                                headersToKeep);
-        layout.onBootstrap();
-
-        addLayoutToRootPanel(layout);
+        ((SessionInfoImpl) currentSession()).setId(bus.getSessionId());
 
         //Lookup PerspectiveProviders and if present launch it to set-up the Workbench
         if (!isStandaloneMode) {
             final PerspectiveActivity homePerspective = getHomePerspectiveActivity();
+            appReady.fire(new ApplicationReadyEvent());
             if (homePerspective != null) {
-                appReady.fire(new ApplicationReadyEvent());
+                layout.setMarginWidgets(isStandaloneMode, headersToKeep);
+                layout.onBootstrap();
+                addLayoutToRootPanel(layout);
                 placeManager.goTo(new DefaultPlaceRequest(homePerspective.getIdentifier()));
             } else {
-                logger.error("No home perspective available!");
+                activityBeansCache.noOp();
+                logger.warn("No home perspective available!");
             }
         } else {
+            layout.setMarginWidgets(isStandaloneMode,
+                                    headersToKeep);
+            layout.onBootstrap();
+
+            addLayoutToRootPanel(layout);
             handleStandaloneMode(Window.Location.getParameterMap());
         }
 
-        // Ensure orderly shutdown when Window is closed (eg. saves workbench state)
-        Window.addWindowClosingHandler(new ClosingHandler() {
-
-            @Override
-            public void onWindowClosing(ClosingEvent event) {
-                workbenchCloseHandler.onWindowClose(workbenchCloseCommand);
-            }
-        });
+        addCloseHandler();
 
         // Resizing the Window should resize everything
-        Window.addResizeHandler(new ResizeHandler() {
-            @Override
-            public void onResize(ResizeEvent event) {
-                layout.resizeTo(event.getWidth(),
-                                event.getHeight());
-            }
-        });
+        Window.addResizeHandler(event -> layout.resizeTo(event.getWidth(),
+                                                         event.getHeight()));
 
         // Defer the initial resize call until widgets are rendered and sizes are available
-        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-            @Override
-            public void execute() {
-                layout.onResize();
-            }
-        });
+        Scheduler.get().scheduleDeferred(() -> layout.onResize());
+
+        notifyJSReady();
     }
 
+    private void addCloseHandler() {
+        if (UserAgent.isChrome()) {
+            setupMessageForUnsavedChanges(); // only works on chrome
+            Window.addCloseHandler(event -> workbenchCloseHandler.onWindowClose(workbenchCloseCommand));
+        } else {
+            // The Window.addCloseHandler does not work as expected for other browsers, thus we need to register the
+            // workbenchCloseCommand in the Window.addWindowClosingHandler.
+            Window.addWindowClosingHandler(event -> workbenchCloseHandler.onWindowClose(workbenchCloseCommand));
+        }
+    }
+
+    private void setupMessageForUnsavedChanges() {
+        Window.addWindowClosingHandler(event -> workbenchCloseHandler.onWindowClosing(workbenchClosingCommand, event));
+    }
+
+    private native void notifyJSReady() /*-{
+        if ($wnd.appFormerGwtFinishedLoading) {
+            $wnd.appFormerGwtFinishedLoading();
+        }
+    }-*/;
+
     // TODO add tests for standalone startup vs. full startup
-    private void handleStandaloneMode(final Map<String, List<String>> parameters) {
+    void handleStandaloneMode(final Map<String, List<String>> parameters) {
         if (parameters.containsKey("perspective") && !parameters.get("perspective").isEmpty()) {
             placeManager.goTo(new DefaultPlaceRequest(parameters.get("perspective").get(0)));
         } else if (parameters.containsKey("path") && !parameters.get("path").isEmpty()) {
-            placeManager.goTo(new DefaultPlaceRequest("StandaloneEditorPerspective"));
+            openStandaloneEditor(parameters);
+        }
+    }
+
+    private void openStandaloneEditor(final Map<String, List<String>> parameters) {
+        String standalonePerspective = "StandaloneEditorPerspective";
+        boolean openEditor = true;
+
+        if (!workbenchCustomStandalonePerspectiveDefinition.isUnsatisfied()) {
+            final WorkbenchCustomStandalonePerspectiveDefinition workbenchCustomStandalonePerspectiveDefinition = this.workbenchCustomStandalonePerspectiveDefinition.get();
+            standalonePerspective = workbenchCustomStandalonePerspectiveDefinition.getStandalonePerspectiveIdentifier();
+            openEditor = workbenchCustomStandalonePerspectiveDefinition.openPathAutomatically();
+        }
+
+        placeManager.goTo(new DefaultPlaceRequest(standalonePerspective));
+        if (openEditor) {
             vfsService.get(parameters.get("path").get(0),
-                           new ParameterizedCommand<Path>() {
-                               @Override
-                               public void execute(final Path response) {
-                                   if (parameters.containsKey("editor") && !parameters.get("editor").isEmpty()) {
-                                       placeManager.goTo(new PathPlaceRequest(response,
-                                                                              parameters.get("editor").get(0)));
-                                   } else {
-                                       placeManager.goTo(new PathPlaceRequest(response));
-                                   }
+                           path -> {
+                               if (parameters.containsKey("editor") && !parameters.get("editor").isEmpty()) {
+                                   openEditor(path, parameters.get("editor").get(0));
+                               } else {
+                                   openEditor(path);
                                }
                            });
         }
+    }
+
+    void openEditor(final Path path) {
+        placeManager.goTo(new PathPlaceRequest(path));
+    }
+
+    void openEditor(final Path path,
+                    final String editor) {
+        placeManager.goTo(new PathPlaceRequest(path, editor));
     }
 
     /**
@@ -311,14 +349,7 @@ public class Workbench {
             }
         }
         // The home perspective has always priority over the default
-        PerspectiveActivity targetPerspective = homePerspective != null ? homePerspective : defaultPerspective;
-
-        // Check access rights
-        if (targetPerspective != null && authorizationManager.authorize(targetPerspective,
-                                                                        identity)) {
-            return targetPerspective;
-        }
-        return null;
+        return homePerspective != null ? homePerspective : defaultPerspective;
     }
 
     @Produces

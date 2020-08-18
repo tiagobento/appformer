@@ -40,9 +40,9 @@ public class ObjectStorageImpl implements ObjectStorage {
     }
 
     @Override
-    public void init(String rootPath) {
+    public void init(URI rootURI) {
         initializeMarshaller();
-        initializeFileSystem(rootPath);
+        initializeFileSystem(rootURI);
     }
 
     @Override
@@ -74,8 +74,19 @@ public class ObjectStorageImpl implements ObjectStorage {
     @Override
     public <T> void write(final String path,
                           final T value) {
+        this.write(path,
+                   value,
+                   true);
+    }
+
+    @Override
+    public <T> void write(final String path,
+                          final T value,
+                          final boolean lock) {
         try {
-            ioService.startBatch(fileSystem);
+            if (lock) {
+                ioService.startBatch(fileSystem);
+            }
             Path fsPath = fileSystem.getPath(path);
             String content = ServerMarshalling.toJSON(value);
             ioService.write(fsPath,
@@ -83,7 +94,9 @@ public class ObjectStorageImpl implements ObjectStorage {
         } catch (final Exception e) {
             throw new RuntimeException(e);
         } finally {
-            ioService.endBatch();
+            if (lock) {
+                ioService.endBatch();
+            }
         }
     }
 
@@ -99,13 +112,19 @@ public class ObjectStorageImpl implements ObjectStorage {
                                        paths);
     }
 
+    @Override
+    public void close() {
+        this.fileSystem.close();
+        this.fileSystem.dispose();
+    }
+
     private void initializeMarshaller() {
         MappingContextSingleton.get();
     }
 
-    private void initializeFileSystem(final String rootPath) {
+    private void initializeFileSystem(final URI rootURI) {
         try {
-            fileSystem = ioService.newFileSystem(URI.create(rootPath),
+            fileSystem = ioService.newFileSystem(rootURI,
                                                  new HashMap<String, Object>() {{
                                                      put("init",
                                                          Boolean.TRUE);
@@ -113,7 +132,7 @@ public class ObjectStorageImpl implements ObjectStorage {
                                                          Boolean.TRUE);
                                                  }});
         } catch (FileSystemAlreadyExistsException e) {
-            fileSystem = ioService.getFileSystem(URI.create(rootPath));
+            fileSystem = ioService.getFileSystem(rootURI);
         }
     }
 }

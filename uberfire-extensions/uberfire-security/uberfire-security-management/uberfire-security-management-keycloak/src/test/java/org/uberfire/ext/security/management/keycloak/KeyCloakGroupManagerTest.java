@@ -19,19 +19,23 @@ package org.uberfire.ext.security.management.keycloak;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.jboss.errai.security.shared.api.Group;
+import org.jboss.errai.security.shared.api.identity.User;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.uberfire.ext.security.management.api.AbstractEntityManager;
 import org.uberfire.ext.security.management.api.Capability;
 import org.uberfire.ext.security.management.api.CapabilityStatus;
 import org.uberfire.ext.security.management.api.exception.GroupNotFoundException;
+import org.uberfire.ext.security.management.api.exception.RealmManagementNotAuthorizedException;
 import org.uberfire.ext.security.management.api.exception.UnsupportedServiceCapabilityException;
+import org.uberfire.ext.security.management.keycloak.client.resource.RealmResource;
 import org.uberfire.ext.security.management.keycloak.client.resource.RoleMappingResource;
 import org.uberfire.ext.security.management.keycloak.client.resource.RoleResource;
 import org.uberfire.ext.security.management.keycloak.client.resource.RoleScopeResource;
@@ -39,21 +43,30 @@ import org.uberfire.ext.security.management.keycloak.client.resource.UserResourc
 import org.uberfire.ext.security.management.util.SecurityManagementUtils;
 
 import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class KeyCloakGroupManagerTest extends DefaultKeyCloakTest {
 
-    @Spy
-    private KeyCloakGroupManager groupsManager = new KeyCloakGroupManager();
+    private KeyCloakGroupManager groupsManager;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setup() throws Exception {
         super.setup();
-        doReturn(keycloakMock).when(groupsManager).getKeyCloakInstance();
-        doReturn(realmResource).when(groupsManager).getRealmResource();
-        groupsManager.initialize(userSystemManager);
+        initGroupManager();
+        doAnswer(invocationOnMock -> {
+            ((Consumer<RealmResource>) invocationOnMock.getArguments()[0]).accept(realmResource);
+            return null;
+        }).when(groupsManager).consumeRealm(any(Consumer.class));
     }
 
     @Test
@@ -75,6 +88,13 @@ public class KeyCloakGroupManagerTest extends DefaultKeyCloakTest {
         assertTrue(groupsManager.getSettings().allowEmpty());
     }
 
+    @Test(expected = RealmManagementNotAuthorizedException.class)
+    public void testGroupNotAuthorized() throws Exception {
+        initGroupManager();
+        doThrow(mockForbiddenResponse()).when(keycloakMock).realm();
+        groupsManager.get(ROLE);
+    }
+
     @Test
     public void testGetGroup5() {
         String name = ROLE + 5;
@@ -87,6 +107,12 @@ public class KeyCloakGroupManagerTest extends DefaultKeyCloakTest {
     public void testGetGroup200() {
         String name = ROLE + 200;
         Group group = groupsManager.get(name);
+    }
+
+    @Test
+    public void testGetAllGroups() {
+        List<Group> groups = groupsManager.getAll();
+        assertEquals(50, groups.size());
     }
 
     @Test(expected = RuntimeException.class)
@@ -167,6 +193,13 @@ public class KeyCloakGroupManagerTest extends DefaultKeyCloakTest {
                     ROLE + 49);
     }
 
+    @Test
+    public void testCreateGroup() {
+        String groupName = "newgroup";
+        Group newgroup = groupsManager.create(SecurityManagementUtils.createGroup("newgroup"));
+        assertGroup(newgroup, groupName);
+    }
+
     @Test(expected = UnsupportedServiceCapabilityException.class)
     public void testUpdateGroup() {
         groupsManager.update(SecurityManagementUtils.createGroup("id1"));
@@ -202,5 +235,11 @@ public class KeyCloakGroupManagerTest extends DefaultKeyCloakTest {
         assertNotNull(group);
         assertEquals(name,
                      group.getName());
+    }
+
+    private void initGroupManager() throws Exception {
+        groupsManager = spy(new KeyCloakGroupManager());
+        doReturn(keycloakMock).when(groupsManager).getKeyCloakInstance();
+        groupsManager.initialize(userSystemManager);
     }
 }

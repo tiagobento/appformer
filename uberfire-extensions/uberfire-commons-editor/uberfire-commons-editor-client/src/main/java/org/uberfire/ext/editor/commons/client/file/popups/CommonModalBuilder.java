@@ -22,6 +22,7 @@ import org.gwtbootstrap3.client.ui.ModalFooter;
 import org.gwtbootstrap3.client.ui.gwt.FlowPanel;
 import org.jboss.errai.common.client.dom.HTMLElement;
 import org.jboss.errai.common.client.ui.ElementWrapperWidget;
+import org.jboss.errai.ui.shared.TemplateUtil;
 import org.uberfire.ext.widgets.common.client.common.popups.BaseModal;
 
 public class CommonModalBuilder {
@@ -33,38 +34,76 @@ public class CommonModalBuilder {
     }
 
     public CommonModalBuilder addHeader(String title) {
-        modal.setTitle(title);
+        this.getModal().setTitle(title);
         return this;
     }
 
     public CommonModalBuilder addBody(HTMLElement element) {
-        modal.add(buildPanel(element,
-                             new ModalBody()));
+        this.getModal().add(buildPanel(element,
+                             makeModalBody()));
+        return this;
+    }
+
+    public CommonModalBuilder addBody(elemental2.dom.HTMLElement element) {
+        this.getModal().add(buildPanel(element,
+                             makeModalBody()));
         return this;
     }
 
     public CommonModalBuilder addFooter(ModalFooter footer) {
-        modal.add(footer);
+        this.getModal().add(footer);
         return this;
     }
 
     public CommonModalBuilder addFooter(HTMLElement element) {
-        modal.add(buildPanel(element,
-                             new ModalFooter()));
+        this.getModal().add(buildPanel(element,
+                             makeModalFooter()));
+        return this;
+    }
+
+    public CommonModalBuilder addFooter(final elemental2.dom.HTMLElement htmlElement) {
+
+        final FlowPanel flowPanel = buildPanel(htmlElement,
+                                               makeModalFooter());
+        getModal().add(flowPanel);
         return this;
     }
 
     public BaseModal build() {
+        return getModal();
+    }
+
+    protected BaseModal getModal() {
         return modal;
     }
 
-    private FlowPanel buildPanel(HTMLElement element,
+    ModalBody makeModalBody() {
+        return new ModalBody();
+    }
+
+    ModalFooter makeModalFooter() {
+        return new ModalFooter();
+    }
+
+    protected FlowPanel buildPanel(final HTMLElement element,
+                                 final FlowPanel panel) {
+
+        final HTMLElement htmlElement = TemplateUtil.asErraiElement(element);
+        panel.add(build(htmlElement));
+        return panel;
+    }
+
+    protected FlowPanel buildPanel(elemental2.dom.HTMLElement element,
                                  FlowPanel panel) {
         panel.add(build(element));
         return panel;
     }
 
     private Widget build(HTMLElement element) {
+        return ElementWrapperWidget.getWidget(element);
+    }
+
+    private Widget build(elemental2.dom.HTMLElement element) {
         return ElementWrapperWidget.getWidget(element);
     }
 }

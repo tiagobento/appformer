@@ -62,6 +62,8 @@ import org.uberfire.backend.server.cdi.workspace.WorkspaceNameResolver;
 import org.uberfire.mocks.MockInstanceImpl;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.*;
@@ -69,7 +71,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Aether.class)
-@PowerMockIgnore({"javax.crypto.*"})
+@PowerMockIgnore({"javax.crypto.*", "javax.net.ssl.*", "javax.net.*", "javax.security.auth.x500.X500Principal"})
 public class GuvnorM2RepositoryTest {
 
     public static final String KIE_SETTINGS_CUSTOM_KEY = "kie.maven.settings.custom";
@@ -227,6 +229,52 @@ public class GuvnorM2RepositoryTest {
                                     }
                                 }));
     }
+    
+    @Test
+    public void testDeployArtifactFilteredOutAllRepositories() throws Exception {
+        final GAV gav = new GAV("org.kie.guvnor",
+                                "guvnor-m2repo-editor-backend",
+                                "0.0.1-SNAPSHOT");
+
+        final InputStream is = this.getClass().getResourceAsStream("guvnor-m2repo-editor-backend-test-with-distribution-management.jar");
+        repo.deployArtifact(is,
+                            gav,
+                            true,
+                            (repo) -> false);
+
+        verify(repositorySystem,
+               never()).deploy(any(RepositorySystemSession.class),
+                                any());
+    }
+    
+    @Test
+    public void testContainArtifact() throws Exception {
+        final GAV gav = new GAV("org.kie.guvnor",
+                                "guvnor-m2repo-editor-backend",
+                                "0.0.1-SNAPSHOT");
+
+        
+        repo.containsArtifact(gav);
+
+        verify(repositorySystem,
+               times(1)).resolveArtifact(any(),
+                                        any());
+    }
+    
+    @Test
+    public void testContainArtifactFilteredOutAllRepositories() throws Exception {
+        final GAV gav = new GAV("org.kie.guvnor",
+                                "guvnor-m2repo-editor-backend",
+                                "0.0.1-SNAPSHOT");
+
+        
+        repo.containsArtifact(gav,
+                              (repo) -> false);
+
+        verify(repositorySystem,
+               never()).resolveArtifact(any(),
+                                        any());
+    }
 
     @Test
     public void testListFilesWithoutParameters() {
@@ -289,5 +337,21 @@ public class GuvnorM2RepositoryTest {
 
         exception.expect(RuntimeException.class);
         repo.getPomText("dir/name.foo");
+    }
+
+    @Test
+    public void testLoadFileTextFromJar() {
+        File jarFile = new File("src/test/resources/org/guvnor/m2repo/backend/server/evaluation-12.1.1.jar");
+        assertNotNull(GuvnorM2Repository.loadFileTextFromJar(jarFile, GuvnorM2Repository.META_INF, GuvnorM2Repository.KIE_DEPLOYMENT_DESCRIPTOR_XML));
+        assertNotNull(GuvnorM2Repository.loadFileTextFromJar(jarFile, GuvnorM2Repository.META_INF, GuvnorM2Repository.KMODULE_XML));
+
+        assertNull(GuvnorM2Repository.loadFileTextFromJar(jarFile, GuvnorM2Repository.META_INF, "kie-descriptor.xml"));
+        assertNull(GuvnorM2Repository.loadFileTextFromJar(jarFile, GuvnorM2Repository.META_INF, "modu.xml"));
+
+        assertNull(GuvnorM2Repository.loadFileTextFromJar(jarFile, GuvnorM2Repository.META_INF, ""));
+        assertNull(GuvnorM2Repository.loadFileTextFromJar(jarFile, GuvnorM2Repository.META_INF, ""));
+
+        assertNull(GuvnorM2Repository.loadFileTextFromJar(jarFile, GuvnorM2Repository.META_INF, null));
+        assertNull(GuvnorM2Repository.loadFileTextFromJar(jarFile, GuvnorM2Repository.META_INF, null));
     }
 }

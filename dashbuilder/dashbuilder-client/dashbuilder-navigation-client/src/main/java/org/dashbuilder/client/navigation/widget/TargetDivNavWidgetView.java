@@ -15,6 +15,9 @@
  */
 package org.dashbuilder.client.navigation.widget;
 
+import java.util.function.Consumer;
+
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.IsWidget;
 import org.dashbuilder.client.navigation.resources.i18n.NavigationConstants;
 import org.dashbuilder.common.client.widgets.AlertBox;
@@ -23,9 +26,11 @@ import org.jboss.errai.common.client.dom.Div;
 import org.jboss.errai.common.client.dom.Element;
 import org.jboss.errai.common.client.dom.HTMLElement;
 import org.jboss.errai.common.client.dom.Window;
+import org.uberfire.ext.layout.editor.client.generator.AbstractLayoutGenerator;
+import org.uberfire.mvp.Command;
 
 public abstract class TargetDivNavWidgetView<T extends TargetDivNavWidget> extends BaseNavWidgetView<T>
-        implements TargetDivNavWidget.View<T> {
+                                            implements TargetDivNavWidget.View<T> {
 
     AlertBox alertBox;
 
@@ -46,17 +51,13 @@ public abstract class TargetDivNavWidgetView<T extends TargetDivNavWidget> exten
 
     @Override
     public void showContent(String targetDivId, IsWidget content) {
-        Element targetDiv = getTargetDiv(targetDivId);
-        if (targetDiv != null) {
+        getTargetDiv(targetDivId, targetDiv -> {
             DOMUtil.removeAllChildren(targetDiv);
             Div container = (Div) Window.getDocument().createElement("div");
             container.getStyle().setProperty("overflow", "hidden");
             targetDiv.appendChild(container);
             super.appendWidgetToElement(container, content);
-        }
-        else {
-            error(NavigationConstants.INSTANCE.navWidgetTargetDivMissing());
-        }
+        }, () -> error(NavigationConstants.INSTANCE.navWidgetTargetDivMissing()));
     }
 
     @Override
@@ -93,11 +94,25 @@ public abstract class TargetDivNavWidgetView<T extends TargetDivNavWidget> exten
             return null;
         }
         String id = el.getAttribute("id");
-        if (id != null && (id.equals("mainContainer") || id.equals("layout"))) {
+        if (id != null && (id.equals(AbstractLayoutGenerator.CONTAINER_ID) || id.equals("layout"))) {
             return el;
         } else {
             return getLayoutRootElement(el.getParentElement());
         }
+    }
+
+    public void getTargetDiv(String targetDivId,
+                             Consumer<HTMLElement> divConsumer,
+                             Command notFoundDivCallback) {
+        Scheduler.get().scheduleDeferred(() -> {
+            HTMLElement targetDiv = getTargetDiv(targetDivId);
+            if (targetDiv != null) {
+                divConsumer.accept(targetDiv);
+            } else {
+                notFoundDivCallback.execute();
+            }
+        });
+
     }
 
     public HTMLElement getTargetDiv(String targetDivId) {

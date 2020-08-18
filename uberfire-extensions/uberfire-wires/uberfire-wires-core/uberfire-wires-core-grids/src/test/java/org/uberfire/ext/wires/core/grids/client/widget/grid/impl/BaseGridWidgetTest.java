@@ -16,6 +16,8 @@
 
 package org.uberfire.ext.wires.core.grids.client.widget.grid.impl;
 
+import java.util.List;
+
 import com.ait.lienzo.client.core.types.Point2D;
 import com.ait.lienzo.test.LienzoMockitoTestRunner;
 import org.junit.Before;
@@ -25,20 +27,24 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.uberfire.ext.wires.core.grids.client.model.GridData;
 import org.uberfire.ext.wires.core.grids.client.model.impl.BaseGridData;
-import org.uberfire.ext.wires.core.grids.client.widget.grid.GridWidget;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.NodeMouseEventHandler;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.GridRenderer;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.selections.CellSelectionManager;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.selections.SelectionExtension;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.GridSelectionManager;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.pinning.GridPinnedModeManager;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @RunWith(LienzoMockitoTestRunner.class)
 public class BaseGridWidgetTest {
 
-    private GridWidget gridWidget;
+    private BaseGridWidget gridWidget;
 
     private GridData model;
 
@@ -62,7 +68,7 @@ public class BaseGridWidgetTest {
                                                           pinnedModeManager,
                                                           renderer) {
             @Override
-            CellSelectionManager getCellSelectionManager() {
+            public CellSelectionManager getCellSelectionManager() {
                 return cellSelectionManager;
             }
         };
@@ -113,17 +119,17 @@ public class BaseGridWidgetTest {
 
     @Test
     public void startEditingCellMouseClick() {
-        final Point2D cp = new Point2D(10,
+        final Point2D rp = new Point2D(10,
                                        20);
 
-        gridWidget.startEditingCell(cp);
+        gridWidget.startEditingCell(rp);
 
         final ArgumentCaptor<Point2D> pointArgumentCaptor = ArgumentCaptor.forClass(Point2D.class);
 
         verify(cellSelectionManager,
                times(1)).startEditingCell(pointArgumentCaptor.capture());
         final Point2D point = pointArgumentCaptor.getValue();
-        assertEquals(cp,
+        assertEquals(rp,
                      point);
     }
 
@@ -135,5 +141,25 @@ public class BaseGridWidgetTest {
         verify(cellSelectionManager,
                times(1)).startEditingCell(eq(0),
                                           eq(1));
+    }
+
+    @Test
+    public void testDefaultNodeMouseClickHandlers() {
+        final List<NodeMouseEventHandler> handlers = gridWidget.getNodeMouseClickEventHandlers(selectionManager);
+
+        assertThat(handlers).hasSize(3);
+        assertThat(handlers.get(0)).isInstanceOf(DefaultGridWidgetCellSelectorMouseEventHandler.class);
+        assertThat(handlers.get(1)).isInstanceOf(DefaultGridWidgetCollapsedCellMouseEventHandler.class);
+        assertThat(handlers.get(2)).isInstanceOf(DefaultGridWidgetLinkedColumnMouseEventHandler.class);
+    }
+
+    @Test
+    public void testDefaultNodeMouseDoubleClickHandlers() {
+        final List<NodeMouseEventHandler> handlers = gridWidget.getNodeMouseDoubleClickEventHandlers(selectionManager,
+                                                                                                     pinnedModeManager);
+
+        assertThat(handlers).hasSize(2);
+        assertThat(handlers.get(0)).isInstanceOf(DefaultGridWidgetEditCellMouseEventHandler.class);
+        assertThat(handlers.get(1)).isInstanceOf(DefaultGridWidgetPinnedModeMouseEventHandler.class);
     }
 }

@@ -23,11 +23,16 @@ import java.util.Map;
 
 import org.jboss.errai.common.client.api.annotations.Portable;
 
+import static org.guvnor.structure.repositories.EnvironmentParameters.BRANCHES;
 import static org.guvnor.structure.repositories.EnvironmentParameters.INIT;
 import static org.guvnor.structure.repositories.EnvironmentParameters.MANAGED;
+import static org.guvnor.structure.repositories.EnvironmentParameters.MIRROR;
 import static org.guvnor.structure.repositories.EnvironmentParameters.ORIGIN;
-import static org.guvnor.structure.repositories.EnvironmentParameters.PASSWORD;
+import static org.guvnor.structure.repositories.EnvironmentParameters.CRYPT_PASSWORD;
+import static org.guvnor.structure.repositories.EnvironmentParameters.SPACE;
+import static org.guvnor.structure.repositories.EnvironmentParameters.SUBDIRECTORY;
 import static org.guvnor.structure.repositories.EnvironmentParameters.USER_NAME;
+import static org.guvnor.structure.repositories.EnvironmentParameters.AVOID_INDEX;
 
 @Portable
 public class RepositoryEnvironmentConfigurations {
@@ -54,6 +59,11 @@ public class RepositoryEnvironmentConfigurations {
         return configurationMap.containsKey(configurationName);
     }
 
+    public void setSpace(final String space) {
+        configurationMap.put(SPACE,
+                             space);
+    }
+
     public void setManaged(final boolean managed) {
         configurationMap.put(MANAGED,
                              managed);
@@ -70,7 +80,7 @@ public class RepositoryEnvironmentConfigurations {
     }
 
     public void setPassword(final String password) {
-        configurationMap.put(PASSWORD,
+        configurationMap.put(CRYPT_PASSWORD,
                              password);
     }
 
@@ -79,8 +89,13 @@ public class RepositoryEnvironmentConfigurations {
                              init);
     }
 
-    public Boolean isManaged() {
-        return (Boolean) configurationMap.get(MANAGED);
+    public void setAvoidIndex(final boolean avoidIndex) {
+        configurationMap.put(AVOID_INDEX,
+                             avoidIndex);
+    }
+
+    public Object getInit() {
+        return configurationMap.get(INIT);
     }
 
     public Object getUserName() {
@@ -88,10 +103,34 @@ public class RepositoryEnvironmentConfigurations {
     }
 
     public Object getPassword() {
-        return configurationMap.get(PASSWORD);
+        return configurationMap.get(CRYPT_PASSWORD);
     }
 
     public Object getOrigin() {
         return configurationMap.get(ORIGIN);
+    }
+
+    public void setSubdirectory(String rootWithoutSpace) {
+        configurationMap.put(SUBDIRECTORY, rootWithoutSpace);
+    }
+
+    public Object getSubdirectory() {
+        return configurationMap.get(SUBDIRECTORY);
+    }
+
+    public void setBranches(List<String> branches) {
+        configurationMap.put(BRANCHES, branches);
+    }
+
+    public Object getBranches() {
+        return configurationMap.get(BRANCHES);
+    }
+
+    public void setMirror(boolean mirror) {
+        configurationMap.put(MIRROR, mirror);
+    }
+
+    public Object getMirror() {
+        return configurationMap.get(MIRROR);
     }
 }

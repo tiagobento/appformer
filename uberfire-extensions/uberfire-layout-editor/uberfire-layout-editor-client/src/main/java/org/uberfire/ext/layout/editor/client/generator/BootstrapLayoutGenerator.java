@@ -15,15 +15,14 @@
  */
 package org.uberfire.ext.layout.editor.client.generator;
 
-import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
-import com.google.gwt.user.client.ui.ComplexPanel;
-import org.gwtbootstrap3.client.ui.Container;
-import org.uberfire.ext.layout.editor.api.editor.LayoutComponent;
-import org.uberfire.ext.layout.editor.client.api.LayoutDragComponent;
-import org.uberfire.ext.layout.editor.client.infra.LayoutDragComponentHelper;
+import org.uberfire.ext.layout.editor.api.editor.LayoutInstance;
+import org.uberfire.ext.layout.editor.api.editor.LayoutTemplate;
+
+
 
 /**
  * A bootstrap based layout generator
@@ -33,19 +32,10 @@ import org.uberfire.ext.layout.editor.client.infra.LayoutDragComponentHelper;
 public class BootstrapLayoutGenerator extends AbstractLayoutGenerator {
 
     @Inject
-    private LayoutDragComponentHelper dragTypeHelper;
+    private BootstrapLayoutGeneratorDriver bootstrapDriver;
 
     @Override
-    public ComplexPanel getLayoutContainer() {
-        Container mainPanel = new Container();
-        mainPanel.getElement().setId("mainContainer");
-        mainPanel.getElement().addClassName("uf-perspective-container");
-        mainPanel.getElement().addClassName("uf-perspective-rendered-container");
-        return mainPanel;
-    }
-
-    @Override
-    public LayoutDragComponent getLayoutDragComponent(LayoutComponent layoutComponent) {
-        return dragTypeHelper.lookupDragTypeBean(layoutComponent.getDragTypeName());
+    public LayoutInstance build(LayoutTemplate layoutTemplate) {
+        return super.build(layoutTemplate, bootstrapDriver);
     }
 }

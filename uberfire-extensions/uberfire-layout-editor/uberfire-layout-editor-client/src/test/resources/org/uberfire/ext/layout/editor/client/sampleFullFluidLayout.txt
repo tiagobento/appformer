@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "name": "A",
   "style": "FLUID",
   "layoutProperties": {
@@ -8,56 +8,65 @@
   "rows": [
     {
       "height": "12",
+      "properties": {},
       "layoutColumns": [
         {
           "span": "4",
           "height": "12",
+          "properties": {},
           "rows": [],
           "layoutComponents": [
             {
               "dragTypeName": "org.uberfire.ext.plugin.client.perspective.editor.layout.editor.HTMLLayoutDragComponent",
               "properties": {
                 "HTML_CODE": "1"
-              }
+              },
+              "parts": []
             }
           ]
         },
         {
           "span": "2",
           "height": "12",
+          "properties": {},
           "rows": [],
           "layoutComponents": [
             {
               "dragTypeName": "org.uberfire.ext.plugin.client.perspective.editor.layout.editor.ScreenLayoutDragComponent",
               "properties": {
                 "Place Name": "HelloWorldScreen"
-              }
+              },
+              "parts": []
             }
           ]
         },
         {
           "span": "3",
           "height": "12",
+          "properties": {},
           "rows": [],
           "layoutComponents": [
             {
               "dragTypeName": "org.uberfire.ext.plugin.client.perspective.editor.layout.editor.HTMLLayoutDragComponent",
               "properties": {
                 "HTML_CODE": "2"
-              }
+              },
+              "parts": []
             }
           ]
         },
         {
           "span": "3",
           "height": "12",
+          "properties": {},
           "rows": [],
           "layoutComponents": [
             {
               "dragTypeName": "org.uberfire.ext.plugin.client.perspective.editor.layout.editor.ScreenLayoutDragComponent",
               "properties": {
                 "Place Name": "HomeScreen3"
-              }
+              },
+              "parts": []
             }
           ]
         }
@@ -65,63 +74,74 @@
     },
     {
       "height": "12",
+      "properties": {},
       "layoutColumns": [
         {
           "span": "3",
           "height": "12",
+          "properties": {},
           "rows": [],
           "layoutComponents": [
             {
               "dragTypeName": "org.uberfire.ext.plugin.client.perspective.editor.layout.editor.HTMLLayoutDragComponent",
               "properties": {
                 "HTML_CODE": "3"
-              }
+              },
+              "parts": []
             }
           ]
         },
         {
           "span": "3",
           "height": "12",
+          "properties": {},
           "rows": [],
           "layoutComponents": [
             {
               "dragTypeName": "org.uberfire.ext.plugin.client.perspective.editor.layout.editor.HTMLLayoutDragComponent",
               "properties": {
                 "HTML_CODE": "4"
-              }
+              },
+              "parts": []
             }
           ]
         },
         {
           "span": "6",
           "height": "12",
+          "properties": {},
           "rows": [
             {
               "height": "12",
+              "properties": {},
               "layoutColumns": [
                 {
                   "span": "12",
                   "height": "12",
+                  "properties": {},
                   "rows": [],
                   "layoutComponents": [
                     {
                       "dragTypeName": "org.uberfire.ext.plugin.client.perspective.editor.layout.editor.HTMLLayoutDragComponent",
                       "properties": {
                         "HTML_CODE": "5"
-                      }
+                      },
+                      "parts": []
                     }
                   ]
                 },
                 {
                   "span": "12",
                   "height": "12",
+                  "properties": {},
                   "rows": [],
                   "layoutComponents": [
                     {
                       "dragTypeName": "org.uberfire.ext.plugin.client.perspective.editor.layout.editor.HTMLLayoutDragComponent",
                       "properties": {
                         "HTML_CODE": "6"
-                      }
+                      },
+                      "parts": []
                     }
                   ]
                 }
@@ -134,17 +154,20 @@
     },
     {
       "height": "12",
+      "properties": {},
       "layoutColumns": [
         {
           "span": "12",
           "height": "12",
+          "properties": {},
           "rows": [],
           "layoutComponents": [
             {
               "dragTypeName": "org.uberfire.ext.plugin.client.perspective.editor.layout.editor.HTMLLayoutDragComponent",
               "properties": {
                 "HTML_CODE": "7"
-              }
+              },
+              "parts": []
             }
           ]
         }
@@ -152,17 +175,20 @@
     },
     {
       "height": "12",
+      "properties": {},
       "layoutColumns": [
         {
           "span": "12",
           "height": "12",
+          "properties": {},
           "rows": [],
           "layoutComponents": [
             {
               "dragTypeName": "org.uberfire.ext.plugin.client.perspective.editor.layout.editor.ScreenLayoutDragComponent",
               "properties": {
                 "Place Name": "BPMN Explorer"
-              }
+              },
+              "parts": []
             }
           ]
         }

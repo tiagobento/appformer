@@ -22,12 +22,12 @@
   <parent>
     <groupId>org.uberfire</groupId>
     <artifactId>uberfire-parent</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>7.43.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>uberfire-commons</artifactId>
-  <packaging>bundle</packaging>
+  <packaging>jar</packaging>
 
   <name>Uberfire Commons</name>
   <description>Collection of reusable (not depending on any other UberFire module) components for Uberfire.</description>
@@ -70,6 +70,10 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>org.jboss.errai</groupId>
+      <artifactId>errai-marshalling</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.jboss.spec.javax.jms</groupId>
       <artifactId>jboss-jms-api_2.0_spec</artifactId>
     </dependency>
@@ -101,27 +105,5 @@
     </dependency>
     <!-- /ActiveMQ (artemis) -->
   </dependencies>
-
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <configuration>
-          <instructions>
-            <Bundle-SymbolicName>org.uberfire.commons</Bundle-SymbolicName>
-            <Export-Package>
-              org.uberfire.commons.*
-            </Export-Package>
-            <Import-Package>
-              *
-            </Import-Package>
-            <_removeheaders>Private-Package</_removeheaders>
-          </instructions>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 
 </project>

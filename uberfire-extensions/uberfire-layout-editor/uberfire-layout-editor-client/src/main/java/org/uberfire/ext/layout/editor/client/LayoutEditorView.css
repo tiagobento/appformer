@@ -1,11 +1,6 @@
 .el-container{
-    margin-right: 250px;
     height: 100%;
-}
-
-.el-sidebar{
-    float: right;
-    width: 250px;
+    padding: 0px 5px 0px 0px;
 }
 
 .le-component {
@@ -73,7 +68,22 @@
     transform: translateY(-50%);
 }
 
-.le-default {
+.le-design-fluid {
+    min-height: 100%;
+}
+
+.le-design-page {
+    height: 100%;
+}
+
+.le-design-container {
+    padding: 16px;
+    background: linear-gradient(#f6f6f6 18px, transparent 18px) 0 -2px, linear-gradient(90deg, #f6f6f6 18px, transparent 0px) -2px 0;
+    background-color: #bbbbbb;
+    background-size: 20px 20px;
+}
+
+.le-preview-container {
     padding: 16px;
     height: 100%;
 }
@@ -87,7 +97,6 @@
     padding-left: 100px;
     padding-right: 100px;
     height: 100%;
-
 }
 
 .le-empty-border {

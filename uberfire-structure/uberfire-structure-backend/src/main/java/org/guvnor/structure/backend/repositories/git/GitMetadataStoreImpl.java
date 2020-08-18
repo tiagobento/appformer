@@ -16,9 +16,11 @@
 
 package org.guvnor.structure.backend.repositories.git;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
@@ -28,28 +30,35 @@ import org.guvnor.structure.repositories.impl.GitMetadataImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.uberfire.backend.server.io.object.ObjectStorage;
+import org.uberfire.spaces.SpacesAPI;
 
 public class GitMetadataStoreImpl implements GitMetadataStore {
 
     private Logger logger = LoggerFactory.getLogger(GitMetadataStoreImpl.class);
     public static final String SEPARATOR = "/";
-    public static final String METADATA = "default://system_ou/metadata";
 
+    private URI metadataFS;
     private ObjectStorage storage;
+    private SpacesAPI spaces;
 
     @Inject
-    public GitMetadataStoreImpl(ObjectStorage storage) {
+    public GitMetadataStoreImpl(ObjectStorage storage,
+                                SpacesAPI spaces) {
         this.storage = storage;
+        this.spaces = spaces;
     }
 
     @PostConstruct
     public void init() {
 
+        metadataFS = spaces.resolveFileSystemURI(SpacesAPI.Scheme.DEFAULT,
+                                                 SpacesAPI.DEFAULT_SPACE,
+                                                    "metadata");
         if (logger.isDebugEnabled()) {
             logger.debug("Initializing GitMetadataStoreImpl {}",
-                         METADATA);
+                         metadataFS);
         }
-        this.storage.init(METADATA);
+        this.storage.init(metadataFS);
     }
 
     @Override
@@ -62,6 +71,11 @@ public class GitMetadataStoreImpl implements GitMetadataStore {
     public void write(String name,
                       String origin) {
 
+        write(name, origin, true);
+    }
+
+    @Override
+    public void write(String name, String origin, boolean lock) {
         GitMetadataImpl repositoryMetadata = (GitMetadataImpl) this.read(name).orElse(new GitMetadataImpl(name));
         this.removeForkFromOrigin(repositoryMetadata);
         GitMetadataImpl newRepositoryMetadata = new GitMetadataImpl(name,
@@ -78,18 +92,26 @@ public class GitMetadataStoreImpl implements GitMetadataStore {
             this.write(origin,
                        new GitMetadataImpl(origin,
                                            originMetadata.getOrigin(),
-                                           forks));
+                                           forks),
+                       lock);
         }
 
         this.write(name,
-                   newRepositoryMetadata);
+                   newRepositoryMetadata,
+                   lock);
     }
 
     @Override
     public void write(String name,
                       GitMetadata metadata) {
+        write(name, metadata, true);
+    }
+
+    @Override
+    public void write(String name, GitMetadata metadata, boolean lock) {
         this.storage.write(buildPath(name),
-                           metadata);
+                           metadata,
+                           lock);
     }
 
     @Override
@@ -160,5 +182,9 @@ public class GitMetadataStoreImpl implements GitMetadataStore {
                                   path.length());
         }
         return path + ".metadata";
+    }
+
+    URI getMetadataFS() {
+        return metadataFS;
     }
 }

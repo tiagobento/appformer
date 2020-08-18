@@ -19,6 +19,7 @@ import com.ait.lienzo.client.core.shape.Viewport;
 import com.ait.lienzo.client.widget.LienzoPanel;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -27,6 +28,7 @@ import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import org.uberfire.ext.wires.core.grids.client.model.Bounds;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.GridWidget;
 import org.uberfire.ext.wires.core.grids.client.widget.scrollbars.GridLienzoScrollHandler;
 import org.uberfire.ext.wires.core.grids.client.widget.scrollbars.GridLienzoScrollable;
 
@@ -81,7 +83,39 @@ public class GridLienzoPanel extends FocusPanel implements RequiresResize,
                         height);
     }
 
-    private GridLienzoPanel(final LienzoPanel lienzoPanel) {
+    public GridLienzoPanel(final DefaultGridLayer defaultGridLayer) {
+        this(new LienzoPanel() {
+                 @Override
+                 public void onResize() {
+                     // Do nothing. Resize is handled by AttachHandler. LienzoPanel calls onResize() in
+                     // it's onAttach() method which causes the Canvas to be redrawn. However when LienzoPanel
+                     // is adopted by another Widget LienzoPanel's onAttach() is called before its children
+                     // have been attached. Should redraw require children to be attached errors arise.
+                 }
+             },
+             defaultGridLayer);
+    }
+
+    public GridLienzoPanel(final int width,
+                           final int height,
+                           final DefaultGridLayer defaultGridLayer) {
+        this(new LienzoPanel(width,
+                             height) {
+                 @Override
+                 public void onResize() {
+                     // Do nothing. Resize is handled by AttachHandler. LienzoPanel calls onResize() in
+                     // it's onAttach() method which causes the Canvas to be redrawn. However when LienzoPanel
+                     // is adopted by another Widget LienzoPanel's onAttach() is called before its children
+                     // have been attached. Should redraw require children to be attached errors arise.
+                 }
+             },
+             defaultGridLayer);
+
+        updatePanelSize(width,
+                        height);
+    }
+
+    protected GridLienzoPanel(final LienzoPanel lienzoPanel) {
         this.lienzoPanel = lienzoPanel;
         this.gridLienzoScrollHandler = new GridLienzoScrollHandler(this);
 
@@ -90,37 +124,50 @@ public class GridLienzoPanel extends FocusPanel implements RequiresResize,
         setupDefaultHandlers();
     }
 
-    void setupPanels() {
+    protected GridLienzoPanel(final LienzoPanel lienzoPanel,
+                              final DefaultGridLayer defaultGridLayer) {
+        this.lienzoPanel = lienzoPanel;
+        this.gridLienzoScrollHandler = new GridLienzoScrollHandler(this);
+
+        add(defaultGridLayer);
+
+        setupPanels();
+        setupScrollHandlers();
+        setupDefaultHandlers();
+    }
+
+    protected void setupPanels() {
         setupScrollPanel();
         setupDomElementContainer();
         setupRootPanel();
 
         add(getRootPanel());
+        getElement().getStyle().setOutlineStyle(Style.OutlineStyle.NONE);
     }
 
-    void setupScrollPanel() {
+    protected void setupScrollPanel() {
         getScrollPanel().add(getInternalScrollPanel());
     }
 
-    void setupDomElementContainer() {
+    protected void setupDomElementContainer() {
         getDomElementContainer().add(getLienzoPanel());
     }
 
-    void setupRootPanel() {
+    protected void setupRootPanel() {
         getRootPanel().add(getDomElementContainer());
         getRootPanel().add(getScrollPanel());
     }
 
-    void setupScrollHandlers() {
+    protected void setupScrollHandlers() {
         getGridLienzoScrollHandler().init();
         addMouseUpHandler();
     }
 
-    void addMouseUpHandler() {
+    protected void addMouseUpHandler() {
         addMouseUpHandler((e) -> refreshScrollPosition());
     }
 
-    private void setupDefaultHandlers() {
+    protected void setupDefaultHandlers() {
         //Prevent DOMElements scrolling into view when they receive the focus
         domElementContainer.addDomHandler(new ScrollHandler() {
 
@@ -139,7 +186,6 @@ public class GridLienzoPanel extends FocusPanel implements RequiresResize,
                 }
             }
         });
-        addMouseDownHandler((e) -> setFocus(true));
     }
 
     @Override
@@ -150,7 +196,7 @@ public class GridLienzoPanel extends FocusPanel implements RequiresResize,
         });
     }
 
-    void scheduleDeferred(final Scheduler.ScheduledCommand scheduledCommand) {
+    protected void scheduleDeferred(final Scheduler.ScheduledCommand scheduledCommand) {
         Scheduler.get().scheduleDeferred(scheduledCommand);
     }
 
@@ -175,21 +221,40 @@ public class GridLienzoPanel extends FocusPanel implements RequiresResize,
                                   height);
     }
 
-    private void updateInternalPanelsSizes(final int width,
-                                           final int height) {
+    protected void updateInternalPanelsSizes(final int width,
+                                             final int height) {
         final Integer scrollbarWidth = getGridLienzoScrollHandler().scrollbarWidth();
         final Integer scrollbarHeight = getGridLienzoScrollHandler().scrollbarHeight();
 
-        getDomElementContainer().setPixelSize(width - scrollbarWidth,
-                                              height - scrollbarHeight);
-        getLienzoPanel().setPixelSize(width - scrollbarWidth,
-                                      height - scrollbarHeight);
+        final int visibleWidth = width - scrollbarWidth;
+        final int visibleHeight = height - scrollbarHeight;
+
+        getDomElementContainer().setPixelSize(visibleWidth,
+                                              visibleHeight);
+        getLienzoPanel().setPixelSize(visibleWidth,
+                                      visibleHeight);
+
+        propagateNewPanelSize(visibleWidth, visibleHeight);
     }
 
-    private void updateScrollPanelSize(final int width,
-                                       final int height) {
+    protected void updateScrollPanelSize(final int width,
+                                         final int height) {
         getScrollPanel().setPixelSize(width,
                                       height);
+    }
+
+    protected void propagateNewPanelSize(int visibleWidth, int visibleHeight) {
+        if (getDefaultGridLayer() == null) {
+            return;
+        }
+        // propagate to all widgets the new visible width and refresh the layer if needed
+        boolean toRefresh = false;
+        for (GridWidget gridWidget : getDefaultGridLayer().getGridWidgets()) {
+            toRefresh = toRefresh || gridWidget.getModel().setVisibleSizeAndRefresh(visibleWidth, visibleHeight);
+        }
+        if (toRefresh) {
+            this.getDefaultGridLayer().batch();
+        }
     }
 
     @Override
@@ -212,7 +277,7 @@ public class GridLienzoPanel extends FocusPanel implements RequiresResize,
         return lienzoPanel;
     }
 
-    private DefaultGridLayer setupDefaultGridLayer(final DefaultGridLayer layer) {
+    protected DefaultGridLayer setupDefaultGridLayer(final DefaultGridLayer layer) {
         layer.addOnEnterPinnedModeCommand(this::refreshScrollPosition);
         layer.addOnExitPinnedModeCommand(this::refreshScrollPosition);
 
@@ -243,11 +308,11 @@ public class GridLienzoPanel extends FocusPanel implements RequiresResize,
         return defaultGridLayer;
     }
 
-    AbsolutePanel getRootPanel() {
+    protected AbsolutePanel getRootPanel() {
         return rootPanel;
     }
 
-    GridLienzoScrollHandler getGridLienzoScrollHandler() {
+    protected GridLienzoScrollHandler getGridLienzoScrollHandler() {
         return gridLienzoScrollHandler;
     }
 }

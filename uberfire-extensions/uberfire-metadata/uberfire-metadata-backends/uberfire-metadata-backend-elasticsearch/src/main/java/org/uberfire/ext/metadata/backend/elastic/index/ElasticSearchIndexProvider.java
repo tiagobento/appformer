@@ -32,6 +32,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ResourceAlreadyExistsException;
@@ -74,7 +75,7 @@ public class ElasticSearchIndexProvider implements IndexProvider {
     public static final String ES_KEYWORD_TYPE = "keyword";
     private final ElasticSearchContext elasticSearchContext;
     private final MappingFieldFactory fieldFactory;
-    private final ElasticSearchMappingStore elasticMetaModel;
+    private final ElasticSearchMappingStore elasticSearchMappingStore;
     private final MetaModelStore metaModelStore;
     private final Analyzer analyzer;
     private Logger logger = LoggerFactory.getLogger(ElasticSearchIndexProvider.class);
@@ -82,11 +83,11 @@ public class ElasticSearchIndexProvider implements IndexProvider {
     public ElasticSearchIndexProvider(MetaModelStore metaModelStore,
                                       ElasticSearchContext elasticSearchContext,
                                       Analyzer analyzer) {
-        this.elasticMetaModel = new ElasticSearchMappingStore(this);
+        this.elasticSearchMappingStore = new ElasticSearchMappingStore(this);
         this.metaModelStore = metaModelStore;
         this.elasticSearchContext = elasticSearchContext;
         this.analyzer = analyzer;
-        this.fieldFactory = new MappingFieldFactory(metaModelStore);
+        this.fieldFactory = new MappingFieldFactory(this.elasticSearchMappingStore);
     }
 
     public Client getClient() {
@@ -101,8 +102,8 @@ public class ElasticSearchIndexProvider implements IndexProvider {
     @Override
     public void index(KObject object) {
         MetaObject metaObject = fieldFactory.build(object);
-        elasticMetaModel.updateMetaModel(object,
-                                         metaObject);
+        elasticSearchMappingStore.updateMetaModel(object,
+                                                  metaObject);
         this.deleteIfExists(object);
         this.createIndexRequest((ElasticMetaObject) metaObject)
                 .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
@@ -125,8 +126,8 @@ public class ElasticSearchIndexProvider implements IndexProvider {
         BulkRequestBuilder bulk = this.getClient().prepareBulk();
         elements.forEach(elem -> {
             MetaObject metaObject = fieldFactory.build(elem);
-            elasticMetaModel.updateMetaModel(elem,
-                                             metaObject);
+            elasticSearchMappingStore.updateMetaModel(elem,
+                                                      metaObject);
             bulk.add(this.createIndexRequest((ElasticMetaObject) metaObject));
         });
         bulk.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
@@ -143,8 +144,8 @@ public class ElasticSearchIndexProvider implements IndexProvider {
                                           ElasticMetaProperty::getValue,
                                           (mp1, mp2) -> mp2));
 
-        return this.getClient().prepareIndex(clusterId,
-                                             type.toLowerCase()).setSource(document);
+        return this.getClient().prepareIndex(sanitizeIndex(clusterId),
+                                             sanitizeIndex(type)).setSource(document);
     }
 
     @Override
@@ -157,7 +158,7 @@ public class ElasticSearchIndexProvider implements IndexProvider {
 
     @Override
     public void delete(String index) {
-        this.getClient().admin().indices().prepareDelete(index).get();
+        this.getClient().admin().indices().prepareDelete(sanitizeIndex(index)).get();
     }
 
     @Override
@@ -252,10 +253,10 @@ public class ElasticSearchIndexProvider implements IndexProvider {
                 .collect(Collectors.toList());
     }
 
-    private Optional<SearchResponse> findByQueryRaw(List<String> indices,
-                                                    Query query,
-                                                    Sort sort,
-                                                    int limit) {
+    protected Optional<SearchResponse> findByQueryRaw(List<String> indices,
+                                                      Query query,
+                                                      Sort sort,
+                                                      int limit) {
         try {
 
             List<String> indexes = indices;
@@ -266,10 +267,12 @@ public class ElasticSearchIndexProvider implements IndexProvider {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             searchSourceBuilder.query(queryBuilder);
             if (sort != null) {
-                Arrays.stream(sort.getSort()).forEach(sortField -> {
-                    String field = sortField.getField();
-                    searchSourceBuilder.sort(field);
-                });
+                Arrays.stream(sort.getSort())
+                        .filter(sortField -> sortField.getField() != null)
+                        .forEach(sortField -> {
+                            addSort(searchSourceBuilder,
+                                    sortField);
+                        });
             }
             if (limit > 0 && limit <= ELASTICSEARCH_MAX_SIZE) {
                 searchSourceBuilder.size(limit);
@@ -277,13 +280,19 @@ public class ElasticSearchIndexProvider implements IndexProvider {
                 searchSourceBuilder.size(ELASTICSEARCH_MAX_SIZE);
             }
             return Optional.of(this.getClient()
-                                       .prepareSearch(indicesToLowerCase(indexes).toArray(new String[indexes.size()]))
+                                       .prepareSearch(sanitizeIndexes(indexes).toArray(new String[indexes.size()]))
                                        .setSource(searchSourceBuilder).get());
         } catch (ElasticsearchException e) {
-            logger.debug(MessageFormat.format("Can't perform search: {0}",
+            logger.debug(MessageFormat.format("Unable to perform search: {0}",
                                               e.getMessage()));
         }
         return Optional.empty();
+    }
+
+    protected void addSort(SearchSourceBuilder searchSourceBuilder,
+                           SortField sortField) {
+        String field = sortField.getField();
+        searchSourceBuilder.sort(field);
     }
 
     protected String escapeSpecialCharacters(String queryString) {
@@ -292,11 +301,21 @@ public class ElasticSearchIndexProvider implements IndexProvider {
             if (query.chars().filter(ch -> ch == ':').count() >= 0) {
                 int separationChar = query.indexOf(':') + 1;
                 return query.substring(0,
-                                       separationChar) + escape(query.substring(separationChar));
+                                       separationChar) + processQuery(query,
+                                                                      separationChar);
             } else {
                 return query;
             }
         }).collect(Collectors.joining(" "));
+    }
+
+    private String processQuery(String query,
+                                int separationChar) {
+        String queryString = escape(query.substring(separationChar));
+        if (queryString.contains(":")) {
+            queryString = "\"" + queryString + "\"";
+        }
+        return queryString;
     }
 
     private String escape(String s) {
@@ -313,8 +332,15 @@ public class ElasticSearchIndexProvider implements IndexProvider {
         return sb.toString();
     }
 
-    private List<String> indicesToLowerCase(List<String> indices) {
-        return indices.stream().map(String::toLowerCase).collect(Collectors.toList());
+    protected List<String> sanitizeIndexes(List<String> indices) {
+        return indices.stream()
+                .map(this::sanitizeIndex)
+                .collect(Collectors.toList());
+    }
+
+    protected String sanitizeIndex(String index) {
+        return index.toLowerCase().replaceAll("/",
+                                              "_");
     }
 
     @Override
@@ -334,6 +360,16 @@ public class ElasticSearchIndexProvider implements IndexProvider {
         return Arrays.asList(indices).stream().filter(index -> !index.startsWith(".")).collect(Collectors.toList());
     }
 
+    @Override
+    public void observerInitialization(Runnable runnable) {
+        // Do nothing
+    }
+
+    @Override
+    public boolean isAlive() {
+        return true;
+    }
+
     public void putMapping(String index,
                            String type,
                            MetaObject metaObject) {
@@ -344,14 +380,14 @@ public class ElasticSearchIndexProvider implements IndexProvider {
         checkNotNull("metaObject",
                      metaObject);
         try {
-            this.getClient().admin().indices().prepareCreate(index.toLowerCase()).get();
+            this.getClient().admin().indices().prepareCreate(sanitizeIndex(index)).get();
         } catch (ResourceAlreadyExistsException ex) {
             logger.debug("Resource Already exists: " + ex.getMessage());
         }
         Map<String, Object> properties = this.createMappingMap(metaObject.getProperties());
         this.getClient().admin().indices()
-                .preparePutMapping(index.toLowerCase())
-                .setType(type.toLowerCase())
+                .preparePutMapping(sanitizeIndex(index))
+                .setType(sanitizeIndex(type))
                 .setSource(properties).get();
     }
 
@@ -362,9 +398,9 @@ public class ElasticSearchIndexProvider implements IndexProvider {
         checkNotEmpty("type",
                       type);
         try {
-            GetMappingsResponse mappingResponse = this.getClient().admin().indices().prepareGetMappings(index.toLowerCase()).addTypes(type.toLowerCase()).get();
-            return Optional.ofNullable(mappingResponse.getMappings().getOrDefault(index,
-                                                                                  ImmutableOpenMap.of()).getOrDefault(type,
+            GetMappingsResponse mappingResponse = this.getClient().admin().indices().prepareGetMappings(sanitizeIndex(index)).addTypes(sanitizeIndex(type)).get();
+            return Optional.ofNullable(mappingResponse.getMappings().getOrDefault(sanitizeIndex(index),
+                                                                                  ImmutableOpenMap.of()).getOrDefault(sanitizeIndex(type),
                                                                                                                       null));
         } catch (IndexNotFoundException ex) {
             if (logger.isDebugEnabled()) {
@@ -385,7 +421,7 @@ public class ElasticSearchIndexProvider implements IndexProvider {
         checkNotEmpty("type",
                       type);
         Map<String, Object> properties = this.createMappingMap(metaProperties);
-        this.getClient().admin().indices().preparePutMapping(index.toLowerCase()).setType(type.toLowerCase()).setSource(properties).get();
+        this.getClient().admin().indices().preparePutMapping(sanitizeIndex(index)).setType(sanitizeIndex(type)).setSource(properties).get();
     }
 
     private Map<String, Object> createMappingMap(Collection<MetaProperty> metaProperties) {

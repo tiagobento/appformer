@@ -112,7 +112,7 @@ public abstract class BaseRoleEditorWorkflow implements IsWidget {
          ****************************************************************************************************** */
 
     public void clear() {
-        view.clearNotification();
+        view.clearNotifications();
         roleEditor.clear();
         isDirty = false;
         role = null;
@@ -190,7 +190,7 @@ public abstract class BaseRoleEditorWorkflow implements IsWidget {
         if (isDirty) {
             view.showNotification(UsersManagementWidgetsConstants.INSTANCE.roleModified(BaseRoleEditorWorkflow.this.role.getName()));
         } else {
-            view.clearNotification();
+            view.clearNotifications();
         }
     }
 
@@ -215,13 +215,9 @@ public abstract class BaseRoleEditorWorkflow implements IsWidget {
 
             // Update the current active policy
             AuthorizationPolicy authzPolicy = permissionManager.getAuthorizationPolicy();
-            authzPolicy.setHomePerspective(role,
-                                           homePerspective.getIdentifier());
-            authzPolicy.setPriority(role,
-                                    rolePriority);
-            Collection<Permission> pc = authzPolicy.getPermissions(role).collection();
-            pc.clear();
-            pc.addAll(rolePermissions.collection());
+            authzPolicy.setHomePerspective(role, homePerspective.getIdentifier());
+            authzPolicy.setPriority(role, rolePriority);
+            authzPolicy.setPermissions(role, rolePermissions);
 
             // Save the policy in the backend
             authorizationService.call(r -> {

@@ -5,7 +5,7 @@ Introduction
 ------------
 The classes in this package contain the user and group manager provider implementation for JBoss KeyCloak.              
 
-There exist two implementation for this provider:           
+There are two implementation for this provider:           
 
 **Based on username/password credentials**                
 
@@ -39,53 +39,39 @@ So the following JAXRS, RestEasy and Keycloak dependencies must be present in th
         <dependency>
           <groupId>org.keycloak</groupId>
           <artifactId>keycloak-core</artifactId>
-          <version>1.9.0.Final</version>
+          <version>...</version>
         </dependency>
         
        <dependency>
          <groupId>org.jboss.resteasy</groupId>
          <artifactId>resteasy-jaxrs</artifactId>
-         <version>2.3.10.Final</version>
+         <version>...</version>
          <version>
        </dependency>
    
        <dependency>
          <groupId>org.jboss.resteasy</groupId>
          <artifactId>resteasy-jackson-provider</artifactId>
-         <version>2.3.10.Final</version>
+         <version>...</version>
        </dependency>
 
-**Note about JBoss Wildfly / EAP**
-If you are deploying the application in a Wildfly 8.x or an EAP 6.4, you can use the server's RestEasy provided modules instead 
-of adding the `org.jboss.resteasy:resteasy-jaxrs` and `org.jboss.resteasy:resteasy-jackson-provider` specified above, 
-just by adding the dependencies below in *jboss-deployment-descriptor.xml*:                
+Run the following command in order to figure out the versions to use for each of the above artifacts:
 
-     <jboss-deployment-structure>
-        <deployment>
-            <dependencies>
-                <module name="org.jboss.resteasy.resteasy-jackson-provider" services="import"/>
-            </dependencies>
-            <!-- Only add this exclusion on Wildfly, keep it for EAP. -->
-            <exclusions>
-                <module name="org.jboss.resteasy.resteasy-jackson2-provider"/>
-            </exclusions>
-        </deployment>
-     </jboss-deployment-structure>
+    mvn dependency:list
 
 Step 2 - Provider settings
 --------------------------
 
-NOTE: If the workbench's user system manager feature if not configured for the distribution you are using, please take a look at the [Workbench installation instructions](../uberfire-security-management-client-wb/README.md).                        
+NOTE: If the workbench's user system manager feature is not configured for the distribution you are using, please take a look at the [Workbench installation instructions](../uberfire-security-management-client-wb/README.md).                        
 
 Once dependencies have been specified as above, let's configure the Keycloak provider. To do it, please choose one of the following options:               
 
 **Using the credentials provider**                   
 
-a) Specify the concrete provider to use by adding a properties file named `security-management.properties` in your web application root classpath. 
+a) Specify the concrete provider to use by setting the Java system property below or by adding a properties file named `security-management.properties` in your web application root classpath
 (e.g. `src/main/resources/security-management.properties`), with the following keys and your concrete provider name as value:                               
 
     org.uberfire.ext.security.management.api.userManagementServices=KCCredentialsUserManagementService
-
 
 b) Specify the following Java system properties at container startup:        
 
@@ -144,12 +130,12 @@ Follow these steps in order to update or enable the Keycloak users and group man
 
 1.- Ensure the following libraries on `WEB-INF/lib`                
 
-* Add if no present the uberfire-security-management-api-0.X.Y.jar                             
-* Add if no present the uberfire-security-management-backend-0.X.Y.jar                             
-* Add if no present the uberfire-security-management-keycloak-0.X.Y.jar                             
-* Add keycloak-core-1.9.0.Final.jar                
-* Add keycloak-common-1.9.0.Final.jar                    
-* Remove any existing provider implementation, if any (ex: uberfire-security-management-wildfly-0.X.Y.jar, remove uberfire-security-management-tomcat-0.X.Y.jar,etc)                   
+* Add if no present the uberfire-security-management-api-X.Y.Z.jar                             
+* Add if no present the uberfire-security-management-backend-X.Y.Z.jar                             
+* Add if no present the uberfire-security-management-keycloak-X.Y.Z.jar                             
+* Add keycloak-core-X.Y.Z.Final.jar
+* Add keycloak-common-X.Y.Z.Final.jar
+* Remove any existing provider implementation, if any (ex: uberfire-security-management-wildfly-X.Y.Z.jar, remove uberfire-security-management-tomcat-X.Y.Z.jar,etc)                   
 
 2.- Replace the whole content for file `WEB-INF/classes/security-management.properties`, if not present, create it:                    
 
@@ -168,7 +154,7 @@ Follow these steps in order to update or enable the Keycloak users and group man
 
 Note: Use the concrete values for your environment.           
 
-3.- Ensure on file `/WEB-INF/jboss-deployment-structure.xml`:                
+3.- Ensure on file `/META-INF/jboss-deployment-structure.xml`:
 
 * Dependency to `org.jboss.resteasy.resteasy-jackson-provider` module          
      
@@ -211,4 +197,4 @@ The KeyCloak provider for users and groups management services provides the foll
 Notes
 -----
 * Java8+                   
-* This implementation has been tested for a KeyCloak version `1.9.0.Final`.                
+* This implementation has been tested for a KeyCloak version `3.4.0.Final`                

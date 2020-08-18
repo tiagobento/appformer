@@ -17,7 +17,7 @@ And for those who prefer the top-down approach, you can find a detailed descript
 
 ## Uberfire Community Support
 
-Visit our IRC channel (#uberfire on freenode) to hang out and share solutions with the Uberfire community.
+Visit our IRC channel (#appformer on freenode) to hang out and share solutions with the Uberfire community.
 
 ## Contributing to Uberfire
 
@@ -28,18 +28,17 @@ Contribute code through pull requests to this repository. See our [contributing 
 ## Building and contributing to our documentation
 
 In order to build and contribute to our documentation, follow this steps
-   
-- Fork the repository https://github.com/uberfire/uberfire then clone the fork locally
+
+- Fork the repository https://github.com/kiegroup/appformer then clone the fork locally
 - Get gitbook editor from https://github.com/GitbookIO/editor-legacy
 - Get gitbook builder from https://github.com/GitbookIO/gitbook (you may need to install npm first)
-- Edit the docs in your forked repository ../uberfire/uberfire-docs in gitbook editor
+- Edit the docs in your forked repository ../appformer/uberfire-docs in gitbook editor
 - When you've finished editing, build the docs by running uberfire-docs/buildHtml.sh and uberfire-docs/buildPdf.sh
 - View the built docs in uberfire-docs/docs/_book/index.html and uberfire-docs/uberfire-docs.pdf
 - Submit a pull request to get your changes accepted
 
-##License
+## License
 
 Uberfire Framework is released under Apache 2 License.
 
-Check [LICENSE](https://github.com/uberfire/uberfire/blob/master/LICENSE-ASL-2.0.txt) file for more information.
- 
+Check [LICENSE](LICENSE-ASL-2.0.txt) file for more information.

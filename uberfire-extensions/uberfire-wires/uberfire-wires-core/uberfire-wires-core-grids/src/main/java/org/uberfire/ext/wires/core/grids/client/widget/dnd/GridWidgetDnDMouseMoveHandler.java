@@ -17,6 +17,7 @@ package org.uberfire.ext.wires.core.grids.client.widget.dnd;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.ait.lienzo.client.core.event.NodeMouseMoveEvent;
 import com.ait.lienzo.client.core.event.NodeMouseMoveHandler;
@@ -27,6 +28,7 @@ import com.google.gwt.dom.client.Style;
 import org.uberfire.ext.wires.core.grids.client.model.GridColumn;
 import org.uberfire.ext.wires.core.grids.client.model.GridData;
 import org.uberfire.ext.wires.core.grids.client.model.GridRow;
+import org.uberfire.ext.wires.core.grids.client.util.ColumnIndexUtilities;
 import org.uberfire.ext.wires.core.grids.client.util.CoordinateUtilities;
 import org.uberfire.ext.wires.core.grids.client.widget.dom.HasDOMElementResources;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.GridWidget;
@@ -43,8 +45,8 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
     // How close the mouse pointer needs to be to the column separator to initiate a resize operation.
     private static final int COLUMN_RESIZE_HANDLE_SENSITIVITY = 5;
 
-    private final GridLayer layer;
-    private final GridWidgetDnDHandlersState state;
+    protected final GridLayer layer;
+    protected final GridWidgetDnDHandlersState state;
 
     public GridWidgetDnDMouseMoveHandler(final GridLayer layer,
                                          final GridWidgetDnDHandlersState state) {
@@ -66,11 +68,13 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
                 break;
 
             case COLUMN_MOVE:
+            case COLUMN_MOVE_INITIATED:
                 //If we're currently moving a column we don't need to find a column
                 handleColumnMove(event);
                 break;
 
             case ROW_MOVE:
+            case ROW_MOVE_INITIATED:
                 //If we're currently moving a row we don't need to find a row
                 handleRowMove(event);
                 break;
@@ -81,7 +85,7 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
         }
     }
 
-    void findGridColumn(final NodeMouseMoveEvent event) {
+    protected void findGridColumn(final NodeMouseMoveEvent event) {
         state.reset();
         setCursor(state.getCursor());
 
@@ -98,10 +102,15 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
 
             final Group header = gridWidget.getHeader();
             final GridRenderer renderer = gridWidget.getRenderer();
-
             final double headerHeight = renderer.getHeaderHeight();
-            final double headerRowsYOffset = getHeaderRowsYOffset(gridWidget,
-                                                                  renderer);
+
+            final BaseGridRendererHelper rendererHelper = gridWidget.getRendererHelper();
+            final BaseGridRendererHelper.RenderingInformation renderingInformation = rendererHelper.getRenderingInformation();
+            if (renderingInformation == null) {
+                continue;
+            }
+
+            final double headerRowsYOffset = renderingInformation.getHeaderRowsYOffset();
             final double headerMinY = (header == null ? headerRowsYOffset : header.getY() + headerRowsYOffset);
             final double headerMaxY = (header == null ? headerHeight : headerHeight + header.getY());
 
@@ -132,6 +141,7 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
             if (cy < headerMaxY) {
                 //Check for column moving
                 findMovableColumns(gridWidget,
+                                   renderingInformation,
                                    headerHeight - headerRowsYOffset,
                                    headerMinY,
                                    cx,
@@ -139,13 +149,15 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
             } else {
                 //Check for movable rows
                 findMovableRows(gridWidget,
+                                renderingInformation,
                                 cx,
                                 cy);
-
-                //Check for column resizing
-                findResizableColumn(gridWidget,
-                                    cx);
             }
+
+            //Check for column resizing
+            findResizableColumn(gridWidget,
+                                renderingInformation,
+                                cx);
 
             //If over Grid but no operation has been identified default to Grid dragging; when unpinned
             if (!layer.isGridPinned()) {
@@ -161,19 +173,7 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
         }
     }
 
-    private double getHeaderRowsYOffset(final GridWidget gridWidget,
-                                        final GridRenderer renderer) {
-        final GridData model = gridWidget.getModel();
-        final int headerRowCount = model.getHeaderRowCount();
-        final double headerHeight = renderer.getHeaderHeight();
-        final double headerRowHeight = renderer.getHeaderRowHeight();
-        final double headerRowsHeight = headerRowHeight * headerRowCount;
-        final double headerRowsYOffset = headerHeight - headerRowsHeight;
-
-        return headerRowsYOffset;
-    }
-
-    private void setCursor(final Style.Cursor cursor) {
+    protected void setCursor(final Style.Cursor cursor) {
         for (IMediator mediator : layer.getViewport().getMediators()) {
             if (mediator instanceof RestrictedMousePanMediator) {
                 if (((RestrictedMousePanMediator) mediator).isDragging()) {
@@ -185,11 +185,10 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
         state.setCursor(cursor);
     }
 
-    void findResizableColumn(final GridWidget view,
-                             final double cx) {
+    protected void findResizableColumn(final GridWidget view,
+                                       final BaseGridRendererHelper.RenderingInformation renderingInformation,
+                                       final double cx) {
         //Gather information on columns
-        final BaseGridRendererHelper rendererHelper = view.getRendererHelper();
-        final BaseGridRendererHelper.RenderingInformation renderingInformation = rendererHelper.getRenderingInformation();
         if (renderingInformation == null) {
             return;
         }
@@ -247,14 +246,13 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
         }
     }
 
-    void findMovableColumns(final GridWidget view,
-                            final double headerRowsHeight,
-                            final double headerMinY,
-                            final double cx,
-                            final double cy) {
+    protected void findMovableColumns(final GridWidget view,
+                                      final BaseGridRendererHelper.RenderingInformation renderingInformation,
+                                      final double headerRowsHeight,
+                                      final double headerMinY,
+                                      final double cx,
+                                      final double cy) {
         //Gather information on columns
-        final BaseGridRendererHelper rendererHelper = view.getRendererHelper();
-        final BaseGridRendererHelper.RenderingInformation renderingInformation = rendererHelper.getRenderingInformation();
         if (renderingInformation == null) {
             return;
         }
@@ -316,14 +314,14 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
                                                 final List<GridColumn.HeaderMetaData> headerMetaData,
                                                 final int headerRowIndex,
                                                 final int headerColumnIndex) {
-        final int blockStartColumnIndex = getBlockStartColumnIndex(allColumns,
-                                                                   headerMetaData.get(headerRowIndex),
-                                                                   headerRowIndex,
-                                                                   headerColumnIndex);
-        final int blockEndColumnIndex = getBlockEndColumnIndex(allColumns,
-                                                               headerMetaData.get(headerRowIndex),
-                                                               headerRowIndex,
-                                                               headerColumnIndex);
+        final int blockStartColumnIndex = ColumnIndexUtilities.getHeaderBlockStartColumnIndex(allColumns,
+                                                                                              headerMetaData.get(headerRowIndex),
+                                                                                              headerRowIndex,
+                                                                                              headerColumnIndex);
+        final int blockEndColumnIndex = ColumnIndexUtilities.getHeaderBlockEndColumnIndex(allColumns,
+                                                                                          headerMetaData.get(headerRowIndex),
+                                                                                          headerRowIndex,
+                                                                                          headerColumnIndex);
 
         final List<GridColumn<?>> columns = new ArrayList<GridColumn<?>>();
         columns.addAll(allColumns.subList(blockStartColumnIndex,
@@ -331,76 +329,28 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
         return columns;
     }
 
-    @SuppressWarnings("unchecked")
-    private int getBlockStartColumnIndex(final List<? extends GridColumn<?>> allColumns,
-                                         final GridColumn.HeaderMetaData headerMetaData,
-                                         final int headerRowIndex,
-                                         final int headerColumnIndex) {
-        //Back-track adding width of proceeding columns sharing header MetaData
-        int candidateHeaderColumnIndex = headerColumnIndex;
-        if (candidateHeaderColumnIndex == 0) {
-            return candidateHeaderColumnIndex;
-        }
-        while (candidateHeaderColumnIndex > 0) {
-            final GridColumn candidateColumn = allColumns.get(candidateHeaderColumnIndex - 1);
-            final List<GridColumn.HeaderMetaData> candidateHeaderMetaData = candidateColumn.getHeaderMetaData();
-            if (candidateHeaderMetaData.size() - 1 < headerRowIndex) {
-                break;
-            }
-            if (!candidateHeaderMetaData.get(headerRowIndex).equals(headerMetaData)) {
-                break;
-            }
-            candidateHeaderColumnIndex--;
-        }
-
-        return candidateHeaderColumnIndex;
-    }
-
-    @SuppressWarnings("unchecked")
-    private int getBlockEndColumnIndex(final List<? extends GridColumn<?>> allColumns,
-                                       final GridColumn.HeaderMetaData headerMetaData,
-                                       final int headerRowIndex,
-                                       final int headerColumnIndex) {
-        //Forward-track adding width of following columns sharing header MetaData
-        int candidateHeaderColumnIndex = headerColumnIndex;
-        if (candidateHeaderColumnIndex == allColumns.size() - 1) {
-            return candidateHeaderColumnIndex;
-        }
-        while (candidateHeaderColumnIndex < allColumns.size() - 1) {
-            final GridColumn candidateColumn = allColumns.get(candidateHeaderColumnIndex + 1);
-            final List<GridColumn.HeaderMetaData> candidateHeaderMetaData = candidateColumn.getHeaderMetaData();
-            if (candidateHeaderMetaData.size() - 1 < headerRowIndex) {
-                break;
-            }
-            if (!candidateHeaderMetaData.get(headerRowIndex).equals(headerMetaData)) {
-                break;
-            }
-            candidateHeaderColumnIndex++;
-        }
-
-        return candidateHeaderColumnIndex;
-    }
-
-    void findMovableRows(final GridWidget view,
-                         final double cx,
-                         final double cy) {
-        if (!isOverRowDragHandleColumn(view,
+    protected void findMovableRows(final GridWidget view,
+                                   final BaseGridRendererHelper.RenderingInformation renderingInformation,
+                                   final double cx,
+                                   final double cy) {
+        if (!isOverRowDragHandleColumn(renderingInformation,
                                        cx)) {
             return;
         }
 
         final GridData gridModel = view.getModel();
         final GridRenderer renderer = view.getRenderer();
+        final List<Double> allRowHeights = renderingInformation.getAllRowHeights();
 
         //Get row index
         if (gridModel.getRowCount() == 0) {
             return;
         }
-        GridRow row;
+        double rowHeight;
         int uiRowIndex = 0;
         double offsetY = cy - renderer.getHeaderHeight();
-        while ((row = gridModel.getRow(uiRowIndex)).getHeight() < offsetY) {
-            offsetY = offsetY - row.getHeight();
+        while ((rowHeight = allRowHeights.get(uiRowIndex)) < offsetY) {
+            offsetY = offsetY - rowHeight;
             uiRowIndex++;
         }
         if (uiRowIndex < 0 || uiRowIndex > gridModel.getRowCount() - 1) {
@@ -408,7 +358,7 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
         }
 
         //Add row over which MouseEvent occurred
-        final List<GridRow> rows = new ArrayList<GridRow>();
+        final List<GridRow> rows = new ArrayList<>();
         rows.add(gridModel.getRow(uiRowIndex));
 
         //Add any other collapsed rows
@@ -424,11 +374,9 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
         setCursor(Style.Cursor.MOVE);
     }
 
-    private boolean isOverRowDragHandleColumn(final GridWidget view,
+    private boolean isOverRowDragHandleColumn(final BaseGridRendererHelper.RenderingInformation renderingInformation,
                                               final double cx) {
         //Gather information on columns
-        final BaseGridRendererHelper rendererHelper = view.getRendererHelper();
-        final BaseGridRendererHelper.RenderingInformation renderingInformation = rendererHelper.getRenderingInformation();
         if (renderingInformation == null) {
             return false;
         }
@@ -471,7 +419,7 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
         return null;
     }
 
-    void handleColumnResize(final NodeMouseMoveEvent event) {
+    protected void handleColumnResize(final NodeMouseMoveEvent event) {
         final GridWidget activeGridWidget = state.getActiveGridWidget();
         final List<GridColumn<?>> activeGridColumns = state.getActiveGridColumns();
         if (activeGridColumns.size() > 1) {
@@ -498,13 +446,61 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
                 columnNewWidth = columnMaximumWidth;
             }
         }
+
         destroyColumns(allGridColumns);
-        activeGridColumn.setWidth(columnNewWidth);
+
+        activeGridColumn.setWidth(adjustColumnWidth(columnNewWidth, activeGridColumn, activeGridWidget));
         layer.batch();
     }
 
+    protected double adjustColumnWidth(double columnNewWidth, GridColumn<?> activeGridColumn, GridWidget activeGridWidget) {
+        final GridData activeGridModel = activeGridWidget.getModel();
+
+        double originalLeftColumnWidth = activeGridColumn.getWidth();
+        double delta = originalLeftColumnWidth - columnNewWidth;
+
+        int visibleWidth = activeGridModel.getVisibleWidth();
+        double gridWidgetWidth = activeGridWidget.getWidth();
+        double newGridWidth = gridWidgetWidth - delta;
+
+        // if the grid is becoming less than 100% width
+        if (newGridWidth < visibleWidth && delta > 0) {
+
+            // look for a column with AUTO width on the right
+            Optional<GridColumn<?>> rightGridColumn = getFirstRightAutoColumn(activeGridColumn, activeGridModel);
+            if (rightGridColumn.isPresent()) {
+                GridColumn<?> rightColumn = rightGridColumn.get();
+                double originalRightColumnWidth = rightColumn.getWidth();
+                double widthWithoutColumn = gridWidgetWidth - originalRightColumnWidth;
+
+                double newWidth = visibleWidth - widthWithoutColumn + delta;
+
+                rightColumn.setWidth(newWidth);
+            }
+            // or revert column resizing if the column itself has AUTO width
+            else if (GridColumn.ColumnWidthMode.isAuto(activeGridColumn)) {
+                double widthWithoutColumn = gridWidgetWidth - originalLeftColumnWidth;
+                columnNewWidth = visibleWidth - widthWithoutColumn;
+            }
+        }
+        return columnNewWidth;
+    }
+
+    Optional<GridColumn<?>> getFirstRightAutoColumn(GridColumn<?> target, GridData model) {
+        List<GridColumn<?>> columns = model.getColumns();
+        int targetIndex = columns.indexOf(target);
+
+        for (int i = targetIndex + 1; i < columns.size(); i += 1) {
+            GridColumn<?> gridColumn = columns.get(i);
+            if (GridColumn.ColumnWidthMode.isAuto(gridColumn)) {
+                return Optional.of(gridColumn);
+            }
+        }
+        return Optional.empty();
+    }
+
     @SuppressWarnings("unchecked")
-    void handleColumnMove(final NodeMouseMoveEvent event) {
+    protected void handleColumnMove(final NodeMouseMoveEvent event) {
         final GridWidget activeGridWidget = state.getActiveGridWidget();
         final List<GridColumn<?>> activeGridColumns = state.getActiveGridColumns();
         final GridColumn.HeaderMetaData activeHeaderMetaData = state.getActiveHeaderMetaData();
@@ -540,14 +536,14 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
                     for (int headerRowIndex = 0; headerRowIndex < candidateGridColumn.getHeaderMetaData().size(); headerRowIndex++) {
                         final GridColumn.HeaderMetaData candidateHeaderMetaData = candidateGridColumn.getHeaderMetaData().get(headerRowIndex);
                         if (candidateHeaderMetaData.getColumnGroup().equals(activeHeaderMetaData.getColumnGroup())) {
-                            final int candidateBlockStartColumnIndex = getBlockStartColumnIndex(allGridColumns,
-                                                                                                candidateHeaderMetaData,
-                                                                                                headerRowIndex,
-                                                                                                headerColumnIndex);
-                            final int candidateBlockEndColumnIndex = getBlockEndColumnIndex(allGridColumns,
-                                                                                            candidateHeaderMetaData,
-                                                                                            headerRowIndex,
-                                                                                            headerColumnIndex);
+                            final int candidateBlockStartColumnIndex = ColumnIndexUtilities.getHeaderBlockStartColumnIndex(allGridColumns,
+                                                                                                                           candidateHeaderMetaData,
+                                                                                                                           headerRowIndex,
+                                                                                                                           headerColumnIndex);
+                            final int candidateBlockEndColumnIndex = ColumnIndexUtilities.getHeaderBlockEndColumnIndex(allGridColumns,
+                                                                                                                       candidateHeaderMetaData,
+                                                                                                                       headerRowIndex,
+                                                                                                                       headerColumnIndex);
                             final double candidateBlockOffset = rendererHelper.getColumnOffset(candidateBlockStartColumnIndex);
                             final double candidateBlockWidth = getBlockWidth(allGridColumns,
                                                                              candidateBlockStartColumnIndex,
@@ -563,14 +559,16 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
                                     destroyColumns(allGridColumns);
                                     activeGridModel.moveColumnsTo(candidateBlockEndColumnIndex,
                                                                   activeGridColumns);
-                                    state.getEventColumnHighlight().setX(activeGridWidget.getX() + rendererHelper.getColumnOffset(activeGridColumns.get(0)));
+                                    state.getEventColumnHighlight().setX(activeGridWidget.getComputedLocation().getX() + rendererHelper.getColumnOffset(activeGridColumns.get(0)));
+                                    state.setOperation(GridWidgetDnDHandlersState.GridWidgetHandlersOperation.COLUMN_MOVE);
                                     layer.batch();
                                     return;
                                 } else {
                                     destroyColumns(allGridColumns);
                                     activeGridModel.moveColumnsTo(candidateBlockStartColumnIndex,
                                                                   activeGridColumns);
-                                    state.getEventColumnHighlight().setX(activeGridWidget.getX() + rendererHelper.getColumnOffset(activeGridColumns.get(0)));
+                                    state.getEventColumnHighlight().setX(activeGridWidget.getComputedLocation().getX() + rendererHelper.getColumnOffset(activeGridColumns.get(0)));
+                                    state.setOperation(GridWidgetDnDHandlersState.GridWidgetHandlersOperation.COLUMN_MOVE);
                                     layer.batch();
                                     return;
                                 }
@@ -595,7 +593,7 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
         return blockWidth;
     }
 
-    void handleRowMove(final NodeMouseMoveEvent event) {
+    protected void handleRowMove(final NodeMouseMoveEvent event) {
         final GridWidget activeGridWidget = state.getActiveGridWidget();
         final List<GridRow> activeGridRows = state.getActiveGridRows();
 
@@ -646,11 +644,11 @@ public class GridWidgetDnDMouseMoveHandler implements NodeMouseMoveHandler {
 
         //Move row(s) and update highlight
         destroyColumns(allGridColumns);
-        activeGridModel.moveRowsTo(uiRowIndex,
-                                   activeGridRows);
+        activeGridModel.moveRowsTo(uiRowIndex, activeGridRows);
 
         final double rowOffsetY = rendererHelper.getRowOffset(leadRow) + headerHeight;
-        state.getEventColumnHighlight().setY(activeGridWidget.getY() + rowOffsetY);
+        state.getEventColumnHighlight().setY(activeGridWidget.getComputedLocation().getY() + rowOffsetY);
+        state.setOperation(GridWidgetDnDHandlersState.GridWidgetHandlersOperation.ROW_MOVE);
         layer.batch();
     }
 

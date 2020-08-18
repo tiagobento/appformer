@@ -15,10 +15,11 @@
  */
 package org.dashbuilder.client.editor;
 
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.ui.IsWidget;
 import org.dashbuilder.client.editor.resources.i18n.Constants;
 import org.dashbuilder.displayer.DisplayerSettings;
+import org.dashbuilder.displayer.DisplayerSubType;
+import org.dashbuilder.displayer.DisplayerType;
 import org.dashbuilder.displayer.client.Displayer;
 import org.dashbuilder.displayer.client.PerspectiveCoordinator;
 import org.dashbuilder.displayer.client.widgets.DisplayerEditorPopup;
@@ -28,9 +29,9 @@ import org.gwtbootstrap3.client.ui.Modal;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.ext.layout.editor.client.api.HasModalConfiguration;
+import org.uberfire.ext.layout.editor.client.api.LayoutDragComponent;
 import org.uberfire.ext.layout.editor.client.api.ModalConfigurationContext;
 import org.uberfire.ext.layout.editor.client.api.RenderingContext;
-import org.uberfire.ext.plugin.client.perspective.editor.api.PerspectiveEditorCoreComponent;
 import org.uberfire.mvp.Command;
 
 import javax.enterprise.context.Dependent;
@@ -38,7 +39,7 @@ import javax.inject.Inject;
 import java.util.Map;
 
 @Dependent
-public class DisplayerDragComponent implements PerspectiveEditorCoreComponent, HasModalConfiguration {
+public class DisplayerDragComponent implements LayoutDragComponent, HasModalConfiguration {
 
     SyncBeanManager beanManager;
     DisplayerViewer viewer;
@@ -47,16 +48,24 @@ public class DisplayerDragComponent implements PerspectiveEditorCoreComponent, H
     DisplayerSettingsJSONMarshaller marshaller;
 
     @Inject
-    public DisplayerDragComponent( SyncBeanManager beanManager,
-                                   DisplayerViewer viewer,
-                                   PlaceManager placeManager,
-                                   PerspectiveCoordinator perspectiveCoordinator ) {
+    public DisplayerDragComponent(SyncBeanManager beanManager,
+                                  DisplayerViewer viewer,
+                                  PlaceManager placeManager,
+                                  PerspectiveCoordinator perspectiveCoordinator) {
 
         this.beanManager = beanManager;
         this.viewer = viewer;
         this.placeManager = placeManager;
         this.perspectiveCoordinator = perspectiveCoordinator;
         this.marshaller = DisplayerSettingsJSONMarshaller.get();
+    }
+
+    public DisplayerType getDisplayerType() {
+        return null;
+    }
+
+    public DisplayerSubType getDisplayerSubType() {
+        return null;
     }
 
     @Override
@@ -79,21 +88,19 @@ public class DisplayerDragComponent implements PerspectiveEditorCoreComponent, H
 
         final DisplayerSettings settings = marshaller.fromJsonString( json );
         viewer.init( settings );
-        viewer.addAttachHandler( new AttachEvent.Handler() {
-            public void onAttachOrDetach( AttachEvent attachEvent ) {
-                if ( attachEvent.isAttached() ) {
-                    final int offsetWidth = ctx.getContainer().getOffsetWidth();
-                    int containerWidth = offsetWidth > 40 ?  offsetWidth - 40 : 0;
-                    adjustSize( settings, containerWidth );
-                    Displayer displayer = viewer.draw();
-                    perspectiveCoordinator.addDisplayer( displayer );
-                }
+        viewer.addAttachHandler(attachEvent -> {
+            if (attachEvent.isAttached()) {
+                final int offsetWidth = ctx.getContainer().getOffsetWidth();
+                int containerWidth = offsetWidth > 40 ?  offsetWidth - 40 : 0;
+                adjustSize( settings, containerWidth );
+                Displayer displayer = viewer.draw();
+                perspectiveCoordinator.addDisplayer( displayer );
             }
-        } );
+        });
         int containerWidth = ctx.getContainer().getOffsetWidth() - 40;
-        adjustSize( settings, containerWidth );
+        adjustSize(settings, containerWidth);
         Displayer displayer = viewer.draw();
-        perspectiveCoordinator.addDisplayer( displayer );
+        perspectiveCoordinator.addDisplayer(displayer);
         return viewer;
     }
 
@@ -103,6 +110,17 @@ public class DisplayerDragComponent implements PerspectiveEditorCoreComponent, H
         String json = properties.get( "json" );
         DisplayerSettings settings = json != null ? marshaller.fromJsonString( json ) : null;
         DisplayerEditorPopup editor = beanManager.lookupBean( DisplayerEditorPopup.class ).newInstance();
+
+        // For brand new components set the default type/subtype to create
+        if (settings == null) {
+            if (getDisplayerType() != null) {
+                editor.setDisplayerType(getDisplayerType());
+            }
+            if (getDisplayerSubType() != null) {
+                editor.setDisplayerSubType(getDisplayerSubType());
+            }
+        }
+
         editor.init( settings );
         editor.setOnSaveCommand( getSaveCommand( editor, ctx ) );
         editor.setOnCloseCommand( getCloseCommand( editor, ctx ) );
@@ -110,22 +128,18 @@ public class DisplayerDragComponent implements PerspectiveEditorCoreComponent, H
     }
 
     protected Command getSaveCommand( final DisplayerEditorPopup editor, final ModalConfigurationContext ctx ) {
-        return new Command() {
-            public void execute() {
-                String json = marshaller.toJsonString( editor.getDisplayerSettings() );
-                ctx.setComponentProperty( "json", json );
-                ctx.configurationFinished();
-                beanManager.destroyBean( editor );
-            }
+        return () -> {
+            String json = marshaller.toJsonString( editor.getDisplayerSettings() );
+            ctx.setComponentProperty( "json", json );
+            ctx.configurationFinished();
+            beanManager.destroyBean( editor );
         };
     }
 
     protected Command getCloseCommand( final DisplayerEditorPopup editor, final ModalConfigurationContext ctx ) {
-        return new Command() {
-            public void execute() {
-                ctx.configurationCancelled();
-                beanManager.destroyBean( editor );
-            }
+        return () -> {
+            ctx.configurationCancelled();
+            beanManager.destroyBean( editor );
         };
     }
 

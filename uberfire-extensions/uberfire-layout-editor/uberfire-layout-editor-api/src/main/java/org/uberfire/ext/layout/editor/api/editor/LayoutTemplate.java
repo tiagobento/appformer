@@ -26,15 +26,15 @@ import org.jboss.errai.common.client.api.annotations.Portable;
 @Portable
 public final class LayoutTemplate {
 
-    private int version = 2;
+    private int version = 3;
 
     private String name;
 
     private Style style = Style.FLUID;
 
-    private Map<String, String> layoutProperties = new HashMap<String, String>();
+    private Map<String, String> layoutProperties = new HashMap<>();
 
-    private List<LayoutRow> rows = new ArrayList<LayoutRow>();
+    private List<LayoutRow> rows = new ArrayList<>();
 
     public LayoutTemplate() {
 
@@ -42,6 +42,11 @@ public final class LayoutTemplate {
 
     public LayoutTemplate(String name) {
         this.name = name;
+    }
+
+    public LayoutTemplate(String name, Style style) {
+        this.name = name;
+        this.style = style;
     }
 
     public LayoutTemplate(String layoutName,
@@ -74,10 +79,6 @@ public final class LayoutTemplate {
 
     public Map<String, String> getLayoutProperties() {
         return layoutProperties;
-    }
-
-    public boolean isPageStyle() {
-        return style.equals(Style.PAGE);
     }
 
     @Override
@@ -128,18 +129,31 @@ public final class LayoutTemplate {
     public boolean isEmpty() {
         return rows.isEmpty();
     }
+    
+    public boolean contains(LayoutComponent component) {
+        for (LayoutRow row : rows) {
+            if (row.contains(component)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public Style getStyle() {
         return style;
     }
 
-    public boolean isPageLayout() {
-        return getStyle() == LayoutTemplate.Style.PAGE;
+    public void setStyle(Style style) {
+        this.style = style;
+    }
+
+    public boolean isPageStyle() {
+        return Style.PAGE.equals(style);
     }
 
     @Portable
     public enum Style {
         PAGE,
-        FLUID
+        FLUID;
     }
 }

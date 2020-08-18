@@ -19,7 +19,15 @@ import com.ait.lienzo.client.core.shape.Line;
 import com.ait.lienzo.client.core.shape.MultiPath;
 import com.ait.lienzo.client.core.shape.Rectangle;
 import com.ait.lienzo.client.core.shape.Text;
+import com.ait.lienzo.shared.core.types.TextAlign;
+import com.ait.lienzo.shared.core.types.TextBaseLine;
+import com.ait.lienzo.shared.core.types.TextUnit;
 import org.uberfire.ext.wires.core.grids.client.model.GridColumn;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.themes.impl.KIEColours;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.themes.impl.KIEStyles;
+
+import static org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.themes.impl.KIEColours.HIGHLIGHTED_CELL_BACKGROUND;
+import static org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.themes.impl.KIEColours.HIGHLIGHTED_CELL_STROKE;
 
 /**
  * Definition of themes used by a render for the pluggable rendering mechanism.
@@ -40,11 +48,16 @@ public interface GridRendererTheme {
     MultiPath getSelector();
 
     /**
-     * Delegates construction of the cell "selector" to sub-classes. All implementations
-     * are to provide a Rectangle surrounding the whole cell.
+     * Delegates construction of the cell "selector" border to sub-classes.
      * @return A {@link Rectangle} for the cell "selector"
      */
-    Rectangle getCellSelector();
+    Rectangle getCellSelectorBorder();
+
+    /**
+     * Delegates construction of the cell "selector" background to sub-classes.
+     * @return A {@link Rectangle} for the cell "selector"
+     */
+    Rectangle getCellSelectorBackground();
 
     /**
      * Delegates the Header's background Rectangle to sub-classes.
@@ -103,4 +116,34 @@ public interface GridRendererTheme {
      * @return A {@link Line} for the divider.
      */
     Line getGridHeaderBodyDivider();
+
+    /**
+     * Delegates the Body's Text to sub-classes.
+     * @return A {@link Text} used to render the placeholder in the body.
+     */
+    default Text getPlaceholderText() {
+        return new Text("")
+                .setFillColor(KIEColours.PLACEHOLDER_COLOR)
+                .setFontSize(KIEStyles.FONT_SIZE)
+                .setFontFamily(KIEStyles.FONT_FAMILY_LABEL)
+                .setFontStyle(KIEStyles.FONT_STYLE_ITALIC)
+                .setTextUnit(TextUnit.PT)
+                .setListening(false)
+                .setTextBaseLine(TextBaseLine.MIDDLE)
+                .setTextAlign(TextAlign.CENTER);
+    }
+
+    /**
+     * Delegates the highlighted cell background Rectangle to sub-classes.
+     * @return A {@link Rectangle} for the cell's highlight background.
+     */
+    default Rectangle getHighlightedCellBackground() {
+        final Rectangle r = new Rectangle(0, 0);
+        r.setFillColor(HIGHLIGHTED_CELL_BACKGROUND);
+        r.setStrokeWidth(1.0);
+        // We need some alpha because the highlight is draw over the cell content.
+        r.setAlpha(0.3);
+        r.setStrokeColor(HIGHLIGHTED_CELL_STROKE);
+        return r;
+    }
 }

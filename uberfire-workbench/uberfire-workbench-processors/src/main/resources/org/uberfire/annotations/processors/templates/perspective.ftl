@@ -19,6 +19,7 @@ package ${packageName};
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Consumer;
 import javax.annotation.Generated;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -32,6 +33,7 @@ import java.util.Map;
 import org.uberfire.client.annotations.Perspective;
 import org.jboss.errai.common.client.dom.HTMLElement;
 import org.jboss.errai.common.client.dom.DOMUtil;
+import org.uberfire.client.mvp.IsTemplatePerspective;
 </#if>
 import org.uberfire.client.mvp.AbstractWorkbenchPerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
@@ -71,6 +73,9 @@ import org.jboss.errai.ioc.client.api.Shared;
 @Dependent
 @Generated("org.uberfire.annotations.processors.WorkbenchPerspectiveProcessor")
 @Named("${identifier}")
+<#if isTemplate>
+@IsTemplatePerspective
+</#if>
 <#if beanActivatorClass??>
 @ActivatedBy(${beanActivatorClass}.class)
 </#if>
@@ -168,8 +173,8 @@ public class ${className} extends AbstractWorkbenchPerspectiveActivity<#if isTem
 </#if>
 <#if getMenuBarMethodName??>
     @Override
-    public Menus getMenus() {
-        return realPresenter.${getMenuBarMethodName}();
+    public void getMenus(final Consumer<Menus> menusConsumer) {
+        realPresenter.${getMenuBarMethodName}(menusConsumer);
     }
 
 </#if>

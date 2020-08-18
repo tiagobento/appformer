@@ -99,6 +99,32 @@ public interface GridWidget extends IPrimitive<Group>,
     boolean isSelected();
 
     /**
+     * Show context menu of a header cell at coordinates 'uiHeaderRowIndex' and 'uiHeaderColumnIndex'.
+     * If the provided coordinate does not resolve to a header cell in the Grid no operation is performed.
+     * @param uiHeaderRowIndex Header row index of cell to invoke context menu
+     * @param uiHeaderColumnIndex Header column index of cell to invoke context menu
+     * @return true if menu was shown.
+     */
+    boolean showContextMenuForHeader(final int uiHeaderRowIndex,
+                                     final int uiHeaderColumnIndex);
+
+    /**
+     * Show context menu of a cell at coordinates 'uiRowIndex' and 'uiColumnIndex'.
+     * If the provided coordinate does not resolve to a cell in the Grid no operation is performed.
+     * @param uiRowIndex Row index of cell to invoke context menu
+     * @param uiColumnIndex Column index of cell to invoke context menu
+     * @return true if menu was shown.
+     */
+    boolean showContextMenuForCell(final int uiRowIndex,
+                                   final int uiColumnIndex);
+
+    /**
+     * Returns the {@link CellSelectionManager} associated with the {@link GridWidget}
+     * @return
+     */
+    CellSelectionManager getCellSelectionManager();
+
+    /**
      * Checks whether a cell-relative coordinate is "on" the hot-spot to toggle the collapsed/expanded state.
      * @param cellX The MouseEvent relative to the cell's x-coordinate.
      * @param cellY The MouseEvent relative to the cell's y-coordinate.

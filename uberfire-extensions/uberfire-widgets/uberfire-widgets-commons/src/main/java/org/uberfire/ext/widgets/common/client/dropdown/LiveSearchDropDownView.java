@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2018 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,34 +16,32 @@
 
 package org.uberfire.ext.widgets.common.client.dropdown;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
-import com.google.gwt.dom.client.AnchorElement;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.LIElement;
-import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.MouseOverEvent;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import org.jboss.errai.common.client.dom.Button;
+import org.jboss.errai.common.client.dom.DOMUtil;
 import org.jboss.errai.common.client.dom.Div;
 import org.jboss.errai.common.client.dom.Input;
-import org.jboss.errai.common.client.dom.Node;
-import org.jboss.errai.common.client.dom.NodeList;
 import org.jboss.errai.common.client.dom.Span;
 import org.jboss.errai.common.client.dom.UnorderedList;
 import org.jboss.errai.ui.shared.api.annotations.DataField;
 import org.jboss.errai.ui.shared.api.annotations.EventHandler;
 import org.jboss.errai.ui.shared.api.annotations.Templated;
+import org.uberfire.ext.widgets.common.client.dropdown.footer.LiveSearchFooter;
+import org.uberfire.ext.widgets.common.client.dropdown.noItems.NoItemsComponent;
 import org.uberfire.ext.widgets.common.client.resources.i18n.CommonConstants;
 
 @Dependent
 @Templated
-public class LiveSearchDropDownView extends Composite
-        implements LiveSearchDropDown.View {
+public class LiveSearchDropDownView<TYPE> extends Composite
+        implements LiveSearchDropDown.View<TYPE> {
 
     @Inject
     @DataField
@@ -81,11 +79,40 @@ public class LiveSearchDropDownView extends Composite
     @DataField
     Span spinnerText;
 
-    LiveSearchDropDown presenter;
+    @Inject
+    @DataField
+    private LiveSearchFooter liveSearchFooter;
+
+    @Inject
+    @DataField
+    private NoItemsComponent noItems;
+
+    private boolean resetEnabled = true;
+    private boolean newItemEnabled = true;
+
+    private LiveSearchDropDown presenter;
 
     @Override
     public void init(LiveSearchDropDown presenter) {
         this.presenter = presenter;
+    }
+
+    @PostConstruct
+    public void initialize() {
+        setSearchHint(getDefaultSearchHintI18nMessage());
+        setDropDownText(getDefaultSelectorHintI18nMessage());
+        setNewInstanceEnabled(false);
+        setNewEntryI18nMessage(getDefaultNewEntryI18nMessage());
+        liveSearchFooter.init(this::showNewItem, this::clearSelection);
+    }
+
+    private void showNewItem() {
+        presenter.showNewItem();
+    }
+
+
+    private void clearSelection() {
+        presenter.clearSelection();
     }
 
     @Override
@@ -104,45 +131,54 @@ public class LiveSearchDropDownView extends Composite
 
     @Override
     public void setSearchEnabled(boolean enabled) {
-        searchPanel.getStyle().removeProperty("display");
-        if (!enabled) {
-            searchPanel.getStyle().setProperty("display",
-                                               "none");
-        }
+        searchPanel.setHidden(!enabled);
+    }
+
+    @Override
+    public void setClearSelectionEnabled(boolean enabled) {
+        resetEnabled = enabled;
+        liveSearchFooter.showReset(enabled);
+        refreshFooter();
+    }
+
+    @Override
+    public void setNewInstanceEnabled(boolean enabled) {
+        newItemEnabled = enabled;
+        liveSearchFooter.showAddNewEntry(enabled);
+        refreshFooter();
+    }
+
+    private void refreshFooter() {
+        liveSearchFooter.getElement().setHidden(!resetEnabled && !newItemEnabled);
+    }
+
+    @Override
+    public void showNewItemEditor(InlineCreationEditor editor) {
+        editor.clear();
+        liveSearchFooter.showEditor(editor);
+    }
+
+    @Override
+    public void restoreFooter() {
+        liveSearchFooter.restore();
     }
 
     @Override
     public void clearItems() {
-        removeAllChildren(dropDownMenu);
+        DOMUtil.removeAllChildren(dropDownMenu);
+        noItems.hide();
     }
 
     @Override
     public void noItems(String msg) {
-        removeAllChildren(dropDownMenu);
-        SpanElement span = Document.get().createSpanElement();
-        span.setInnerText(msg);
-        span.getStyle().setPropertyPx("marginLeft",
-                                      10);
-        dropDownMenu.appendChild((Node) span);
+        DOMUtil.removeAllChildren(dropDownMenu);
+        noItems.setMessage(msg);
+        noItems.show();
     }
 
     @Override
-    public void addItem(String key, String value) {
-        AnchorElement anchor = Document.get().createAnchorElement();
-        anchor.setInnerText(value);
-
-        Event.sinkEvents(anchor,
-                         Event.ONCLICK);
-        Event.setEventListener(anchor,
-                               event -> {
-                                   if (Event.ONCLICK == event.getTypeInt()) {
-                                       presenter.onItemSelected(key, value);
-                                   }
-                               });
-
-        LIElement li = Document.get().createLIElement();
-        li.appendChild(anchor);
-        dropDownMenu.appendChild((Node) li);
+    public void addItem(LiveSearchSelectorItem<TYPE> item) {
+        dropDownMenu.appendChild(item.getElement());
     }
 
     @Override
@@ -182,6 +218,27 @@ public class LiveSearchDropDownView extends Composite
     }
 
     @Override
+    public void setEnabled(boolean enabled) {
+        dropDownButton.setDisabled(!enabled);
+    }
+
+    @Override
+    public void setClearSelectionMessage(boolean multipleSelection) {
+        String message = multipleSelection ? getDefaultClearSelectionI18nMessage() : getDefaultResetSelectionI18nMessage();
+        liveSearchFooter.setResetLabel(message);
+    }
+
+    @Override
+    public void setNewEntryI18nMessage(String message) {
+        liveSearchFooter.setNewEntryLabel(message);
+    }
+
+    @Override
+    public String getDefaultNewEntryI18nMessage() {
+        return CommonConstants.INSTANCE.liveSearchNewEntry();
+    }
+
+    @Override
     public String getDefaultSearchHintI18nMessage() {
         return CommonConstants.INSTANCE.liveSearchHint();
     }
@@ -196,12 +253,14 @@ public class LiveSearchDropDownView extends Composite
         return CommonConstants.INSTANCE.liveSearchNotFoundMessage();
     }
 
-    private void removeAllChildren(org.jboss.errai.common.client.dom.Element element) {
-        NodeList nodeList = element.getChildNodes();
-        int lenght = nodeList.getLength();
-        for (int i = 0; i < lenght; i++) {
-            element.removeChild(nodeList.item(0));
-        }
+    @Override
+    public String getDefaultResetSelectionI18nMessage() {
+        return CommonConstants.INSTANCE.liveSearchResetSelectionMessage();
+    }
+
+    @Override
+    public String getDefaultClearSelectionI18nMessage() {
+        return CommonConstants.INSTANCE.liveSearchClearSelectionMessage();
     }
 
     @EventHandler("searchInput")
@@ -216,13 +275,19 @@ public class LiveSearchDropDownView extends Composite
         event.stopPropagation();
     }
 
-    @EventHandler("dropDownButton")
-    void onDropDownClick(ClickEvent event) {
-        presenter.onItemsShown();
-    }
-
     @EventHandler("searchInput")
     void onSearchOver(MouseOverEvent event) {
         searchInput.focus();
+    }
+
+    @EventHandler("searchInput")
+    void onSearchOver(KeyDownEvent event) {
+        // Capture and ignore in order to avoid the js errors
+        event.stopPropagation();
+    }
+
+    @EventHandler("dropDownButton")
+    void onDropDownClick(ClickEvent event) {
+        presenter.onItemsShown();
     }
 }

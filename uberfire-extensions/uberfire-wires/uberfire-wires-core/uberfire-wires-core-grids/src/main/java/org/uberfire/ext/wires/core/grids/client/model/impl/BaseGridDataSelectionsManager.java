@@ -18,12 +18,14 @@ package org.uberfire.ext.wires.core.grids.client.model.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.uberfire.ext.wires.core.grids.client.model.GridCell;
 import org.uberfire.ext.wires.core.grids.client.model.GridColumn;
 import org.uberfire.ext.wires.core.grids.client.model.GridData;
 import org.uberfire.ext.wires.core.grids.client.model.GridRow;
 import org.uberfire.ext.wires.core.grids.client.util.ColumnIndexUtilities;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.selections.impl.RowSelectionStrategy;
 
 /**
  * Helper class that manages "selected cell" meta-data following different mutations to {@link GridData}
@@ -51,8 +53,29 @@ public class BaseGridDataSelectionsManager {
         }
     }
 
-    public void onDeleteColumn(final int index) {
+    public void onInsertColumn(final int index) {
         final List<GridData.SelectedCell> selectedCells = gridData.getSelectedCells();
+        final List<Integer> rowsWithASelection = selectedCells.stream()
+                .filter(sc -> {
+                    final int ri = sc.getRowIndex();
+                    final int ci = sc.getColumnIndex();
+                    final int _ci = ColumnIndexUtilities.findUiColumnIndex(gridData.getColumns(), ci);
+                    final GridCell<?> cell = gridData.getCell(ri, _ci);
+                    return cell != null && cell.getSelectionStrategy() instanceof RowSelectionStrategy;
+                })
+                .map(GridData.SelectedCell::getRowIndex)
+                .collect(Collectors.toList());
+
+        rowsWithASelection.forEach(rowIndex -> onSelectCell(rowIndex, index));
+    }
+
+    public void onDeleteColumn(final int index) {
+        onDeleteColumn(index, gridData.getSelectedCells());
+        onDeleteColumn(index, gridData.getSelectedHeaderCells());
+    }
+
+    private void onDeleteColumn(final int index,
+                                final List<GridData.SelectedCell> selectedCells) {
         final List<GridData.SelectedCell> selectedCellsToRemove = new ArrayList<GridData.SelectedCell>();
         final List<GridData.SelectedCell> selectedCellsToUpdate = new ArrayList<GridData.SelectedCell>();
         for (GridData.SelectedCell sc : selectedCells) {
@@ -156,6 +179,12 @@ public class BaseGridDataSelectionsManager {
                                   maxRowIndex);
     }
 
+    public GridData.Range onSelectHeaderCell(final int headerRowIndex,
+                                             final int headerColumnIndex) {
+        return selectHeaderCell(headerRowIndex,
+                                headerColumnIndex);
+    }
+
     private GridData.Range selectCellMerged(final int rowIndex,
                                             final int columnIndex) {
         //Find affected rows for merged data
@@ -232,6 +261,31 @@ public class BaseGridDataSelectionsManager {
 
         return new GridData.Range(rowIndex,
                                   rowIndex + height - 1);
+    }
+
+    private GridData.Range selectHeaderCell(final int headerRowIndex,
+                                            final int headerColumnIndex) {
+        final List<GridColumn<?>> columns = gridData.getColumns();
+        final List<GridData.SelectedCell> selectedHeaderCells = gridData.getSelectedHeaderCells();
+        final GridData.Range range = new GridData.Range(headerRowIndex);
+        if (headerColumnIndex < 0 || headerColumnIndex > columns.size() - 1) {
+            return range;
+        }
+        final GridColumn<?> gridColumn = columns.get(headerColumnIndex);
+        final List<GridColumn.HeaderMetaData> gridColumnHeaderMetaData = gridColumn.getHeaderMetaData();
+        if (headerRowIndex < 0 || headerRowIndex > gridColumnHeaderMetaData.size() - 1) {
+            return range;
+        }
+
+        final int _headerColumnIndex = columns.get(headerColumnIndex).getIndex();
+        final GridData.SelectedCell selectedCell = new GridData.SelectedCell(headerRowIndex,
+                                                                             _headerColumnIndex);
+
+        if (!selectedHeaderCells.contains(selectedCell)) {
+            selectedHeaderCells.add(selectedCell);
+        }
+
+        return range;
     }
 
     private int findMinRowIndex(final int rowIndex,

@@ -19,7 +19,7 @@ import org.junit.Test;
 import org.uberfire.ext.wires.core.grids.client.model.GridColumn;
 import org.uberfire.ext.wires.core.grids.client.model.GridData;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.uberfire.ext.wires.core.grids.client.model.impl.BaseGridTest.Expected.build;
 
 public class GridColumnsTest extends BaseGridTest {
@@ -39,9 +39,9 @@ public class GridColumnsTest extends BaseGridTest {
 
         for (int rowIndex = 0; rowIndex < data.getRowCount(); rowIndex++) {
             for (int columnIndex = 0; columnIndex < data.getColumnCount(); columnIndex++) {
-                data.setCell(rowIndex,
-                             columnIndex,
-                             new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
+                data.setCellValue(rowIndex,
+                                  columnIndex,
+                                  new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
             }
         }
 
@@ -113,9 +113,9 @@ public class GridColumnsTest extends BaseGridTest {
 
         for (int rowIndex = 0; rowIndex < data.getRowCount(); rowIndex++) {
             for (int columnIndex = 0; columnIndex < data.getColumnCount(); columnIndex++) {
-                data.setCell(rowIndex,
-                             columnIndex,
-                             new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
+                data.setCellValue(rowIndex,
+                                  columnIndex,
+                                  new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
             }
         }
 
@@ -191,9 +191,9 @@ public class GridColumnsTest extends BaseGridTest {
 
         for (int rowIndex = 0; rowIndex < data.getRowCount(); rowIndex++) {
             for (int columnIndex = 0; columnIndex < data.getColumnCount(); columnIndex++) {
-                data.setCell(rowIndex,
-                             columnIndex,
-                             new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
+                data.setCellValue(rowIndex,
+                                  columnIndex,
+                                  new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
             }
         }
 
@@ -276,9 +276,9 @@ public class GridColumnsTest extends BaseGridTest {
 
         for (int rowIndex = 0; rowIndex < data.getRowCount(); rowIndex++) {
             for (int columnIndex = 0; columnIndex < data.getColumnCount(); columnIndex++) {
-                data.setCell(rowIndex,
-                             columnIndex,
-                             new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
+                data.setCellValue(rowIndex,
+                                  columnIndex,
+                                  new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
             }
         }
 
@@ -393,9 +393,9 @@ public class GridColumnsTest extends BaseGridTest {
 
         for (int rowIndex = 0; rowIndex < data.getRowCount(); rowIndex++) {
             for (int columnIndex = 0; columnIndex < data.getColumnCount(); columnIndex++) {
-                data.setCell(rowIndex,
-                             columnIndex,
-                             new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
+                data.setCellValue(rowIndex,
+                                  columnIndex,
+                                  new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
             }
         }
 
@@ -620,9 +620,9 @@ public class GridColumnsTest extends BaseGridTest {
 
         for (int rowIndex = 0; rowIndex < data.getRowCount(); rowIndex++) {
             for (int columnIndex = 0; columnIndex < data.getColumnCount(); columnIndex++) {
-                data.setCell(rowIndex,
-                             columnIndex,
-                             new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
+                data.setCellValue(rowIndex,
+                                  columnIndex,
+                                  new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
             }
         }
 
@@ -847,9 +847,9 @@ public class GridColumnsTest extends BaseGridTest {
 
         for (int rowIndex = 0; rowIndex < data.getRowCount(); rowIndex++) {
             for (int columnIndex = 0; columnIndex < data.getColumnCount(); columnIndex++) {
-                data.setCell(rowIndex,
-                             columnIndex,
-                             new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
+                data.setCellValue(rowIndex,
+                                  columnIndex,
+                                  new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
             }
         }
 
@@ -970,9 +970,9 @@ public class GridColumnsTest extends BaseGridTest {
 
         for (int rowIndex = 0; rowIndex < data.getRowCount(); rowIndex++) {
             for (int columnIndex = 0; columnIndex < data.getColumnCount(); columnIndex++) {
-                data.setCell(rowIndex,
-                             columnIndex,
-                             new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
+                data.setCellValue(rowIndex,
+                                  columnIndex,
+                                  new BaseGridCellValue<String>("(" + columnIndex + ", " + rowIndex + ")"));
             }
         }
 

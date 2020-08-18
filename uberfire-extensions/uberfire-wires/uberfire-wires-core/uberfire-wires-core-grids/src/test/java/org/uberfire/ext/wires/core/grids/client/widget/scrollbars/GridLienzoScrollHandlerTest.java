@@ -33,6 +33,7 @@ import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.AbsolutePanel;
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,8 +42,18 @@ import org.uberfire.ext.wires.core.grids.client.widget.layer.impl.DefaultGridLay
 import org.uberfire.ext.wires.core.grids.client.widget.layer.impl.GridLienzoPanel;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.pinning.impl.RestrictedMousePanMediator;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyDouble;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.uberfire.ext.wires.core.grids.client.widget.scrollbars.GridLienzoScrollHandler.DEFAULT_INTERNAL_SCROLL_HEIGHT;
 import static org.uberfire.ext.wires.core.grids.client.widget.scrollbars.GridLienzoScrollHandler.DEFAULT_INTERNAL_SCROLL_WIDTH;
 
@@ -474,16 +485,32 @@ public class GridLienzoScrollHandlerTest {
     }
 
     @Test
+    public void testEmptyLayerReuse() {
+        Assertions.assertThat(gridLienzoScrollHandler.emptyLayer()).isEqualTo(gridLienzoScrollHandler.emptyLayer());
+    }
+
+    @Test
+    public void testScrollBarsReuse() {
+        Assertions.assertThat(gridLienzoScrollHandler.scrollBars()).isEqualTo(gridLienzoScrollHandler.scrollBars());
+    }
+
+    @Test
+    public void testScrollPositionReuse() {
+        Assertions.assertThat(gridLienzoScrollHandler.scrollPosition()).isEqualTo(gridLienzoScrollHandler.scrollPosition());
+    }
+
+    @Test
+    public void testScrollBoundsReuse() {
+        Assertions.assertThat(gridLienzoScrollHandler.scrollBounds()).isEqualTo(gridLienzoScrollHandler.scrollBounds());
+    }
+
+    @Test
     public void testGetDefaultGridLayerWhenLienzoGridLayerIsNotNull() {
-
-        final DefaultGridLayer expectedLayer = mock(DefaultGridLayer.class);
-
-        doReturn(expectedLayer).when(gridLienzoPanel).getDefaultGridLayer();
-        doCallRealMethod().when(gridLienzoScrollHandler).getDefaultGridLayer();
-
         final DefaultGridLayer actualLayer = gridLienzoScrollHandler.getDefaultGridLayer();
 
-        assertEquals(expectedLayer,
+        verify(gridLienzoScrollHandler, never()).emptyLayer();
+
+        assertEquals(defaultGridLayer,
                      actualLayer);
     }
 

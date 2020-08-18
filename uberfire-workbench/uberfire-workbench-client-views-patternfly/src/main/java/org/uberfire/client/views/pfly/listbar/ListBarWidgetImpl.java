@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.PostConstruct;
@@ -42,6 +43,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
+import elemental2.dom.HTMLElement;
 import org.gwtbootstrap3.client.ui.AnchorListItem;
 import org.gwtbootstrap3.client.ui.Button;
 import org.gwtbootstrap3.client.ui.ButtonGroup;
@@ -52,11 +54,13 @@ import org.gwtbootstrap3.client.ui.PanelHeader;
 import org.gwtbootstrap3.client.ui.constants.ButtonSize;
 import org.gwtbootstrap3.client.ui.constants.Pull;
 import org.gwtbootstrap3.client.ui.constants.Toggle;
+import org.jboss.errai.common.client.api.elemental2.IsElement;
+import org.jboss.errai.common.client.ui.ElementWrapperWidget;
 import org.jboss.errai.ioc.client.container.IOCResolutionException;
 import org.jboss.errai.security.shared.api.identity.User;
 import org.uberfire.client.menu.AuthFilterMenuVisitor;
-import org.uberfire.client.util.Layouts;
 import org.uberfire.client.util.CSSLocatorsUtils;
+import org.uberfire.client.util.Layouts;
 import org.uberfire.client.views.pfly.maximize.MaximizeToggleButton;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.panels.MaximizeToggleButtonPresenter;
@@ -120,7 +124,7 @@ public class ListBarWidgetImpl
     @UiField
     PanelBody content;
     WorkbenchPanelPresenter presenter;
-    LinkedHashSet<PartDefinition> parts = new LinkedHashSet<>();
+    LinkedList<PartDefinition> parts = new LinkedList<>();
     Pair<PartDefinition, FlowPanel> currentPart;
     @Inject
     private AuthorizationManager authzManager;
@@ -217,7 +221,7 @@ public class ListBarWidgetImpl
             return;
         }
 
-        parts.add(partDefinition);
+        parts.addFirst(partDefinition);
 
         final FlowPanel panel = new FlowPanel();
         setupCSSLocators(view,
@@ -270,7 +274,7 @@ public class ListBarWidgetImpl
             if (currentPart.getK1().equals(part)) {
                 return true;
             }
-            parts.add(currentPart.getK1());
+            parts.addFirst(currentPart.getK1());
             panelManager.onPartHidden(currentPart.getK1());
             currentPart.getK2().getElement().getStyle().setDisplay(NONE);
         }
@@ -300,16 +304,18 @@ public class ListBarWidgetImpl
     void setupContextMenu() {
         contextMenu.clear();
         final WorkbenchPartPresenter.View part = (WorkbenchPartPresenter.View) currentPart.getK2().getWidget(0);
-        if (part.getPresenter().getMenus() != null && part.getPresenter().getMenus().getItems().size() > 0) {
-            for (final MenuItem menuItem : part.getPresenter().getMenus().getItems()) {
-                final Widget result = makeItem(menuItem,
-                                               true);
-                if (result != null) {
-                    contextMenu.add(result);
+        part.getPresenter().getMenus(menus -> {
+            if (menus != null && menus.getItems().size() > 0) {
+                for (final MenuItem menuItem : menus.getItems()) {
+                    final Widget result = makeItem(menuItem,
+                                                   true);
+                    if (result != null) {
+                        contextMenu.add(result);
+                    }
                 }
             }
-        }
-        contextMenu.setVisible(contextMenu.getWidgetCount() > 0);
+            contextMenu.setVisible(contextMenu.getWidgetCount() > 0);
+        });
     }
 
     @Override
@@ -324,6 +330,7 @@ public class ListBarWidgetImpl
             if (nextPart != null) {
                 presenter.selectPart(nextPart);
             } else {
+                panelManager.onPartHidden(currentPart.getK1());
                 clear();
             }
         }
@@ -379,12 +386,14 @@ public class ListBarWidgetImpl
 
     @Override
     public Collection<PartDefinition> getParts() {
-        List<PartDefinition> allParts = new ArrayList<>();
         if (currentPart == null) {
             return parts;
         }
-        allParts.add(currentPart.getK1());
+
+        LinkedList<PartDefinition> allParts = new LinkedList<>();
         allParts.addAll(parts);
+        allParts.addFirst(currentPart.getK1());
+
         return Collections.unmodifiableList(allParts);
     }
 
@@ -513,6 +522,9 @@ public class ListBarWidgetImpl
         if (result instanceof Widget) {
             return (Widget) result;
         }
+        if (result instanceof HTMLElement) {
+            return ElementWrapperWidget.getWidget((HTMLElement) result);
+        }
         return null;
     }
 
@@ -579,6 +591,11 @@ public class ListBarWidgetImpl
     @Override
     public void disableClosePart() {
         closeButton.setVisible(false);
+    }
+
+    @Override
+    public void disableExpandPart() {
+        maximizeButton.setVisible(false);
     }
 
     Collection<PartDefinition> getUnselectedParts() {

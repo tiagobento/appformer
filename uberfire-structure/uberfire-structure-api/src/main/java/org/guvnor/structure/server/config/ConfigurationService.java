@@ -16,6 +16,7 @@
 package org.guvnor.structure.server.config;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ConfigurationService {
 
@@ -27,9 +28,16 @@ public interface ConfigurationService {
 
     List<ConfigGroup> getConfiguration(final ConfigType type);
 
+    List<ConfigGroup> getConfiguration(final ConfigType type,
+                                       final String namespace);
+
+    Map<String, List<ConfigGroup>> getConfigurationByNamespace(final ConfigType type);
+
     boolean addConfiguration(final ConfigGroup configGroup);
 
     boolean updateConfiguration(final ConfigGroup configGroup);
 
     boolean removeConfiguration(final ConfigGroup configGroup);
+
+    boolean cleanUpSystemRepository();
 }

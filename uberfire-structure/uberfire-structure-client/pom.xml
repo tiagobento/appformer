@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.uberfire</groupId>
     <artifactId>uberfire-structure</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>7.43.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>uberfire-structure-client</artifactId>
@@ -22,6 +22,11 @@
     <dependency>
       <groupId>org.uberfire</groupId>
       <artifactId>uberfire-project-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-project-client</artifactId>
     </dependency>
 
     <dependency>
@@ -103,6 +108,10 @@
       <groupId>org.uberfire</groupId>
       <artifactId>uberfire-workbench-processors</artifactId>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.elemental2</groupId>
+      <artifactId>elemental2-promise</artifactId>
     </dependency>
 
     <!-- GWT and GWT Extensions -->

@@ -67,7 +67,7 @@ public class UploadFormViewImpl
     }
 
     private Form doUploadForm() {
-        form.setAction(getWebContext() + "/maven2wb");
+        form.setAction(getWebContext() + "/maven2");
         form.setEncoding(FormPanel.ENCODING_MULTIPART);
         form.setMethod(FormPanel.METHOD_POST);
         form.setType(FormType.HORIZONTAL);
@@ -92,11 +92,11 @@ public class UploadFormViewImpl
 
         form.addAttribute("File",
                           uploader);
-        groupIdItem = form.addAttribute("Group ID",
+        groupIdItem = form.addAttribute("Group IDENTIFIER",
                                         hiddenGroupIdField);
-        artifactIdItem = form.addAttribute("Artifact ID",
+        artifactIdItem = form.addAttribute("Artifact IDENTIFIER",
                                            hiddenArtifactIdField);
-        versionIdItem = form.addAttribute("Version ID",
+        versionIdItem = form.addAttribute("Version IDENTIFIER",
                                           hiddenVersionIdField);
 
         hideGAVInputs();
@@ -200,6 +200,18 @@ public class UploadFormViewImpl
     @Override
     public String getFileName() {
         return uploader.getFilename();
+    }
+
+    @Override
+    public void hide() {
+        super.hide();
+        uploader.clear();
+    }
+
+    @Override
+    public void removeFromParent() {
+        super.removeFromParent();
+        uploader.clear();
     }
 
     private void showMessage(final String message) {

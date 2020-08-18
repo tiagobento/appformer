@@ -26,9 +26,9 @@ import javax.inject.Inject;
 
 import org.guvnor.structure.client.editors.repository.RepositoryPreferences;
 import org.guvnor.structure.events.AfterCreateOrganizationalUnitEvent;
-import org.guvnor.structure.events.AfterDeleteOrganizationalUnitEvent;
 import org.guvnor.structure.organizationalunit.OrganizationalUnit;
 import org.guvnor.structure.organizationalunit.OrganizationalUnitService;
+import org.guvnor.structure.organizationalunit.RemoveOrganizationalUnitEvent;
 import org.guvnor.structure.repositories.Repository;
 import org.guvnor.structure.repositories.RepositoryAlreadyExistsException;
 import org.guvnor.structure.repositories.RepositoryEnvironmentConfigurations;
@@ -40,11 +40,7 @@ import org.jboss.errai.common.client.api.ErrorCallback;
 import org.jboss.errai.common.client.api.RemoteCallback;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
-import org.uberfire.rpc.SessionInfo;
-import org.uberfire.security.authz.AuthorizationManager;
 import org.uberfire.util.URIUtil;
-
-import static org.guvnor.structure.security.RepositoryFeatures.CONFIGURE_REPOSITORY;
 
 @Dependent
 public class CloneRepositoryPresenter implements CloneRepositoryView.Presenter {
@@ -59,35 +55,25 @@ public class CloneRepositoryPresenter implements CloneRepositoryView.Presenter {
 
     private PlaceManager placeManager;
 
-    private AuthorizationManager authorizationManager;
-
     private Map<String, OrganizationalUnit> availableOrganizationalUnits = new HashMap<String, OrganizationalUnit>();
-
-    private SessionInfo sessionInfo;
-    private boolean assetsManagementIsGranted = false;
 
     @Inject
     public CloneRepositoryPresenter(final RepositoryPreferences repositoryPreferences,
                                     final CloneRepositoryView view,
                                     final Caller<RepositoryService> repositoryService,
                                     final Caller<OrganizationalUnitService> organizationalUnitService,
-                                    final PlaceManager placeManager,
-                                    final AuthorizationManager authorizationManager,
-                                    final SessionInfo sessionInfo) {
+                                    final PlaceManager placeManager) {
         this.repositoryPreferences = repositoryPreferences;
         this.view = view;
         this.repositoryService = repositoryService;
         this.organizationalUnitService = organizationalUnitService;
         this.placeManager = placeManager;
-        this.authorizationManager = authorizationManager;
-        this.sessionInfo = sessionInfo;
     }
 
     @PostConstruct
     public void init() {
         view.init(this,
                   isOuMandatory());
-        setAssetsManagementGrant();
         populateOrganizationalUnits();
     }
 
@@ -117,7 +103,7 @@ public class CloneRepositoryPresenter implements CloneRepositoryView.Presenter {
                                          organizationalUnit);
     }
 
-    public void onDeleteOrganizationalUnit(@Observes final AfterDeleteOrganizationalUnitEvent event) {
+    public void onDeleteOrganizationalUnit(@Observes final RemoveOrganizationalUnitEvent event) {
         final OrganizationalUnit organizationalUnit = event.getOrganizationalUnit();
         if (organizationalUnit == null) {
             return;
@@ -145,18 +131,18 @@ public class CloneRepositoryPresenter implements CloneRepositoryView.Presenter {
                                        getErrorCallback()).createRepository(availableOrganizationalUnits.get(view.getSelectedOrganizationalUnit()),
                                                                             scheme,
                                                                             alias,
-                                                                            getRepositoryConfiguration());
+                                                                            getRepositoryConfiguration(view.getSelectedOrganizationalUnit()));
             }
         };
     }
 
-    private RepositoryEnvironmentConfigurations getRepositoryConfiguration() {
+    private RepositoryEnvironmentConfigurations getRepositoryConfiguration(String selectedOrganizationalUnit) {
         final RepositoryEnvironmentConfigurations configuration = new RepositoryEnvironmentConfigurations();
 
         configuration.setUserName(view.getUsername().trim());
         configuration.setPassword(view.getPassword().trim());
         configuration.setOrigin(view.getGitUrl());
-        configuration.setManaged(view.isManagedRepository());
+        configuration.setSpace(selectedOrganizationalUnit);
         return configuration;
     }
 
@@ -284,11 +270,5 @@ public class CloneRepositoryPresenter implements CloneRepositoryView.Presenter {
 
     private boolean isOuMandatory() {
         return repositoryPreferences == null || repositoryPreferences.isOUMandatory();
-    }
-
-    private void setAssetsManagementGrant() {
-        assetsManagementIsGranted = authorizationManager.authorize(CONFIGURE_REPOSITORY,
-                                                                   sessionInfo.getIdentity());
-        view.enableManagedRepoCreation(assetsManagementIsGranted);
     }
 }

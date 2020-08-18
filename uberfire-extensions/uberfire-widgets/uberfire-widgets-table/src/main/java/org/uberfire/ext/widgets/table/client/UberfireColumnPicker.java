@@ -25,8 +25,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import org.gwtbootstrap3.client.ui.Button;
@@ -43,6 +41,10 @@ public class UberfireColumnPicker<T> {
     protected final List<ColumnMeta<T>> columnMetaList = new ArrayList<>();
     protected final PopupPanel popup = GWT.create(PopupPanel.class);
     protected List<ColumnChangedHandler> columnChangedHandler = new ArrayList<>();
+
+    protected DataGrid<T> getDataGrid() {
+        return dataGrid;
+    }
 
     public UberfireColumnPicker(DataGrid<T> dataGrid) {
         this.dataGrid = dataGrid;
@@ -120,7 +122,7 @@ public class UberfireColumnPicker<T> {
             if (cm.equals(columnMeta)) {
                 return index;
             }
-            if (cm.isVisible()) {
+            if (cm.isVisible() && cm.isVisibleIndex()) {
                 index++;
             }
         }
@@ -134,19 +136,16 @@ public class UberfireColumnPicker<T> {
         if (!columnMetaList.contains(columnMeta)) {
             columnMetaList.add(columnMeta);
         }
+        Collections.sort(columnMetaList);
         if (columnMeta.isVisible()) {
-            dataGrid.addColumn(columnMeta.getColumn(),
-                               columnMeta.getHeader());
+            dataGrid.insertColumn(getVisibleColumnIndex(columnMeta),
+                                  columnMeta.getColumn(),
+                                  columnMeta.getHeader());
         }
     }
 
     protected void sortAndAddColumns(List<ColumnMeta<T>> columnMetas) {
-        // Sort based on preferences applied
-        Collections.sort(columnMetas);
-        //Add the columns based on the preferences
-        for (ColumnMeta meta : columnMetas) {
-            addColumn(meta);
-        }
+        columnMetas.stream().sorted().forEach(meta -> addColumn(meta));
     }
 
     public void adjustColumnWidths() {
@@ -196,29 +195,7 @@ public class UberfireColumnPicker<T> {
                                          final int top) {
         VerticalPanel popupContent = GWT.create(VerticalPanel.class);
 
-        for (final ColumnMeta<T> columnMeta : columnMetaList) {
-            if (addThisColumnToPopup(columnMeta)) {
-                final CheckBox checkBox = GWT.create(CheckBox.class);
-                checkBox.setText((String) columnMeta.getHeader().getValue());
-                checkBox.setValue(columnMeta.isVisible());
-                checkBox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
-                    public void onValueChange(ValueChangeEvent<Boolean> booleanValueChangeEvent) {
-                        boolean visible = booleanValueChangeEvent.getValue();
-                        if (visible) {
-                            dataGrid.insertColumn(getVisibleColumnIndex(columnMeta),
-                                                  columnMeta.getColumn(),
-                                                  columnMeta.getHeader());
-                        } else {
-                            dataGrid.removeColumn(columnMeta.getColumn());
-                        }
-                        columnMeta.setVisible(visible);
-                        adjustColumnWidths();
-                    }
-                });
-
-                popupContent.add(checkBox);
-            }
-        }
+        initCheckBoxs(popupContent);
 
         addResetButtom(left,
                        top,
@@ -226,6 +203,32 @@ public class UberfireColumnPicker<T> {
         configureColorPickerPopup(left,
                                   top,
                                   popupContent);
+    }
+
+    protected void initCheckBoxs(VerticalPanel popupContent) {
+        for (final ColumnMeta<T> columnMeta : columnMetaList) {
+            if (addThisColumnToPopup(columnMeta)) {
+                final CheckBox checkBox = GWT.create(CheckBox.class);
+                checkBox.setText((String) columnMeta.getHeader().getValue());
+                checkBox.setName((String) columnMeta.getHeader().getValue());
+                checkBox.setValue(columnMeta.isVisible());
+                checkBox.addValueChangeHandler(handler -> addColumnOnDataGrid(handler.getValue(), columnMeta));
+
+                popupContent.add(checkBox);
+            }
+        }
+    }
+
+    protected void addColumnOnDataGrid(boolean visible, ColumnMeta<T> columnMeta) {
+        if (visible) {
+            dataGrid.insertColumn(getVisibleColumnIndex(columnMeta),
+                                  columnMeta.getColumn(),
+                                  columnMeta.getHeader());
+        } else {
+            dataGrid.removeColumn(columnMeta.getColumn());
+        }
+        columnMeta.setVisible(visible);
+        adjustColumnWidths();
     }
 
     public Button createToggleButton() {
@@ -276,6 +279,12 @@ public class UberfireColumnPicker<T> {
     }
 
     protected void loadGlobalGridPreferences() {
+    }
 
+    public int getDataGridMinWidth() {
+        return -1;
+    }
+
+    public void setDefaultColumnWidthSize(int defaultColumSize) {
     }
 }

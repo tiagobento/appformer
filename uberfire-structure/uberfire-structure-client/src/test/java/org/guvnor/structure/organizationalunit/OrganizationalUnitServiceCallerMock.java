@@ -17,11 +17,15 @@
 package org.guvnor.structure.organizationalunit;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.function.Predicate;
 
+import org.guvnor.structure.contributors.Contributor;
 import org.guvnor.structure.repositories.Repository;
 import org.jboss.errai.common.client.api.Caller;
 import org.jboss.errai.common.client.api.ErrorCallback;
 import org.jboss.errai.common.client.api.RemoteCallback;
+import org.uberfire.spaces.Space;
 
 /**
  * Utility class for client side testing.
@@ -80,8 +84,44 @@ public class OrganizationalUnitServiceCallerMock
         }
 
         @Override
+        public OrganizationalUnit getOrganizationalUnit(String name,
+                                                        final boolean includeDeleted) {
+            OrganizationalUnit result = organizationalUnitService.getOrganizationalUnit(name, includeDeleted);
+            remoteCallback.callback(result);
+            return result;
+        }
+
+        @Override
         public Collection<OrganizationalUnit> getAllOrganizationalUnits() {
             Collection<OrganizationalUnit> result = organizationalUnitService.getAllOrganizationalUnits();
+            remoteCallback.callback(result);
+            return result;
+        }
+
+        @Override
+        public Collection<OrganizationalUnit> getAllOrganizationalUnits(final boolean includeDeleted) {
+            Collection<OrganizationalUnit> result = organizationalUnitService.getAllOrganizationalUnits(includeDeleted);
+            remoteCallback.callback(result);
+            return result;
+        }
+
+        @Override
+        public Collection<OrganizationalUnit> getAllOrganizationalUnits(boolean includeDeleted, Predicate<OrganizationalUnit> filter) {
+            Collection<OrganizationalUnit> result = organizationalUnitService.getAllOrganizationalUnits(includeDeleted, filter);
+            remoteCallback.callback(result);
+            return result;
+        }
+
+        @Override
+        public Collection<OrganizationalUnit> getAllDeletedOrganizationalUnit() {
+            Collection<OrganizationalUnit> result = organizationalUnitService.getAllDeletedOrganizationalUnit();
+            remoteCallback.callback(result);
+            return result;
+        }
+
+        @Override
+        public Collection<Space> getAllUserSpaces() {
+            Collection<Space> result = organizationalUnitService.getAllUserSpaces();
             remoteCallback.callback(result);
             return result;
         }
@@ -94,11 +134,16 @@ public class OrganizationalUnitServiceCallerMock
         }
 
         @Override
+        public Collection<OrganizationalUnit> getOrganizationalUnits(final boolean includeDeleted) {
+            Collection<OrganizationalUnit> result = organizationalUnitService.getOrganizationalUnits(includeDeleted);
+            remoteCallback.callback(result);
+            return result;
+        }
+
+        @Override
         public OrganizationalUnit createOrganizationalUnit(String name,
-                                                           String owner,
                                                            String defaultGroupId) {
             OrganizationalUnit result = organizationalUnitService.createOrganizationalUnit(name,
-                                                                                           owner,
                                                                                            defaultGroupId);
             remoteCallback.callback(result);
             return result;
@@ -106,11 +151,9 @@ public class OrganizationalUnitServiceCallerMock
 
         @Override
         public OrganizationalUnit createOrganizationalUnit(String name,
-                                                           String owner,
                                                            String defaultGroupId,
                                                            Collection<Repository> repositories) {
             OrganizationalUnit result = organizationalUnitService.createOrganizationalUnit(name,
-                                                                                           owner,
                                                                                            defaultGroupId,
                                                                                            repositories);
             remoteCallback.callback(result);
@@ -119,12 +162,10 @@ public class OrganizationalUnitServiceCallerMock
 
         @Override
         public OrganizationalUnit createOrganizationalUnit(String name,
-                                                           String owner,
                                                            String defaultGroupId,
                                                            Collection<Repository> repositories,
-                                                           Collection<String> contributors) {
+                                                           Collection<Contributor> contributors) {
             OrganizationalUnit result = organizationalUnitService.createOrganizationalUnit(name,
-                                                                                           owner,
                                                                                            defaultGroupId,
                                                                                            repositories,
                                                                                            contributors);
@@ -133,11 +174,24 @@ public class OrganizationalUnitServiceCallerMock
         }
 
         @Override
+        public OrganizationalUnit createOrganizationalUnit(String name,
+                                                           String defaultGroupId,
+                                                           Collection<Repository> repositories,
+                                                           Collection<Contributor> contributors,
+                                                           String description) {
+            OrganizationalUnit result = organizationalUnitService.createOrganizationalUnit(name,
+                                                                                           defaultGroupId,
+                                                                                           repositories,
+                                                                                           contributors,
+                                                                                           description);
+            remoteCallback.callback(result);
+            return result;
+        }
+
+        @Override
         public OrganizationalUnit updateOrganizationalUnit(String name,
-                                                           String owner,
                                                            String defaultGroupId) {
             OrganizationalUnit result = organizationalUnitService.updateOrganizationalUnit(name,
-                                                                                           owner,
                                                                                            defaultGroupId);
             remoteCallback.callback(result);
             return result;
@@ -145,13 +199,24 @@ public class OrganizationalUnitServiceCallerMock
 
         @Override
         public OrganizationalUnit updateOrganizationalUnit(String name,
-                                                           String owner,
                                                            String defaultGroupId,
-                                                           Collection<String> contributors) {
+                                                           Collection<Contributor> contributors) {
             OrganizationalUnit result = organizationalUnitService.updateOrganizationalUnit(name,
-                                                                                           owner,
                                                                                            defaultGroupId,
                                                                                            contributors);
+            remoteCallback.callback(result);
+            return result;
+        }
+
+        @Override
+        public OrganizationalUnit updateOrganizationalUnit(String name,
+                                                           String defaultGroupId,
+                                                           Collection<Contributor> contributors,
+                                                           String description) {
+            OrganizationalUnit result = organizationalUnitService.updateOrganizationalUnit(name,
+                                                                                           defaultGroupId,
+                                                                                           contributors,
+                                                                                           description);
             remoteCallback.callback(result);
             return result;
         }
@@ -192,6 +257,13 @@ public class OrganizationalUnitServiceCallerMock
         @Override
         public OrganizationalUnit getParentOrganizationalUnit(Repository repository) {
             OrganizationalUnit result = organizationalUnitService.getParentOrganizationalUnit(repository);
+            remoteCallback.callback(result);
+            return result;
+        }
+
+        @Override
+        public List<OrganizationalUnit> getOrganizationalUnits(Repository repository) {
+            List<OrganizationalUnit> result = organizationalUnitService.getOrganizationalUnits(repository);
             remoteCallback.callback(result);
             return result;
         }

@@ -26,7 +26,9 @@ import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.impl
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.impl.FloatingSelectionsTransformer;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.impl.SelectedRange;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class GridCellSelectionsTransformationTest extends BaseGridTest {
 
@@ -70,7 +72,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
 
         final SelectionsTransformer transformer = new DefaultSelectionsTransformer(data,
                                                                                    data.getColumns());
-        final List<SelectedRange> selectedRanges1 = transformer.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges1 = transformer.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(0,
                      selectedRanges1.size());
 
@@ -109,7 +111,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
         assertEquals(5,
                      data.getSelectedCells().size());
 
-        final List<SelectedRange> selectedRanges2 = transformer.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges2 = transformer.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(2,
                      selectedRanges2.size());
     }
@@ -154,7 +156,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
 
         final SelectionsTransformer transformer = new DefaultSelectionsTransformer(data,
                                                                                    data.getColumns());
-        final List<SelectedRange> selectedRanges1 = transformer.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges1 = transformer.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(0,
                      selectedRanges1.size());
 
@@ -193,7 +195,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
         assertEquals(5,
                      data.getSelectedCells().size());
 
-        final List<SelectedRange> selectedRanges2 = transformer.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges2 = transformer.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(3,
                      selectedRanges2.size());
     }
@@ -238,7 +240,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
 
         final SelectionsTransformer transformer1 = new DefaultSelectionsTransformer(data,
                                                                                     data.getColumns());
-        final List<SelectedRange> selectedRanges1 = transformer1.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges1 = transformer1.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(0,
                      selectedRanges1.size());
 
@@ -283,7 +285,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
         }};
         final SelectionsTransformer transformer2 = new FloatingSelectionsTransformer(data,
                                                                                      columns);
-        final List<SelectedRange> selectedRanges2 = transformer2.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges2 = transformer2.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(1,
                      selectedRanges2.size());
     }
@@ -328,7 +330,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
 
         final SelectionsTransformer transformer1 = new DefaultSelectionsTransformer(data,
                                                                                     data.getColumns());
-        final List<SelectedRange> selectedRanges1 = transformer1.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges1 = transformer1.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(0,
                      selectedRanges1.size());
 
@@ -373,7 +375,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
         }};
         final SelectionsTransformer transformer2 = new FloatingSelectionsTransformer(data,
                                                                                      columns);
-        final List<SelectedRange> selectedRanges2 = transformer2.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges2 = transformer2.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(1,
                      selectedRanges2.size());
     }
@@ -418,7 +420,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
 
         final SelectionsTransformer transformer = new DefaultSelectionsTransformer(data,
                                                                                    data.getColumns());
-        final List<SelectedRange> selectedRanges1 = transformer.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges1 = transformer.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(0,
                      selectedRanges1.size());
 
@@ -459,7 +461,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
         assertEquals(6,
                      data.getSelectedCells().size());
 
-        final List<SelectedRange> selectedRanges2 = transformer.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges2 = transformer.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(2,
                      selectedRanges2.size());
     }
@@ -504,7 +506,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
 
         final SelectionsTransformer transformer = new DefaultSelectionsTransformer(data,
                                                                                    data.getColumns());
-        final List<SelectedRange> selectedRanges1 = transformer.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges1 = transformer.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(0,
                      selectedRanges1.size());
 
@@ -543,7 +545,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
         assertEquals(5,
                      data.getSelectedCells().size());
 
-        final List<SelectedRange> selectedRanges2 = transformer.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges2 = transformer.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(3,
                      selectedRanges2.size());
     }
@@ -588,7 +590,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
 
         final SelectionsTransformer transformer = new DefaultSelectionsTransformer(data,
                                                                                    data.getColumns());
-        final List<SelectedRange> selectedRanges1 = transformer.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges1 = transformer.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(0,
                      selectedRanges1.size());
 
@@ -627,7 +629,7 @@ public class GridCellSelectionsTransformationTest extends BaseGridTest {
         assertEquals(5,
                      data.getSelectedCells().size());
 
-        final List<SelectedRange> selectedRanges2 = transformer.transformToSelectedRanges();
+        final List<SelectedRange> selectedRanges2 = transformer.transformToSelectedRanges(data.getSelectedCells());
         assertEquals(5,
                      selectedRanges2.size());
     }

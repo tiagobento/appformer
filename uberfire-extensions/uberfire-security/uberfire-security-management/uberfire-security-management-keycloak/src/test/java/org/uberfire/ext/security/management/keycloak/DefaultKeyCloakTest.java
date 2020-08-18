@@ -17,11 +17,15 @@
 package org.uberfire.ext.security.management.keycloak;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.ws.rs.core.Response;
+
 import org.jboss.resteasy.client.ClientResponse;
+import org.jboss.resteasy.client.ClientResponseFailure;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.keycloak.representations.idm.RoleRepresentation;
@@ -37,7 +41,8 @@ import org.uberfire.ext.security.management.keycloak.client.resource.UserResourc
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * <p>It provides a default set of users and roles for mocking a keycloak service.</p>
@@ -113,6 +118,12 @@ public abstract class DefaultKeyCloakTest extends BaseKeyCloakTest {
                 return result;
             }
         });
+        when(usersResource.list()).thenAnswer(new Answer<List<UserRepresentation>>() {
+            @Override
+            public List<UserRepresentation> answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return userRepresentations;
+            }
+        });
         when(usersResource.search(anyString(),
                                   anyString(),
                                   anyString(),
@@ -133,6 +144,15 @@ public abstract class DefaultKeyCloakTest extends BaseKeyCloakTest {
         ClientResponse response = mock(ClientResponse.class);
         when(response.getStatus()).thenReturn(200);
         when(usersResource.create(any(UserRepresentation.class))).thenReturn(response);
+    }
+
+    protected ClientResponseFailure mockForbiddenResponse() {
+        ClientResponseFailure error = mock(ClientResponseFailure.class);
+        ClientResponse response = mock(ClientResponse.class);
+        Response.Status responseStatus = Response.Status.FORBIDDEN;
+        when(error.getResponse()).thenReturn(response);
+        when(response.getResponseStatus()).thenReturn(responseStatus);
+        return error;
     }
 
     private List<UserRepresentation> getUserRepresentations(String pattern,
@@ -183,19 +203,19 @@ public abstract class DefaultKeyCloakTest extends BaseKeyCloakTest {
         when(userRepresentation.getEmail()).thenReturn(mail);
         when(userRepresentation.isEmailVerified()).thenReturn(true);
         when(userRepresentation.isEnabled()).thenReturn(true);
-        Map<String, Object> attributes = new HashMap<String, Object>(6);
+        Map<String, List<String>> attributes = new HashMap<String, List<String>>(6);
         attributes.put(BaseKeyCloakManager.ATTRIBUTE_USER_ID,
-                       id);
+                       Arrays.asList(id));
         attributes.put(BaseKeyCloakManager.ATTRIBUTE_USER_FIRST_NAME,
-                       fName);
+                       Arrays.asList(fName));
         attributes.put(BaseKeyCloakManager.ATTRIBUTE_USER_LAST_NAME,
-                       lName);
+                       Arrays.asList(lName));
         attributes.put(BaseKeyCloakManager.ATTRIBUTE_USER_ENABLED,
-                       "true");
+                       Arrays.asList("true"));
         attributes.put(BaseKeyCloakManager.ATTRIBUTE_USER_EMAIL,
-                       mail);
+                       Arrays.asList(mail));
         attributes.put(BaseKeyCloakManager.ATTRIBUTE_USER_EMAIL_VERIFIED,
-                       "true");
+                       Arrays.asList("true"));
         when(userRepresentation.getAttributes()).thenReturn(attributes);
     }
 

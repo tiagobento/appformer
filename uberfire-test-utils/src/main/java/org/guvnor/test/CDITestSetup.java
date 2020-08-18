@@ -22,6 +22,7 @@ import javax.enterprise.inject.spi.BeanManager;
 
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
+import org.slf4j.LoggerFactory;
 import org.uberfire.backend.server.util.Paths;
 import org.uberfire.java.nio.fs.file.SimpleFileSystemProvider;
 
@@ -42,12 +43,17 @@ public class CDITestSetup {
         paths = getReference(Paths.class);
 
         // Ensure URLs use the default:// scheme
-        fileSystemProvider.forceAsDefault();
+//        fileSystemProvider.forceAsDefault();
     }
 
     public void cleanup() {
         if (weld != null) {
-            weld.shutdown();
+            try {
+                weld.shutdown();
+            } catch (NullPointerException npeException) {
+                LoggerFactory.getLogger(CDITestSetup.class)
+                        .warn("Problem occured during weld clean up: " + npeException.getMessage());
+            }
         }
     }
 

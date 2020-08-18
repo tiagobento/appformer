@@ -122,6 +122,11 @@ public class JGitFileSystemsEventsManager {
                              ex);
             }
         }
+    }
+
+    public void shutdown() {
+        fsWatchServices.keySet().forEach(key -> this.close(key));
+
         if (jGitEventsBroadcast != null) {
             jGitEventsBroadcast.close();
         }

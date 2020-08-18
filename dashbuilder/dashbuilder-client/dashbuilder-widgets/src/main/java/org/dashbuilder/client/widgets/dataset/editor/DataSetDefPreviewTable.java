@@ -91,8 +91,9 @@ public class DataSetDefPreviewTable implements IsWidget {
                     .dataset(dataSetDef.getUUID())
                     .renderer(DefaultRenderer.UUID)
                     .titleVisible(false)
-                    .tablePageSize(6)
+                    .tablePageSize(10)
                     .tableOrderEnabled(true)
+                    .tableColumnPickerEnabled(false)
                     .filterOn(true, false, false);
 
             // Make only the specified columns visible (if null then show all)

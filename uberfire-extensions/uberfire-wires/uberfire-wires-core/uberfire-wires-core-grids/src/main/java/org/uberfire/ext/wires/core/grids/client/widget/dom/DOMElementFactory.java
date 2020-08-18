@@ -15,7 +15,8 @@
  */
 package org.uberfire.ext.wires.core.grids.client.widget.dom;
 
-import org.uberfire.client.callbacks.Callback;
+import java.util.function.Consumer;
+
 import org.uberfire.ext.wires.core.grids.client.widget.context.GridBodyCellRenderContext;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.GridWidget;
 import org.uberfire.ext.wires.core.grids.client.widget.layer.GridLayer;
@@ -39,12 +40,18 @@ public interface DOMElementFactory<W, E> extends HasDOMElementResources {
      * Creates a DOMElement.
      * @param gridLayer The Lienzo layer on which the Grid Widget is attached. DOMElements may need to redraw the Layer when their state changes.
      * @param gridWidget The GridWidget to which this DOMElement is to be associated.
-     * @param context The render context of the cell.
      * @return
      */
     E createDomElement(final GridLayer gridLayer,
-                       final GridWidget gridWidget,
-                       final GridBodyCellRenderContext context);
+                       final GridWidget gridWidget);
+
+    /**
+     * Register handlers for the widget. The set of handlers may differ per each Factory. Common handlers
+     * registered in this method are KeyDownHandler, BlurHandler, ... .
+     * @param widget
+     * @param widgetDomElement
+     */
+    void registerHandlers(final W widget, final E widgetDomElement);
 
     /**
      * Initialises a DOMElement for a cell and attach it to the GWT container.
@@ -53,6 +60,6 @@ public interface DOMElementFactory<W, E> extends HasDOMElementResources {
      * @param onDisplay A callback that is invoked after the cell has been attached to the DOM and displayed.
      */
     void attachDomElement(final GridBodyCellRenderContext context,
-                          final Callback<E> onCreation,
-                          final Callback<E> onDisplay);
+                          final Consumer<E> onCreation,
+                          final Consumer<E> onDisplay);
 }

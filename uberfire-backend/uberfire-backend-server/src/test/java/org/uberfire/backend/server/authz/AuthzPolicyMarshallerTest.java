@@ -26,6 +26,8 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.jboss.errai.security.shared.api.Group;
+import org.jboss.errai.security.shared.api.GroupImpl;
 import org.jboss.errai.security.shared.api.Role;
 import org.jboss.errai.security.shared.api.RoleImpl;
 import org.jboss.errai.security.shared.api.identity.User;
@@ -41,8 +43,14 @@ import org.uberfire.security.impl.authz.AuthorizationPolicyBuilder;
 import org.uberfire.security.impl.authz.DefaultPermissionManager;
 import org.uberfire.security.impl.authz.DefaultPermissionTypeRegistry;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class AuthzPolicyMarshallerTest {
 
@@ -85,7 +93,7 @@ public class AuthzPolicyMarshallerTest {
 
     @Test
     public void testOverwriteDefault() {
-        Map input = new HashMap<>();
+        Map<String, String> input = new HashMap<>();
         input.put("default.permission.perspective.read",
                   "false");
         input.put("default.permission.perspective.read.HomePerspective",
@@ -113,6 +121,25 @@ public class AuthzPolicyMarshallerTest {
                      AuthorizationResult.ACCESS_GRANTED);
         assertEquals(pc.get("perspective.read.Sales dashboard").getResult(),
                      AuthorizationResult.ACCESS_GRANTED);
+    }
+
+    @Test
+    public void testDefaultPermissionsNotOverwrite() {
+        Map<String, String> input = new HashMap<>();
+        input.put("default.permission.perspective.read.p1", "false");
+        input.put("default.permission.perspective.read.p2", "false");
+        input.put("role.user.permission.perspective.read", "true");
+        input.put("role.user.permission.perspective.read.p2", "false");
+
+        marshaller.read(builder, input);
+        permissionManager.setAuthorizationPolicy(builder.build());
+
+        User user = createUserMock("user");
+        PermissionCollection pc = permissionManager.resolvePermissions(user, VotingStrategy.PRIORITY);
+        assertEquals(pc.collection().size(), 2);
+        assertEquals(pc.get("perspective.read").getResult(), AuthorizationResult.ACCESS_GRANTED);
+        assertNull(pc.get("perspective.read.p1"));
+        assertEquals(pc.get("perspective.read.p2").getResult(), AuthorizationResult.ACCESS_DENIED);
     }
 
     @Test
@@ -173,23 +200,29 @@ public class AuthzPolicyMarshallerTest {
                      "repository.update.git://repo1");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testRoleMissing() {
-        marshaller.parse("role..priority");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testTypeMissing() {
-        marshaller.parse(".admin.priority");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testIncompleteEntry() {
-        marshaller.parse("role");
+        assertThatThrownBy(() -> marshaller.parse("role..priority"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Role value is empty");
     }
 
     @Test
-    public void testReadDefaultEntries() throws Exception {
+    public void testTypeMissing() {
+        assertThatThrownBy(() -> marshaller.parse(".admin.priority"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Key must start with [default|role|group]");
+    }
+
+    @Test
+    public void testIncompleteEntry() {
+        assertThatThrownBy(() -> marshaller.parse("role"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Role value is empty");
+    }
+
+    @Test
+    public void testReadDefaultEntries() {
         AuthorizationPolicy policy = builder.bydefault().home("B")
                 .permission("p1",
                             false)
@@ -311,7 +344,7 @@ public class AuthzPolicyMarshallerTest {
     }
 
     @Test
-    public void testPolicyWrite() throws Exception {
+    public void testPolicyWrite() {
         builder.role("admin").priority(5).home("A")
                 .permission("p1",
                             true)
@@ -359,5 +392,30 @@ public class AuthzPolicyMarshallerTest {
                      "false");
         assertEquals(output.get("default.permission.p2"),
                      "true");
+    }
+
+    @Test
+    public void testPolicyRemove() {
+        builder.group("group2").priority(3).home("B")
+                .permission("p1",
+                            false)
+                .permission("p2",
+                            true);
+
+        AuthorizationPolicy policy = builder.build();
+        TreeMap<String, String> output = new TreeMap<>();
+        marshaller.write(policy,
+                         output);
+        Group g = new GroupImpl("group2");
+        assertEquals("B", output.get("group.group2.home"));
+        assertEquals("3", output.get("group.group2.priority"));
+        assertEquals("false", output.get("group.group2.permission.p1"));
+        assertEquals("true", output.get("group.group2.permission.p2"));
+        marshaller.remove(g, policy, output);
+
+        assertEquals(null, output.get("group.group2.home"));
+        assertEquals(null, output.get("group.group2.priority"));
+        assertEquals(null, output.get("group.group2.permission.p1"));
+        assertEquals(null, output.get("group.group2.permission.p2"));
     }
 }

@@ -23,7 +23,8 @@ import org.junit.Test;
 import org.uberfire.ext.wires.core.grids.client.model.GridData.SelectedCell;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.selections.CellSelectionStrategy;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class RowSelectionStrategyUnmergedDataTest extends BaseCellSelectionStrategyTest {
 
@@ -142,5 +143,57 @@ public class RowSelectionStrategyUnmergedDataTest extends BaseCellSelectionStrat
                                                            1)));
         assertTrue(selectedCells.contains(new SelectedCell(2,
                                                            1)));
+    }
+
+    @Test
+    public void selectCellWithShiftKeyWithHeaderSelected() {
+        uiModel.selectHeaderCell(0, 0);
+
+        final List<SelectedCell> selectedHeaderCells = uiModel.getSelectedHeaderCells();
+        assertEquals(1,
+                     selectedHeaderCells.size());
+        assertTrue(selectedHeaderCells.contains(new SelectedCell(0,
+                                                                 0)));
+
+        strategy.handleSelection(uiModel,
+                                 0,
+                                 0,
+                                 true,
+                                 false);
+
+        final List<SelectedCell> selectedCells = uiModel.getSelectedCells();
+        assertEquals(2,
+                     selectedCells.size());
+        assertTrue(selectedCells.contains(new SelectedCell(0,
+                                                           0)));
+        assertTrue(selectedCells.contains(new SelectedCell(0,
+                                                           1)));
+        assertTrue(uiModel.getSelectedHeaderCells().isEmpty());
+    }
+
+    @Test
+    public void selectCellWithControlKeyWithHeaderSelected() {
+        uiModel.selectHeaderCell(0, 0);
+
+        final List<SelectedCell> selectedHeaderCells = uiModel.getSelectedHeaderCells();
+        assertEquals(1,
+                     selectedHeaderCells.size());
+        assertTrue(selectedHeaderCells.contains(new SelectedCell(0,
+                                                                 0)));
+
+        strategy.handleSelection(uiModel,
+                                 0,
+                                 0,
+                                 false,
+                                 true);
+
+        final List<SelectedCell> selectedCells = uiModel.getSelectedCells();
+        assertEquals(2,
+                     selectedCells.size());
+        assertTrue(selectedCells.contains(new SelectedCell(0,
+                                                           0)));
+        assertTrue(selectedCells.contains(new SelectedCell(0,
+                                                           1)));
+        assertTrue(uiModel.getSelectedHeaderCells().isEmpty());
     }
 }

@@ -40,6 +40,7 @@ import org.uberfire.ext.security.management.client.widgets.management.events.OnE
 import org.uberfire.ext.security.management.client.widgets.management.events.SaveGroupEvent;
 import org.uberfire.ext.security.management.client.widgets.popup.ConfirmBox;
 import org.uberfire.ext.security.management.client.widgets.popup.LoadingBox;
+import org.uberfire.mocks.CallerMock;
 import org.uberfire.mocks.EventSourceMock;
 import org.uberfire.mvp.Command;
 import org.uberfire.security.authz.PermissionCollection;
@@ -59,7 +60,9 @@ import static org.mockito.Mockito.*;
 public class GroupEditorWorkflowTest extends AbstractSecurityManagementTest {
 
     @Mock
-    Caller<AuthorizationService> authorizationService;
+    AuthorizationService authorizationService;
+    Caller<AuthorizationService> authorizationServiceCaller;
+
     @Mock
     EventSourceMock<OnErrorEvent> errorEvent;
     @Mock
@@ -100,7 +103,7 @@ public class GroupEditorWorkflowTest extends AbstractSecurityManagementTest {
         when(groupEditor.getAclSettings()).thenReturn(aclSettings);
         when(group.getName()).thenReturn("group1");
         when(view.setWidget(any(IsWidget.class))).thenReturn(view);
-        when(view.clearNotification()).thenReturn(view);
+        when(view.clearNotifications()).thenReturn(view);
         when(view.setCallback(any(EntityWorkflowView.Callback.class))).thenReturn(view);
         when(view.setCancelButtonVisible(anyBoolean())).thenReturn(view);
         when(view.setSaveButtonEnabled(anyBoolean())).thenReturn(view);
@@ -108,9 +111,9 @@ public class GroupEditorWorkflowTest extends AbstractSecurityManagementTest {
         when(view.setSaveButtonText(anyString())).thenReturn(view);
         when(view.showNotification(anyString())).thenReturn(view);
         when(groupsManagerService.get(anyString())).thenReturn(group);
-
+        authorizationServiceCaller = new CallerMock<>(authorizationService);
         tested = spy(new GroupEditorWorkflow(userSystemManager,
-                                             authorizationService,
+                                             authorizationServiceCaller,
                                              permissionManager,
                                              errorEvent,
                                              confirmBox,
@@ -133,7 +136,7 @@ public class GroupEditorWorkflowTest extends AbstractSecurityManagementTest {
         verify(groupEditor,
                times(0)).show(any(Group.class));
         verify(view,
-               times(1)).clearNotification();
+               times(1)).clearNotifications();
         verify(view,
                times(0)).setCancelButtonVisible(anyBoolean());
         verify(view,
@@ -169,7 +172,7 @@ public class GroupEditorWorkflowTest extends AbstractSecurityManagementTest {
         verify(view,
                times(0)).showNotification(anyString());
         verify(view,
-               times(1)).clearNotification();
+               times(1)).clearNotifications();
         verify(groupEditorDriver,
                times(1)).edit(group,
                               groupEditor);
@@ -178,7 +181,7 @@ public class GroupEditorWorkflowTest extends AbstractSecurityManagementTest {
     }
 
     @Test
-    public void testOnDeleteUserEvent() {
+    public void testOnDeleteGroupEvent() {
         final OnDeleteEvent onDeleteEvent = mock(OnDeleteEvent.class);
         when(onDeleteEvent.getContext()).thenReturn(groupEditor);
         doAnswer(new Answer<Void>() {
@@ -249,6 +252,6 @@ public class GroupEditorWorkflowTest extends AbstractSecurityManagementTest {
         verify(view,
                times(0)).showNotification(anyString());
         verify(view,
-               times(0)).clearNotification();
+               times(0)).clearNotifications();
     }
 }

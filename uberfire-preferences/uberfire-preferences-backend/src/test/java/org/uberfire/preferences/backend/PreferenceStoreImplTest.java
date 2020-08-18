@@ -23,12 +23,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.enterprise.event.Event;
+
 import org.jboss.errai.marshalling.server.MappingContextSingleton;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.uberfire.backend.server.io.object.ObjectStorage;
 import org.uberfire.backend.server.io.object.ObjectStorageImpl;
+import org.uberfire.backend.server.spaces.SpacesAPIImpl;
 import org.uberfire.io.IOService;
 import org.uberfire.java.nio.file.FileSystem;
 import org.uberfire.mocks.FileSystemTestingUtils;
@@ -38,6 +42,7 @@ import org.uberfire.preferences.shared.PreferenceScope;
 import org.uberfire.preferences.shared.PreferenceScopeFactory;
 import org.uberfire.preferences.shared.PreferenceScopeResolutionStrategy;
 import org.uberfire.preferences.shared.PreferenceScopeTypes;
+import org.uberfire.preferences.shared.event.PreferenceUpdatedEvent;
 import org.uberfire.preferences.shared.impl.DefaultPreferenceScopeResolutionStrategy;
 import org.uberfire.preferences.shared.impl.DefaultPreferenceScopeTypes;
 import org.uberfire.preferences.shared.impl.DefaultScopes;
@@ -97,7 +102,7 @@ public class PreferenceStoreImplTest {
     private PreferenceScopeResolutionStrategyInfo preferenceScopeResolutionStrategyInfo;
 
     private PreferenceStoreImpl preferenceStore;
-
+    
     @Before
     public void setup() throws IOException {
         MappingContextSingleton.get();
@@ -110,6 +115,8 @@ public class PreferenceStoreImplTest {
         final IOService ioService = mockIoService(fileSystem);
 
         ObjectStorage objectStorage = new ObjectStorageImpl(ioService);
+        
+        Event<PreferenceUpdatedEvent> preferenceUpdatedEvent = mock(Event.class);
 
         scopeTypes = new DefaultPreferenceScopeTypes(new ServerUsernameProvider(sessionInfo));
         scopeFactory = new PreferenceScopeFactoryImpl(scopeTypes);
@@ -120,7 +127,9 @@ public class PreferenceStoreImplTest {
                                                 sessionInfo,
                                                 scopeTypes,
                                                 scopeFactory,
-                                                objectStorage));
+                                                objectStorage,
+                                                new SpacesAPIImpl(),
+                                                preferenceUpdatedEvent));
         storage.init();
 
         preferenceStore = spy(new PreferenceStoreImpl(storage,

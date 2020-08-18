@@ -16,56 +16,57 @@
 
 package org.uberfire.ext.editor.commons.client;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.IsWidget;
+import elemental2.promise.Promise;
 import org.jboss.errai.common.client.api.Caller;
 import org.jboss.errai.common.client.api.RemoteCallback;
+import org.jboss.errai.ioc.client.api.ManagedInstance;
 import org.uberfire.backend.vfs.ObservablePath;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.callbacks.Callback;
 import org.uberfire.client.mvp.PlaceManager;
+import org.uberfire.client.promise.Promises;
 import org.uberfire.client.workbench.events.ChangeTitleWidgetEvent;
 import org.uberfire.client.workbench.type.ClientResourceType;
 import org.uberfire.ext.editor.commons.client.event.ConcurrentDeleteAcceptedEvent;
 import org.uberfire.ext.editor.commons.client.event.ConcurrentDeleteIgnoredEvent;
 import org.uberfire.ext.editor.commons.client.event.ConcurrentRenameAcceptedEvent;
 import org.uberfire.ext.editor.commons.client.event.ConcurrentRenameIgnoredEvent;
+import org.uberfire.ext.editor.commons.client.file.popups.DeletePopUpPresenter;
 import org.uberfire.ext.editor.commons.client.history.VersionRecordManager;
 import org.uberfire.ext.editor.commons.client.menu.BasicFileMenuBuilder;
+import org.uberfire.ext.editor.commons.client.menu.DownloadMenuItemBuilder;
 import org.uberfire.ext.editor.commons.client.menu.MenuItems;
+import org.uberfire.ext.editor.commons.client.menu.common.SaveAndRenameCommandBuilder;
 import org.uberfire.ext.editor.commons.client.resources.i18n.CommonConstants;
 import org.uberfire.ext.editor.commons.client.validation.DefaultFileNameValidator;
 import org.uberfire.ext.editor.commons.client.validation.Validator;
 import org.uberfire.ext.editor.commons.service.support.SupportsCopy;
 import org.uberfire.ext.editor.commons.service.support.SupportsDelete;
 import org.uberfire.ext.editor.commons.service.support.SupportsRename;
+import org.uberfire.ext.editor.commons.service.support.SupportsSaveAndRename;
 import org.uberfire.ext.editor.commons.version.events.RestoreEvent;
+import org.uberfire.ext.widgets.common.client.common.ConcurrentChangePopup;
 import org.uberfire.java.nio.base.version.VersionRecord;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.events.NotificationEvent;
+import org.uberfire.workbench.model.menu.MenuItem;
 import org.uberfire.workbench.model.menu.Menus;
 
-import static org.uberfire.ext.editor.commons.client.menu.MenuItems.COPY;
-import static org.uberfire.ext.editor.commons.client.menu.MenuItems.DELETE;
-import static org.uberfire.ext.editor.commons.client.menu.MenuItems.HISTORY;
-import static org.uberfire.ext.editor.commons.client.menu.MenuItems.RENAME;
-import static org.uberfire.ext.editor.commons.client.menu.MenuItems.SAVE;
-import static org.uberfire.ext.editor.commons.client.menu.MenuItems.VALIDATE;
-import static org.uberfire.ext.widgets.common.client.common.ConcurrentChangePopup.newConcurrentDelete;
-import static org.uberfire.ext.widgets.common.client.common.ConcurrentChangePopup.newConcurrentRename;
-import static org.uberfire.ext.widgets.common.client.common.ConcurrentChangePopup.newConcurrentUpdate;
+import javax.enterprise.event.Event;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-public abstract class BaseEditor {
+import static org.uberfire.ext.editor.commons.client.menu.MenuItems.*;
+import static org.uberfire.ext.widgets.common.client.common.ConcurrentChangePopup.*;
+
+public abstract class BaseEditor<T, M> {
 
     protected boolean isReadOnly;
 
@@ -74,6 +75,10 @@ public abstract class BaseEditor {
     protected ObservablePath.OnConcurrentUpdateEvent concurrentUpdateSessionInfo = null;
 
     protected Menus menus;
+
+    protected Promise<Void> makeMenuBarPromise;
+    
+    protected boolean saveWithComments = true;
 
     @Inject
     protected PlaceManager placeManager;
@@ -88,10 +93,16 @@ public abstract class BaseEditor {
     protected VersionRecordManager versionRecordManager;
 
     @Inject
+    protected ManagedInstance<BasicFileMenuBuilder> menuBuilderManagedInstance;
+
+    @Inject
     protected BasicFileMenuBuilder menuBuilder;
 
     @Inject
     protected DefaultFileNameValidator fileNameValidator;
+
+    @Inject
+    protected SaveAndRenameCommandBuilder<T, M> saveAndRenameCommandBuilder;
 
     @Inject
     protected Event<ConcurrentDeleteAcceptedEvent> concurrentDeleteAcceptedEvent;
@@ -105,12 +116,37 @@ public abstract class BaseEditor {
     @Inject
     protected Event<ConcurrentRenameIgnoredEvent> concurrentRenameIgnoredEvent;
 
-    protected Set<MenuItems> menuItems = new HashSet<MenuItems>();
+    @Inject
+    private DownloadMenuItemBuilder downloadMenuItemBuilder;
+
+    @Inject
+    protected Promises promises;
+
+    @Inject
+    protected DeletePopUpPresenter deletePopUpPresenter;
+
+    protected ConcurrentChangePopup concurrentChangePopup;
+
+    protected Set<MenuItems> menuItems = new HashSet<>();
 
     protected PlaceRequest place;
     protected ClientResourceType type;
     protected Integer originalHash;
+    protected Integer metadataOriginalHash;
+    protected boolean isValidationRunning = false;
     private boolean displayShowMoreVersions;
+    private ObservablePath path;
+
+    //for test purposes only
+    BaseEditor(VersionRecordManager versionRecordManager,
+               BaseEditorView baseView,
+               BasicFileMenuBuilder menuBuilder,
+               Event<ChangeTitleWidgetEvent> changeTitleNotification) {
+        this.versionRecordManager = versionRecordManager;
+        this.baseView = baseView;
+        this.menuBuilder = menuBuilder;
+        this.changeTitleNotification = changeTitleNotification;
+    }
 
     protected BaseEditor() {
     }
@@ -152,6 +188,7 @@ public abstract class BaseEditor {
                         final boolean addFileChangeListeners,
                         final boolean displayShowMoreVersions,
                         final Collection<MenuItems> menuItems) {
+        this.path = path;
         this.place = place;
         this.type = type;
         this.menuItems.addAll(menuItems);
@@ -166,12 +203,7 @@ public abstract class BaseEditor {
                 this.place.getParameter("version",
                                         null),
                 path,
-                new Callback<VersionRecord>() {
-                    @Override
-                    public void callback(VersionRecord versionRecord) {
-                        selectVersion(versionRecord);
-                    }
-                });
+                this::selectVersion);
 
         if (displayShowMoreVersions) {
             versionRecordManager.setShowMoreCommand(
@@ -187,11 +219,7 @@ public abstract class BaseEditor {
             addFileChangeListeners(path);
         }
 
-        makeMenuBar();
-
-        buildMenuBar();
-
-        loadContent();
+        getMenus(menus -> loadContent());
 
         concurrentUpdateSessionInfo = null;
     }
@@ -203,9 +231,9 @@ public abstract class BaseEditor {
     /**
      * If you want to customize the menu content override this method.
      */
-    protected void makeMenuBar() {
+    protected Promise<Void> makeMenuBar() {
         if (menuItems.contains(SAVE)) {
-            menuBuilder.addSave(this::onSave);
+            menuBuilder.addSave(getOnSave());
         }
 
         if (menuItems.contains(COPY)) {
@@ -214,20 +242,101 @@ public abstract class BaseEditor {
                                 getCopyServiceCaller());
         }
         if (menuItems.contains(RENAME)) {
-            menuBuilder.addRename(versionRecordManager.getPathToLatest(),
-                                  getRenameValidator(),
-                                  getRenameServiceCaller());
+            menuBuilder.addRename(getSaveAndRename());
         }
         if (menuItems.contains(DELETE)) {
             menuBuilder.addDelete(versionRecordManager.getCurrentPath(),
                                   getDeleteServiceCaller());
         }
         if (menuItems.contains(VALIDATE)) {
-            menuBuilder.addValidate(onValidate());
+            menuBuilder.addValidate(getValidateCommand());
         }
         if (menuItems.contains(HISTORY)) {
             menuBuilder.addNewTopLevelMenu(versionRecordManager.buildMenu());
         }
+        if (menuItems.contains(DOWNLOAD)) {
+            addDownloadMenuItem(menuBuilder);
+        }
+
+        return promises.resolve();
+    }
+
+    protected void addDownloadMenuItem(final BasicFileMenuBuilder menuBuilder) {
+        menuBuilder.addNewTopLevelMenu(downloadMenuItem());
+    }
+
+    protected MenuItem downloadMenuItem() {
+        return downloadMenuItemBuilder.build(getPathSupplier());
+    }
+
+    Command getOnSave() {
+        return this::onSave;
+    }
+
+    protected Command getSaveAndRename() {
+
+        return getSaveAndRenameCommandBuilder()
+                .addPathSupplier(getPathSupplier())
+                .addValidator(getRenameValidator())
+                .addValidator(getSaveValidator())
+                .addRenameService(getSaveAndRenameServiceCaller())
+                .addMetadataSupplier(getMetadataSupplier())
+                .addContentSupplier(getContentSupplier())
+                .addIsDirtySupplier(isDirtySupplier())
+                .addSuccessCallback(onSuccess())
+                .addBeforeSaveAndRenameCommand(getBeforeSaveAndRenameCommand())
+                .build();
+    }
+
+    protected Command getBeforeSaveAndRenameCommand() {
+        return () -> {
+        };
+    }
+
+    protected Supplier<Boolean> getSaveValidator() {
+
+        return () -> {
+
+            if (isReadOnly && versionRecordManager.isCurrentLatest()) {
+                baseView.alertReadOnly();
+                return false;
+            } else if (isReadOnly && !versionRecordManager.isCurrentLatest()) {
+                versionRecordManager.restoreToCurrentVersion(saveWithComments);
+                return false;
+            }
+
+            if (concurrentUpdateSessionInfo != null) {
+                showConcurrentUpdatePopup();
+                return false;
+            } else {
+                return true;
+            }
+        };
+    }
+
+    protected ParameterizedCommand<Path> onSuccess() {
+
+        return (path) -> {
+
+            final T content = getContentSupplier().get();
+            final M metadata = getMetadataSupplier().get();
+
+            setOriginalHash(content.hashCode());
+
+            Optional<M> optionalMetadata = Optional.ofNullable(getMetadataSupplier().get());
+
+            if (optionalMetadata.isPresent()) {
+                setMetadataOriginalHash(metadata.hashCode());
+            }
+        };
+    }
+
+    protected SaveAndRenameCommandBuilder<T, M> getSaveAndRenameCommandBuilder() {
+        return saveAndRenameCommandBuilder;
+    }
+
+    protected Supplier<Path> getPathSupplier() {
+        return () -> versionRecordManager.getPathToLatest();
     }
 
     /**
@@ -236,7 +345,7 @@ public abstract class BaseEditor {
      * {@link BasicFileMenuBuilder#build()} to create the {@link Menus}
      */
     protected void buildMenuBar() {
-        if (menuBuilder != null) {
+        if (menuBuilder != null && menus == null) {
             menus = menuBuilder.build();
         }
     }
@@ -281,33 +390,30 @@ public abstract class BaseEditor {
             @Override
             public void execute(final ObservablePath.OnConcurrentUpdateEvent eventInfo) {
                 concurrentUpdateSessionInfo = eventInfo;
+                showConcurrentUpdatePopup();
             }
         });
 
-        path.onConcurrentRename(new ParameterizedCommand<ObservablePath.OnConcurrentRenameEvent>() {
-            @Override
-            public void execute(final ObservablePath.OnConcurrentRenameEvent info) {
-                newConcurrentRename(info.getSource(),
-                                    info.getTarget(),
-                                    info.getIdentity(),
-                                    onConcurrentRenameIgnoreCommand(path),
-                                    onConcurrentRenameCloseCommand(path)).show();
-            }
-        });
+        path.onConcurrentRename(this::onConcurrentRename);
 
-        path.onConcurrentDelete(new ParameterizedCommand<ObservablePath.OnConcurrentDelete>() {
-            @Override
-            public void execute(final ObservablePath.OnConcurrentDelete info) {
-                newConcurrentDelete(info.getPath(),
-                                    info.getIdentity(),
-                                    onConcurrentDeleteIgnoreCommand(path),
-                                    onConcurrentDeleteCloseCommand(path)).show();
-            }
-        });
+        path.onConcurrentDelete(this::onConcurrentDelete);
+    }
+
+    void onConcurrentRename(final ObservablePath.OnConcurrentRenameEvent info) {
+        baseView.hideBusyIndicator();
+        if (concurrentChangePopup == null) {
+            concurrentChangePopup = newConcurrentRename(info.getSource(),
+                                                        info.getTarget(),
+                                                        info.getIdentity(),
+                                                        onConcurrentRenameIgnoreCommand(path),
+                                                        onConcurrentRenameCloseCommand(path));
+        }
+        concurrentChangePopup.show();
     }
 
     Command onConcurrentRenameIgnoreCommand(final ObservablePath path) {
         return () -> {
+            concurrentChangePopup = null;
             disableMenus();
             concurrentRenameIgnoredEvent.fire(new ConcurrentRenameIgnoredEvent(path));
         };
@@ -315,23 +421,45 @@ public abstract class BaseEditor {
 
     Command onConcurrentRenameCloseCommand(final ObservablePath path) {
         return () -> {
+            concurrentChangePopup = null;
             reload();
             concurrentRenameAcceptedEvent.fire(new ConcurrentRenameAcceptedEvent(path));
         };
     }
 
+    void onConcurrentDelete(final ObservablePath.OnConcurrentDelete info) {
+        baseView.hideBusyIndicator();
+        if (concurrentChangePopup == null) {
+            concurrentChangePopup = newConcurrentDelete(info.getPath(),
+                                                        info.getIdentity(),
+                                                        onConcurrentDeleteIgnoreCommand(path),
+                                                        onConcurrentDeleteCloseCommand(path));
+        }
+        concurrentChangePopup.show();
+    }
+
     Command onConcurrentDeleteIgnoreCommand(final ObservablePath path) {
         return () -> {
+            concurrentChangePopup = null;
             disableMenus();
+            disableDeletePopup();
             concurrentDeleteIgnoredEvent.fire(new ConcurrentDeleteIgnoredEvent(path));
         };
     }
 
     Command onConcurrentDeleteCloseCommand(final ObservablePath path) {
         return () -> {
+            concurrentChangePopup = null;
+            disableDeletePopup();
             placeManager.closePlace(place);
             concurrentDeleteAcceptedEvent.fire(new ConcurrentDeleteAcceptedEvent(path));
         };
+    }
+
+    private void disableDeletePopup() {
+        if (deletePopUpPresenter.isOpened()) {
+            deletePopUpPresenter.cancel();
+        }
     }
 
     private void onDelete() {
@@ -343,16 +471,8 @@ public abstract class BaseEditor {
         });
     }
 
-    /**
-     * Effectively the same as reload() but don't reset concurrentUpdateSessionInfo
-     */
     protected void onRename() {
-        refreshTitle();
-        baseView.showBusyIndicator(CommonConstants.INSTANCE.Loading());
-        loadContent();
-        changeTitleNotification.fire(new ChangeTitleWidgetEvent(place,
-                                                                getTitleText(),
-                                                                getTitle()));
+        reload(path);
     }
 
     /**
@@ -360,60 +480,69 @@ public abstract class BaseEditor {
      * @return The widget for the title
      */
     protected IsWidget getTitle() {
-        refreshTitle();
+        refreshTitle(versionRecordManager.getCurrentPath());
+        return getTitleWidget();
+    }
+
+    EditorTitle getTitleWidget() {
         return baseView.getTitleWidget();
     }
 
     public String getTitleText() {
-        return versionRecordManager.getCurrentPath().getFileName() + " - " + type.getDescription();
+        return getTitleText(versionRecordManager.getCurrentPath());
     }
 
-    private void refreshTitle() {
-        baseView.refreshTitle(getTitleText());
+    String getTitleText(final ObservablePath observablePath) {
+        return observablePath.getFileName() + " - " + getType().getDescription();
+    }
+
+    ClientResourceType getType() {
+        return type;
     }
 
     protected void onSave() {
 
-        if (isReadOnly && versionRecordManager.isCurrentLatest()) {
-            baseView.alertReadOnly();
-            return;
-        } else if (isReadOnly && !versionRecordManager.isCurrentLatest()) {
-            versionRecordManager.restoreToCurrentVersion();
-            return;
-        }
+        final boolean isValid = getSaveValidator().get();
 
-        if (concurrentUpdateSessionInfo != null) {
-            showConcurrentUpdatePopup();
-        } else {
+        if (isValid) {
             save();
         }
     }
 
     protected void showConcurrentUpdatePopup() {
-        newConcurrentUpdate(concurrentUpdateSessionInfo.getPath(),
-                            concurrentUpdateSessionInfo.getIdentity(),
-                            new Command() {
-                                @Override
-                                public void execute() {
-                                    save();
-                                }
-                            },
-                            new Command() {
-                                @Override
-                                public void execute() {
-                                    //cancel?
-                                }
-                            },
-                            new Command() {
-                                @Override
-                                public void execute() {
-                                    reload();
-                                }
-                            }
-        ).show();
+        baseView.hideBusyIndicator();
+        if (concurrentChangePopup == null) {
+            concurrentChangePopup = getConcurrentUpdatePopup();
+        }
+        concurrentChangePopup.show();
     }
 
-    protected RemoteCallback<Path> getSaveSuccessCallback(final int newHash) {
+    ConcurrentChangePopup getConcurrentUpdatePopup() {
+        return newConcurrentUpdate(concurrentUpdateSessionInfo.getPath(),
+                                                    concurrentUpdateSessionInfo.getIdentity(),
+                                                    new Command() {
+                                                        @Override
+                                                        public void execute() {
+                                                            save();
+                                                            concurrentChangePopup = null;
+                                                        }
+                                                    },
+                                                    new Command() {
+                                                        @Override
+                                                        public void execute() {
+                                                            concurrentChangePopup = null;
+                                                        }
+                                                    },
+                                                    new Command() {
+                                                        @Override
+                                                        public void execute() {
+                                                            reload();
+                                                            concurrentChangePopup = null;
+                                                        }
+                                                    });
+    }
+
+    public RemoteCallback<Path> getSaveSuccessCallback(final int newHash) {
         return new RemoteCallback<Path>() {
             @Override
             public void callback(final Path path) {
@@ -442,12 +571,55 @@ public abstract class BaseEditor {
 
     public void reload() {
         concurrentUpdateSessionInfo = null;
-        refreshTitle();
-        baseView.showBusyIndicator(CommonConstants.INSTANCE.Loading());
+        reload(versionRecordManager.getCurrentPath());
+    }
+
+    void reload(final ObservablePath path) {
+        refreshTitle(path);
+        showBusyIndicator();
         loadContent();
-        changeTitleNotification.fire(new ChangeTitleWidgetEvent(place,
-                                                                getTitleText(),
-                                                                getTitle()));
+        notifyChangeTitle(path);
+        initVersionRecordManager();
+    }
+
+    void refreshTitle(final ObservablePath observablePath) {
+        baseView.refreshTitle(getTitleText(observablePath));
+    }
+
+    void showBusyIndicator() {
+        baseView.showBusyIndicator(makeLoading());
+    }
+
+    String makeLoading() {
+        return CommonConstants.INSTANCE.Loading();
+    }
+
+    void notifyChangeTitle(final ObservablePath path) {
+        changeTitleNotification.fire(makeChangeTitleWidgetEvent(path));
+    }
+
+    ChangeTitleWidgetEvent makeChangeTitleWidgetEvent(final ObservablePath path) {
+
+        final String titleText = getTitleText(path);
+        final EditorTitle titleWidget = getTitleWidget();
+
+        return new ChangeTitleWidgetEvent(getPlace(), titleText, titleWidget);
+    }
+
+    void initVersionRecordManager() {
+
+        final String version = getPlace().getParameter("version", null);
+        final Callback<VersionRecord> selectVersion = getSelectVersion();
+
+        versionRecordManager.init(version, versionRecordManager.getCurrentPath(), selectVersion);
+    }
+
+    Callback<VersionRecord> getSelectVersion() {
+        return this::selectVersion;
+    }
+
+    PlaceRequest getPlace() {
+        return place;
     }
 
     void disableMenus() {
@@ -457,26 +629,122 @@ public abstract class BaseEditor {
         disableMenuItem(MenuItems.VALIDATE);
     }
 
-    private void disableMenuItem(final MenuItems menuItem) {
-        if (menus.getItemsMap().containsKey(menuItem)) {
-            menus.getItemsMap().get(menuItem).setEnabled(false);
+    public void disableMenuItem(final MenuItems menuItem) {
+        setEnableMenuItem(menuItem, false);
+    }
+
+    public void enableMenuItem(final MenuItems menuItem) {
+        setEnableMenuItem(menuItem, true);
+    }
+
+    private void setEnableMenuItem(final MenuItems menuItem,
+                                   final boolean isEnabled) {
+        getMenus(menus -> {
+            if (menus.getItemsMap().containsKey(menuItem)) {
+                menus.getItemsMap().get(menuItem).setEnabled(isEnabled);
+            }
+        });
+    }
+
+    public void getMenus(final Consumer<Menus> menusConsumer) {
+        if (menus != null) {
+            menusConsumer.accept(menus);
+            return;
+        }
+
+        if (makeMenuBarPromise == null) {
+            makeMenuBarPromise = makeMenuBar().then(v -> {
+                buildMenuBar();
+                menusConsumer.accept(menus);
+                return promises.resolve();
+            });
+        } else {
+            makeMenuBarPromise.then(v -> {
+                menusConsumer.accept(menus);
+                return promises.resolve();
+            });
         }
     }
 
-    /**
-     * If your editor has validation, overwrite this.
-     * @return The validation command
-     */
-    protected Command onValidate() {
+    public Command getValidateCommand() {
+
         return new Command() {
             @Override
             public void execute() {
-                // Default is that nothing happens.
+                if (!isValidationRunning) {
+
+                    onBeforeValidate();
+
+                    onValidate(new Command() {
+                        @Override
+                        public void execute() {
+                            onAfterValidate();
+                        }
+                    });
+                }
             }
         };
     }
 
+    protected void onBeforeValidate() {
+        baseView.showBusyIndicator(CommonConstants.INSTANCE.Validating());
+        isValidationRunning = true;
+    }
+
+    protected void onAfterValidate() {
+        baseView.hideBusyIndicator();
+        isValidationRunning = false;
+    }
+
+    /**
+     * If your editor has validation, overwrite this.
+     * @param finished Called when validation is finished.
+     */
+    protected void onValidate(final Command finished) {
+
+    }
+
     protected abstract void loadContent();
+
+    protected Supplier<T> getContentSupplier() {
+        return () -> null;
+    }
+
+    protected Supplier<Boolean> isDirtySupplier() {
+        return () -> isContentDirty() || isMetadataDirty();
+    }
+
+    boolean isMetadataDirty() {
+
+        final Optional<M> optionalMetadata = Optional.ofNullable(getMetadataSupplier().get());
+
+        if (optionalMetadata.isPresent()) {
+            return isMetadataDirty(optionalMetadata.get());
+        } else {
+            return false;
+        }
+    }
+
+    private boolean isMetadataDirty(final M metadata) {
+        final Integer metadataCurrentHash = metadata.hashCode();
+        return !metadataCurrentHash.equals(metadataOriginalHash);
+    }
+
+    boolean isContentDirty() {
+        return isDirty(getCurrentContentHash());
+    }
+
+    protected Integer getCurrentContentHash() {
+        try {
+            return getContentSupplier().get().hashCode();
+        } catch (final Exception e) {
+            return null;
+        }
+    }
+
+    protected Supplier<M> getMetadataSupplier() {
+        return () -> null;
+    }
 
     /**
      * Needs to be overwritten for save to work
@@ -490,6 +758,10 @@ public abstract class BaseEditor {
     }
 
     protected Caller<? extends SupportsRename> getRenameServiceCaller() {
+        return null;
+    }
+
+    protected Caller<? extends SupportsSaveAndRename<T, M>> getSaveAndRenameServiceCaller() {
         return null;
     }
 
@@ -516,5 +788,8 @@ public abstract class BaseEditor {
     public VersionRecordManager getVersionRecordManager() {
         return this.versionRecordManager;
     }
-}
 
+    public void setMetadataOriginalHash(final Integer metadataOriginalHash) {
+        this.metadataOriginalHash = metadataOriginalHash;
+    }
+}

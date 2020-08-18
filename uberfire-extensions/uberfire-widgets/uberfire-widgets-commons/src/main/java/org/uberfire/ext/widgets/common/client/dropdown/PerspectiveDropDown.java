@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2018 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,21 +37,38 @@ public class PerspectiveDropDown implements IsWidget {
     LiveSearchDropDown liveSearchDropDown;
     PerspectiveNameProvider perspectiveNameProvider;
     Set<String> perspectiveIdsExcluded;
-    LiveSearchService searchService = (pattern, maxResults, callback) -> {
-
-        LiveSearchResults result = new LiveSearchResults(maxResults);
-        for (SyncBeanDef<Activity> beanDef : activityBeansCache.getPerspectiveActivities()) {
-            String perspectiveName = beanDef.getName();
-            if (perspectiveIdsExcluded == null || !perspectiveIdsExcluded.contains(perspectiveName)) {
-                String name = getItemName(perspectiveName);
-                if (name.toLowerCase().contains(pattern.toLowerCase())) {
-                    result.add(perspectiveName, name);
+    LiveSearchService<String> searchService = new LiveSearchService<String>() {
+        @Override
+        public void search(String pattern, int maxResults, LiveSearchCallback<String> callback) {
+            LiveSearchResults result = new LiveSearchResults(maxResults);
+            for (SyncBeanDef<Activity> beanDef : activityBeansCache.getPerspectiveActivities()) {
+                String perspectiveName = beanDef.getName();
+                if (perspectiveIdsExcluded == null || !perspectiveIdsExcluded.contains(perspectiveName)) {
+                    String name = getItemName(perspectiveName);
+                    if (name.toLowerCase().contains(pattern.toLowerCase())) {
+                        result.add(perspectiveName, name);
+                    }
                 }
             }
+            result.sortByValue();
+            callback.afterSearch(result);
         }
-        result.sortByValue();
-        callback.afterSearch(result);
+
+        @Override
+        public void searchEntry(String key, LiveSearchCallback<String> callback) {
+            LiveSearchResults result = new LiveSearchResults(1);
+
+            activityBeansCache.getPerspectiveActivities()
+                    .stream()
+                    .map(SyncBeanDef::getName)
+                    .filter(perspectiveName -> (perspectiveIdsExcluded == null || !perspectiveIdsExcluded.contains(perspectiveName)) && perspectiveName.equals(key))
+                    .findAny()
+                    .ifPresent(perspectiveName -> result.add(perspectiveName, getItemName(perspectiveName)));
+            callback.afterSearch(result);
+        }
     };
+
+    SingleLiveSearchSelectionHandler<String> selectionHandler = new SingleLiveSearchSelectionHandler<>();
 
     @Inject
     public PerspectiveDropDown(ActivityBeansCache activityBeansCache,
@@ -66,7 +83,8 @@ public class PerspectiveDropDown implements IsWidget {
         liveSearchDropDown.setSelectorHint(CommonConstants.INSTANCE.PerspectiveSelectHint());
         liveSearchDropDown.setSearchHint(CommonConstants.INSTANCE.PerspectiveSearchHint());
         liveSearchDropDown.setNotFoundMessage(CommonConstants.INSTANCE.PerspectiveNotFound());
-        liveSearchDropDown.setSearchService(searchService);
+        liveSearchDropDown.setClearSelectionEnabled(false);
+        liveSearchDropDown.init(searchService, selectionHandler);
     }
 
     @Override
@@ -93,7 +111,7 @@ public class PerspectiveDropDown implements IsWidget {
     }
 
     public PerspectiveActivity getSelectedPerspective() {
-        String selected = liveSearchDropDown.getSelectedKey();
+        String selected = selectionHandler.getSelectedKey();
         if (selected == null) {
             return null;
         }
@@ -103,13 +121,11 @@ public class PerspectiveDropDown implements IsWidget {
     }
 
     public void setSelectedPerspective(String perspectiveId) {
-        String item = getItemName(perspectiveId);
-        liveSearchDropDown.setSelectedItem(perspectiveId, item);
+        liveSearchDropDown.setSelectedItem(perspectiveId);
     }
 
     public void setSelectedPerspective(PerspectiveActivity selectedPerspective) {
-        String item = getItemName(selectedPerspective);
-        liveSearchDropDown.setSelectedItem(selectedPerspective.getIdentifier(), item);
+        liveSearchDropDown.setSelectedItem(selectedPerspective.getIdentifier());
     }
 
     public void setMaxItems(int maxItems) {

@@ -35,7 +35,7 @@ import static org.junit.Assert.*;
 import static org.uberfire.ext.metadata.io.KObjectUtil.toKCluster;
 
 @RunWith(org.jboss.byteman.contrib.bmunit.BMUnitRunner.class)
-@BMScript(value = "byteman/lucene.btm")
+@BMScript(dir = "byteman", value = "lucene.btm")
 public class IOServiceIndexedGitImplTest extends BaseIndexTest {
 
     protected final Date dateValue = new Date();
@@ -126,7 +126,7 @@ public class IOServiceIndexedGitImplTest extends BaseIndexTest {
         assertTrue(config.getMetaModelStore().getMetaObject(Path.class.getName()).getProperty("int.hello").get().getTypes().contains(String.class));
         assertTrue(config.getMetaModelStore().getMetaObject(Path.class.getName()).getProperty("custom").get().getTypes().contains(Date.class));
 
-        final String index = toKCluster(path2.getFileSystem()).getClusterId();
+        final String index = toKCluster(path2).getClusterId();
 
         {
             TermQuery query = new TermQuery(new Term("int.hello",

@@ -16,6 +16,7 @@
 package org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.columns;
 
 import java.util.List;
+import java.util.function.BiFunction;
 
 import com.ait.lienzo.client.core.shape.Group;
 import org.uberfire.ext.wires.core.grids.client.model.GridCell;
@@ -23,6 +24,7 @@ import org.uberfire.ext.wires.core.grids.client.model.GridColumn;
 import org.uberfire.ext.wires.core.grids.client.widget.context.GridBodyCellRenderContext;
 import org.uberfire.ext.wires.core.grids.client.widget.context.GridBodyColumnRenderContext;
 import org.uberfire.ext.wires.core.grids.client.widget.context.GridHeaderColumnRenderContext;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.GridRenderer;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.grids.impl.BaseGridRendererHelper;
 
 public interface GridColumnRenderer<T> {
@@ -32,11 +34,28 @@ public interface GridColumnRenderer<T> {
      * @param headerMetaData MetaData for the header
      * @param context Contextual information to support rendering
      * @param renderingInformation Calculated rendering information supporting rendering.
+     * @param columnRenderingConstraint Function to determine whether column should be rendered to the SelectionLayer
      * @return
      */
-    Group renderHeader(final List<GridColumn.HeaderMetaData> headerMetaData,
-                       final GridHeaderColumnRenderContext context,
-                       final BaseGridRendererHelper.RenderingInformation renderingInformation);
+    List<GridRenderer.RendererCommand> renderHeader(final List<GridColumn.HeaderMetaData> headerMetaData,
+                                                    final GridHeaderColumnRenderContext context,
+                                                    final BaseGridRendererHelper.RenderingInformation renderingInformation,
+                                                    final BiFunction<Boolean, GridColumn<?>, Boolean> columnRenderingConstraint);
+
+    /**
+     * Renders the column's Header content.
+     * @param headerMetaData MetaData for the header
+     * @param context Contextual information to support rendering
+     * @param headerRowIndex Index of the header row being rendered. Zero based.
+     * @param blockWidth Width of the block of 'equal' header meta data objects.
+     * @param rowHeight Height of the header row.
+     * @return
+     */
+    Group renderHeaderContent(final List<GridColumn.HeaderMetaData> headerMetaData,
+                              final GridHeaderColumnRenderContext context,
+                              final int headerRowIndex,
+                              final double blockWidth,
+                              final double rowHeight);
 
     /**
      * Renders the column.textual information to support rendering
@@ -44,12 +63,14 @@ public interface GridColumnRenderer<T> {
      * @param context Contextual information to support rendering
      * @param rendererHelper Helper for rendering.
      * @param renderingInformation Calculated rendering information supporting rendering.
+     * @param columnRenderingConstraint Function to determine whether column should be rendered to the SelectionLayer
      * @return
      */
-    Group renderColumn(final GridColumn<?> column,
-                       final GridBodyColumnRenderContext context,
-                       final BaseGridRendererHelper rendererHelper,
-                       final BaseGridRendererHelper.RenderingInformation renderingInformation);
+    List<GridRenderer.RendererCommand> renderColumn(final GridColumn<?> column,
+                                                    final GridBodyColumnRenderContext context,
+                                                    final BaseGridRendererHelper rendererHelper,
+                                                    final BaseGridRendererHelper.RenderingInformation renderingInformation,
+                                                    final BiFunction<Boolean, GridColumn<?>, Boolean> columnRenderingConstraint);
 
     /**
      * Renders a cell for the column for a row. Normally a column would use its logical index

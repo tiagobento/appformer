@@ -15,18 +15,52 @@
  */
 package org.uberfire.ext.wires.core.grids.client.model.impl;
 
+import java.util.function.Consumer;
+
 import com.ait.lienzo.client.core.shape.Group;
-import org.uberfire.client.callbacks.Callback;
 import org.uberfire.ext.wires.core.grids.client.model.GridCell;
 import org.uberfire.ext.wires.core.grids.client.model.GridCellValue;
+import org.uberfire.ext.wires.core.grids.client.model.GridColumn;
 import org.uberfire.ext.wires.core.grids.client.model.GridData;
 import org.uberfire.ext.wires.core.grids.client.model.GridRow;
 import org.uberfire.ext.wires.core.grids.client.widget.context.GridBodyCellRenderContext;
 import org.uberfire.ext.wires.core.grids.client.widget.grid.renderers.columns.impl.BaseGridColumnRenderer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 public abstract class BaseGridTest {
+
+    protected GridData gridData;
+
+    protected GridRow[] gridRows;
+
+    protected GridColumn<String>[] gridColumns;
+
+    // true by default
+    private boolean isMerged = true;
+
+    protected void constructGridData(final boolean isMerged, final int columnCount, final int rowCount) {
+        this.isMerged = isMerged;
+        constructGridData(columnCount, rowCount);
+    }
+
+    protected void constructGridData(final int columnCount, final int rowCount) {
+        gridData = new BaseGridData(isMerged);
+
+        gridColumns = new GridColumn[columnCount];
+        for (int i = 0; i < columnCount; i++) {
+            gridColumns[i] = new MockMergableGridColumn<>("col" + i, 100);
+            gridData.appendColumn(gridColumns[i]);
+        }
+
+        gridRows = new GridRow[rowCount];
+        for (int i = 0; i < rowCount; i++) {
+            gridRows[i] = new BaseGridRow();
+            gridData.appendRow(gridRows[i]);
+        }
+    }
 
     public void assertGridIndexes(final GridData data,
                                   final boolean[] expectedRowMergeStates,
@@ -80,6 +114,7 @@ public abstract class BaseGridTest {
         private boolean isMerged;
         private int mergedCellCount;
         private Object value;
+
         private Expected(final boolean isMerged,
                          final int mergedCellCount,
                          final Object value) {
@@ -87,6 +122,7 @@ public abstract class BaseGridTest {
             this.mergedCellCount = mergedCellCount;
             this.value = value;
         }
+
         private Expected(final Object value) {
             this.value = value;
         }
@@ -116,7 +152,7 @@ public abstract class BaseGridTest {
         @Override
         public void edit(final GridCell<T> cell,
                          final GridBodyCellRenderContext context,
-                         final Callback<GridCellValue<T>> callback) {
+                         final Consumer<GridCellValue<T>> callback) {
             //Do nothing
         }
     }

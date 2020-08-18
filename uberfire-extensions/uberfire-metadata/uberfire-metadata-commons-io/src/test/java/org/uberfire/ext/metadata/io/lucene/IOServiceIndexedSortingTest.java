@@ -39,7 +39,7 @@ import static org.junit.Assert.*;
 import static org.uberfire.ext.metadata.io.KObjectUtil.toKCluster;
 
 @RunWith(org.jboss.byteman.contrib.bmunit.BMUnitRunner.class)
-@BMScript(value = "byteman/lucene.btm")
+@BMScript(dir = "byteman", value = "lucene.btm")
 public class IOServiceIndexedSortingTest extends BaseIndexTest {
 
     @Override
@@ -60,7 +60,7 @@ public class IOServiceIndexedSortingTest extends BaseIndexTest {
 
         waitForCountDown(5000);
 
-        final String index = toKCluster(base.getFileSystem()).getClusterId();
+        final String index = toKCluster(base).getClusterId();
 
         {
             final Sort sort = new Sort(new SortField(FieldFactory.FILE_NAME_FIELD_SORTED,

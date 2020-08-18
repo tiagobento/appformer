@@ -31,6 +31,8 @@ public interface NavigationManager {
 
     NavTree getNavTree();
 
+    boolean hasNavTree();
+
     void saveNavTree(NavTree navTree, Command afterSave);
 
     NavTree secure(NavTree navTree, boolean removeEmptyGroups);
@@ -38,4 +40,6 @@ public interface NavigationManager {
     void secure(List<NavItem> itemList, boolean removeEmptyGroups);
 
     void navItemClicked(NavItem navItem);
+
+    void update(NavTree navTree);
 }

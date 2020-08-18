@@ -15,6 +15,8 @@
  */
 package org.dashbuilder.displayer.client.resources.i18n;
 
+import org.dashbuilder.displayer.DisplayerType;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.ConstantsWithLookup;
 import com.google.gwt.i18n.client.Messages;
@@ -257,4 +259,19 @@ public interface CommonConstants extends Messages {
 
     String rendererliblocator_multiple_renderers_found(String renderer);
 
+    String expand();
+
+    String collapse();
+
+    String removeFilter();
+
+    String renderermanager_renderer_not_available(String type);
+
+    String displayerviewer_displayer_not_created();
+
+    String chart_resizable();
+
+    String map_group();
+
+    String color_scheme();
 }

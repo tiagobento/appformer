@@ -26,6 +26,9 @@ public class APIModule {
     public static final String panelDefinition = "org.uberfire.workbench.model.PanelDefinition";
     public static final String position = "org.uberfire.workbench.model.Position";
     public static final String placeRequest = "org.uberfire.mvp.PlaceRequest";
+    public static final String setContent = "org.uberfire.lifecycle.SetContent";
+    public static final String getContent = "org.uberfire.lifecycle.GetContent";
+    public static final String getPreview = "org.uberfire.lifecycle.GetPreview";
     public static final String isDirty = "org.uberfire.lifecycle.IsDirty";
     public static final String onClose = "org.uberfire.lifecycle.OnClose";
     public static final String onFocus = "org.uberfire.lifecycle.OnFocus";
@@ -37,8 +40,8 @@ public class APIModule {
     public static final String onStartup = "org.uberfire.lifecycle.OnStartup";
     public static final String onContextAttach = "org.uberfire.lifecycle.OnContextAttach";
     public static final String activatedBy = "org.jboss.errai.ioc.client.api.ActivatedBy";
-    private APIModule() {
-    }
+
+    private APIModule() {}
 
     public static String getPanelDefinitionClass() {
         return panelDefinition;
@@ -58,6 +61,18 @@ public class APIModule {
 
     public static String getIsDirtyClass() {
         return isDirty;
+    }
+
+    public static String getSetContentClass() {
+        return setContent;
+    }
+
+    public static String getGetContentClass() {
+        return getContent;
+    }
+
+    public static String getGetPreviewClass() {
+        return getPreview;
     }
 
     public static String getOnCloseClass() {

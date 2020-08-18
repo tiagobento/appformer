@@ -42,12 +42,18 @@ public class FileSystemTestingUtils {
     }
 
     public void setup(boolean initRepo) throws IOException {
+        setup(initRepo, "git://amend-repo-test");
+    }
+
+    public void setup(String repoPath) throws IOException {
+        setup(true, repoPath);
+    }
+
+    public void setup(boolean initRepo, String repoPath) throws IOException {
         ioService = new IOServiceDotFileImpl();
 
         createTempDirectory();
-        setupJGitRepository("git://amend-repo-test",
-                            initRepo
-        );
+        setupJGitRepository(repoPath, initRepo);
     }
 
     private void createTempDirectory()
@@ -76,7 +82,7 @@ public class FileSystemTestingUtils {
             fileSystem = ioService.newFileSystem(newRepo,
                                                  new HashMap<String, Object>());
         } catch (FileSystemAlreadyExistsException e) {
-
+            fileSystem = ioService.getFileSystem(newRepo);
         }
         if (initRepo) {
 

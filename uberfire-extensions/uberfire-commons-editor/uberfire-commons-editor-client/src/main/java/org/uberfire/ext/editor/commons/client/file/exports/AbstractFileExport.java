@@ -27,10 +27,14 @@ public abstract class AbstractFileExport<T> implements FileExport<T> {
     private final BiConsumer<Blob, String> fileSaver;
 
     public AbstractFileExport() {
-        this(JsFileSaver::saveAs);
+        this((blob, name) -> {
+            JsFileSaver.saveAs(blob,
+                               name,
+                               Boolean.TRUE);
+        });
     }
 
-    AbstractFileExport(final BiConsumer<Blob, String> saveAs) {
+    protected AbstractFileExport(final BiConsumer<Blob, String> saveAs) {
         this.fileSaver = saveAs;
     }
 

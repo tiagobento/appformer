@@ -16,7 +16,9 @@
 
 package org.uberfire.client.views.pfly.multipage;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 import com.google.gwt.user.client.ui.IsWidget;
@@ -32,6 +34,14 @@ public class MultiPageEditorImpl implements MultiPageEditor {
     @Inject
     @Multiple
     private MultiPageEditorViewImpl view;
+
+    @Inject
+    private Event<MultiPageEditorSelectedPageEvent> selectedPageEvent;
+
+    @PostConstruct
+    public void init() {
+        view.enableSelectedPageEvent(selectedPageEvent);
+    }
 
     public void addPage(final Page page) {
         view.addPage(page);
@@ -55,6 +65,10 @@ public class MultiPageEditorImpl implements MultiPageEditor {
 
     public int selectedPage() {
         return view.selectedPage();
+    }
+
+    public void addTabBarWidget(final IsWidget customWidget) {
+        view.addTabBarWidget(customWidget);
     }
 
     @Override

@@ -25,7 +25,6 @@ import java.util.zip.ZipInputStream;
 
 import org.guvnor.common.services.backend.MockIOService;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.uberfire.java.nio.IOException;
 import org.uberfire.java.nio.file.FileSystemNotFoundException;
@@ -37,7 +36,6 @@ import org.uberfire.java.nio.fs.file.SimpleFileSystemProvider;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
-@Ignore
 public class ArchiverTest {
 
     private Archiver archiver;
@@ -58,8 +56,12 @@ public class ArchiverTest {
             @Override
             public InputStream newInputStream(Path path,
                                               OpenOption... openOptions) throws IllegalArgumentException, NoSuchFileException, UnsupportedOperationException, IOException, SecurityException {
+                String resourcePath = path.toString().substring(path.toString().indexOf("test-classes") + "test-classes".length());
+                if (resourcePath.startsWith("\\")) {
+                    resourcePath = resourcePath.replaceAll("\\\\", "/");
+                }
                 return getClass().getResourceAsStream(
-                        path.toString().substring(path.toString().indexOf("test-classes") + "test-classes".length()));
+                        resourcePath);
             }
         });
 
@@ -74,8 +76,8 @@ public class ArchiverTest {
                          this.getClass().getResource("testRepository").toURI().toString());
 
         assertZipContains(outputStream,
-                          "project1/file1.txt",
-                          "project2/file2.txt");
+                          "testRepository/project1/file1.txt",
+                          "testRepository/project2/file2.txt");
     }
 
     @Test
@@ -86,7 +88,7 @@ public class ArchiverTest {
                          this.getClass().getResource("testRepository/project1").toURI().toString());
 
         assertZipContains(outputStream,
-                          "file1.txt");
+                          "project1/file1.txt");
     }
 
     private void assertZipContains(ByteArrayOutputStream outputStream,

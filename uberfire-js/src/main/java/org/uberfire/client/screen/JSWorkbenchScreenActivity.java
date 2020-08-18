@@ -16,6 +16,7 @@
 
 package org.uberfire.client.screen;
 
+import java.util.function.Consumer;
 import javax.enterprise.inject.Alternative;
 
 import com.google.gwt.core.client.Scheduler;
@@ -79,6 +80,7 @@ public class JSWorkbenchScreenActivity implements WorkbenchScreenActivity {
     @Override
     public void onClose() {
         nativePlugin.onClose();
+        placeManager.executeOnCloseCallbacks(place);
     }
 
     @Override
@@ -122,8 +124,8 @@ public class JSWorkbenchScreenActivity implements WorkbenchScreenActivity {
     }
 
     @Override
-    public Menus getMenus() {
-        return null;
+    public void getMenus(final Consumer<Menus> menusConsumer) {
+        menusConsumer.accept(null);
     }
 
     @Override
@@ -133,16 +135,13 @@ public class JSWorkbenchScreenActivity implements WorkbenchScreenActivity {
 
     @Override
     public void onOpen() {
-        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-            @Override
-            public void execute() {
-                if (nativePlugin.getType() != null && nativePlugin.getType().equalsIgnoreCase("angularjs")) {
-                    bind();
-                }
-
-                nativePlugin.onOpen();
-                placeManager.executeOnOpenCallback(place);
+        Scheduler.get().scheduleDeferred(() -> {
+            if (nativePlugin.getType() != null && nativePlugin.getType().equalsIgnoreCase("angularjs")) {
+                bind();
             }
+
+            nativePlugin.onOpen();
+            placeManager.executeOnOpenCallbacks(place);
         });
     }
 

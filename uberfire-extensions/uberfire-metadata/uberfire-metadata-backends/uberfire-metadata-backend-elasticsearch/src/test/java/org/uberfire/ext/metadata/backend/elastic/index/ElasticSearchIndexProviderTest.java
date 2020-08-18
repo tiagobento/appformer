@@ -18,37 +18,56 @@ package org.uberfire.ext.metadata.backend.elastic.index;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 
+import com.google.common.collect.Sets;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.TermQuery;
+import org.elasticsearch.client.transport.TransportClient;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Answers;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+import org.uberfire.ext.metadata.backend.elastic.metamodel.ElasticMetaObject;
 import org.uberfire.ext.metadata.backend.elastic.metamodel.ElasticMetaProperty;
 import org.uberfire.ext.metadata.backend.elastic.provider.ElasticSearchContext;
 import org.uberfire.ext.metadata.metamodel.NullMetaModelStore;
-import org.uberfire.ext.metadata.model.impl.MetaPropertyImpl;
 import org.uberfire.ext.metadata.model.schema.MetaProperty;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+@RunWith(MockitoJUnitRunner.class)
 public class ElasticSearchIndexProviderTest {
 
     private ElasticSearchIndexProvider provider;
 
+    @Mock
+    private ElasticSearchContext elasticSearchContext;
+
+    @Mock
+    private Analyzer analyzer;
+
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    private TransportClient transportClient;
+
     @Before
     public void setUp() {
-        this.provider = new ElasticSearchIndexProvider(new NullMetaModelStore(),
-                                                       mock(ElasticSearchContext.class),
-                                                       mock(Analyzer.class));
+        this.provider = spy(new ElasticSearchIndexProvider(new NullMetaModelStore(),
+                                                           elasticSearchContext,
+                                                           analyzer));
+
+        doReturn(transportClient).when(this.provider).getClient();
     }
 
     @Test
     public void testEscapeSpecialCharacters() {
 
-        String expected = "(+field:value AND +field2:\\+AAA123=) OR url:git\\:\\/\\/master@path\\/to\\/file";
+        String expected = "(+field:value AND +field2:\\+AAA123=) OR url:\"git\\:\\/\\/master@path\\/to\\/file\"";
         String queryString = "(+field:value AND +field2:+AAA123=) OR url:git://master@path/to/file";
         String escapedQueryString = this.provider.escapeSpecialCharacters(queryString);
         assertEquals(expected,
@@ -87,5 +106,59 @@ public class ElasticSearchIndexProviderTest {
         String type = this.provider.createElasticType(metaProperty);
         assertEquals("integer",
                      type);
+    }
+
+    @Test
+    public void testPrepareIndex() {
+        String index = this.provider.sanitizeIndex("system_ou/plugins");
+        assertEquals("system_ou_plugins",
+                     index);
+    }
+
+    @Test
+    public void testCreateIndexRequest() {
+
+        ElasticMetaObject obj = new ElasticMetaObject(() -> "type");
+        obj.addProperty(new ElasticMetaProperty("cluster.id",
+                                                "system_ou/plugins",
+                                                Sets.newHashSet(String.class)));
+        obj.addProperty(new ElasticMetaProperty("type",
+                                                "plugins",
+                                                Sets.newHashSet(String.class)));
+        this.provider.createIndexRequest(obj);
+
+        verify(transportClient).prepareIndex(eq("system_ou_plugins"),
+                                             eq("plugins"));
+    }
+
+    @Test
+    public void testAddNullSort() {
+
+        this.provider.findByQueryRaw(Arrays.asList("index"),
+                                     new TermQuery(new Term("",
+                                                            "")),
+                                     new Sort(SortField.FIELD_DOC),
+                                     0);
+
+        verify(this.provider,
+               never()).addSort(any(),
+                                any());
+    }
+
+    @Test
+    public void testWithSort() {
+
+        SortField sortField = new SortField("aField",
+                                            SortField.Type.STRING);
+
+        this.provider.findByQueryRaw(Arrays.asList("index"),
+                                     new TermQuery(new Term("",
+                                                            "")),
+                                     new Sort(sortField),
+                                     0);
+
+        verify(this.provider,
+               times(1)).addSort(any(),
+                                 eq(sortField));
     }
 }

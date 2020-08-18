@@ -15,6 +15,7 @@
  */
 package org.uberfire.client.perspectives;
 
+import java.util.function.Consumer;
 import javax.enterprise.context.ApplicationScoped;
 
 import com.google.gwt.user.client.Window;
@@ -34,8 +35,9 @@ import org.uberfire.workbench.model.menu.Menus;
  * A simple perspective with one tabbed panel.
  */
 @ApplicationScoped
-@WorkbenchPerspective(identifier = "SimplePerspective", isTransient = false)
+@WorkbenchPerspective(identifier = SimplePerspective.IDENTIFIER, isTransient = false)
 public class SimplePerspective {
+    public static final String IDENTIFIER = "SimplePerspective";
 
     @Perspective
     public PerspectiveDefinition buildPerspective() {
@@ -45,47 +47,27 @@ public class SimplePerspective {
     }
 
     @WorkbenchMenu
-    public Menus getMenus() {
-        return MenuFactory
-                .newTopLevelMenu("Open")
-                .withItems(ShowcaseEntryPoint.getScreens())
-                .endMenu()
-                .newTopLevelMenu("Command").respondsWith(new Command() {
-                    @Override
-                    public void execute() {
-                        Window.alert("Command!");
-                    }
-                })
-                .endMenu()
-                .newTopLevelMenu("Create New")
-                .menus()
-                .menu("Command 1")
-                .respondsWith(new Command() {
-                    @Override
-                    public void execute() {
-                        Window.alert("Command 1!");
-                    }
-                })
-                .endMenu()
-                .menu("Command 2")
-                .respondsWith(new Command() {
-                    @Override
-                    public void execute() {
-                        Window.alert("Command 2!");
-                    }
-                })
-                .endMenu()
-                .endMenus()
-                .endMenu()
-                .newTopLevelMenu("Find")
-                .respondsWith(new Command() {
-                    @Override
-                    public void execute() {
-                        Window.alert("Find!");
-                    }
-                })
-                .position(MenuPosition.RIGHT)
-                .endMenu()
-                .build();
+    public void getMenus(final Consumer<Menus> menusConsumer) {
+        menusConsumer.accept(MenuFactory
+                                     .newTopLevelMenu("Open")
+                                     .withItems(ShowcaseEntryPoint.getScreens())
+                                     .endMenu()
+                                     .newTopLevelMenu("Command").respondsWith(() -> Window.alert("Command!"))
+                                     .endMenu()
+                                     .newTopLevelMenu("Create New")
+                                     .menus()
+                                     .menu("Command 1")
+                                     .respondsWith(() -> Window.alert("Command 1!"))
+                                     .endMenu()
+                                     .menu("Command 2")
+                                     .respondsWith(() -> Window.alert("Command 2!"))
+                                     .endMenu()
+                                     .endMenus()
+                                     .endMenu()
+                                     .newTopLevelMenu("Find")
+                                     .respondsWith(() -> Window.alert("Find!"))
+                                     .position(MenuPosition.RIGHT)
+                                     .endMenu()
+                                     .build());
     }
 }

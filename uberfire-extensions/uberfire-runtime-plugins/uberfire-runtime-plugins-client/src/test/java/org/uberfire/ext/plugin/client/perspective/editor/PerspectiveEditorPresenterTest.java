@@ -16,9 +16,11 @@
 package org.uberfire.ext.plugin.client.perspective.editor;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
+import java.util.function.Supplier;
 
 import com.google.gwtmockito.GwtMockitoTestRunner;
+import org.assertj.core.api.Assertions;
 import org.jboss.errai.common.client.api.Caller;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
@@ -26,24 +28,43 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.uberfire.backend.vfs.ObservablePath;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.ext.editor.commons.client.history.VersionRecordManager;
 import org.uberfire.ext.editor.commons.client.menu.BasicFileMenuBuilder;
+import org.uberfire.ext.editor.commons.client.menu.common.SaveAndRenameCommandBuilder;
 import org.uberfire.ext.editor.commons.client.validation.Validator;
+import org.uberfire.ext.editor.commons.file.DefaultMetadata;
+import org.uberfire.ext.layout.editor.api.PerspectiveServices;
+import org.uberfire.ext.layout.editor.api.editor.LayoutTemplate;
 import org.uberfire.ext.layout.editor.client.LayoutEditorPresenter;
 import org.uberfire.ext.layout.editor.client.api.LayoutDragComponentGroup;
+import org.uberfire.ext.layout.editor.client.api.LayoutDragComponentPalette;
 import org.uberfire.ext.layout.editor.client.api.LayoutEditorPlugin;
+import org.uberfire.ext.layout.editor.client.widgets.LayoutComponentPaletteGroupProvider;
 import org.uberfire.ext.plugin.client.perspective.editor.api.PerspectiveEditorComponentGroupProvider;
+import org.uberfire.ext.plugin.client.perspective.editor.events.PerspectiveEditorFocusEvent;
 import org.uberfire.ext.plugin.client.perspective.editor.layout.editor.PerspectiveEditorSettings;
 import org.uberfire.ext.plugin.client.security.PluginController;
+import org.uberfire.mocks.EventSourceMock;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.PlaceRequest;
+import org.uberfire.promise.SyncPromises;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.isA;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(GwtMockitoTestRunner.class)
 public class PerspectiveEditorPresenterTest {
@@ -76,12 +97,6 @@ public class PerspectiveEditorPresenterTest {
     PerspectiveEditorSettings settings;
 
     @Mock
-    PerspectiveEditorComponentGroupProvider perspectiveEditorGroupA;
-
-    @Mock
-    PerspectiveEditorComponentGroupProvider perspectiveEditorGroupB;
-
-    @Mock
     SyncBeanDef<PerspectiveEditorComponentGroupProvider> perspectiveEditorGroupBeanA;
 
     @Mock
@@ -90,47 +105,100 @@ public class PerspectiveEditorPresenterTest {
     @Mock
     LayoutEditorPresenter layoutEditorPresenter;
 
+    @Mock
+    LayoutDragComponentPalette layoutDragComponentPalette;
+
+    @Mock
+    EventSourceMock<PerspectiveEditorFocusEvent> perspectiveEditorFocusEvent;
+
+    @Mock
+    Caller<PerspectiveServices> perspectiveServices;
+
+    @Mock
+    SaveAndRenameCommandBuilder<LayoutTemplate, DefaultMetadata> saveAndRenameCommandBuilder;
+
+    @Spy
+    SyncPromises promises;
+
     @InjectMocks
     PerspectiveEditorPresenter presenter;
 
+    @Captor
+    private ArgumentCaptor<Collection<LayoutComponentPaletteGroupProvider>> providersCaptor;
+
+    PerspectiveEditorComponentGroupProvider perspectiveEditorGroupA;
+    PerspectiveEditorComponentGroupProvider perspectiveEditorGroupB;
     LayoutDragComponentGroup dragComponentGroupA;
     LayoutDragComponentGroup dragComponentGroupB;
 
     public static final String COMPONENT_GROUP_A = "A";
     public static final String COMPONENT_GROUP_B = "B";
 
+    class PerspectiveEditorTestGroupProvider implements PerspectiveEditorComponentGroupProvider {
+
+        private String name;
+        private LayoutDragComponentGroup componentGroup;
+
+        public PerspectiveEditorTestGroupProvider(String name, LayoutDragComponentGroup componentGroup) {
+            this.name = name;
+            this.componentGroup = componentGroup;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public LayoutDragComponentGroup getComponentGroup() {
+            return componentGroup;
+        }
+    }
+
     @Before
     public void setUp() {
+        presenter.perspectiveEditorFocusEvent = perspectiveEditorFocusEvent;
         when(pluginController.canCreatePerspectives()).thenReturn(true);
         when(pluginController.canDelete(any())).thenReturn(true);
         when(pluginController.canUpdate(any())).thenReturn(true);
 
         dragComponentGroupA = new LayoutDragComponentGroup(COMPONENT_GROUP_A);
-        when(perspectiveEditorGroupA.getName()).thenReturn(COMPONENT_GROUP_A);
-        when(perspectiveEditorGroupA.getInstance()).thenReturn(dragComponentGroupA);
+        perspectiveEditorGroupA = new PerspectiveEditorTestGroupProvider(COMPONENT_GROUP_A, dragComponentGroupA);
         when(perspectiveEditorGroupBeanA.getInstance()).thenReturn(perspectiveEditorGroupA);
 
         dragComponentGroupB = new LayoutDragComponentGroup(COMPONENT_GROUP_B);
-        when(perspectiveEditorGroupB.getName()).thenReturn(COMPONENT_GROUP_B);
-        when(perspectiveEditorGroupB.getInstance()).thenReturn(dragComponentGroupB);
+        perspectiveEditorGroupB = new PerspectiveEditorTestGroupProvider(COMPONENT_GROUP_B, dragComponentGroupB);
         when(perspectiveEditorGroupBeanB.getInstance()).thenReturn(perspectiveEditorGroupB);
 
         when(beanManager.lookupBeans(PerspectiveEditorComponentGroupProvider.class))
                 .thenReturn(Arrays.asList(perspectiveEditorGroupBeanB, perspectiveEditorGroupBeanA));
+
+        mockSaveAndRenameCommandBuilder();
+    }
+
+    @Test
+    public void testInitLayoutEditor() {
+        presenter.onStartup(observablePath, placeRequest);
+
+        verify(layoutEditorPlugin).init(anyString(), anyString(), anyString(), eq(LayoutTemplate.Style.PAGE));
+        verify(layoutEditorPlugin).setPreviewEnabled(true);
+        verify(layoutEditorPlugin).setElementSelectionEnabled(true);
     }
 
     @Test
     public void testInitDragComponentGroups() {
         presenter.onStartup(observablePath, placeRequest);
 
-        ArgumentCaptor<List> groupListArg = ArgumentCaptor.forClass(List.class);
-        verify(layoutEditorPlugin).init(anyString(), groupListArg.capture(), anyString(), anyString(), any());
+        verify(layoutDragComponentPalette).clear();
 
         // The component groups are grouped by name
-        List groupList = groupListArg.getValue();
-        assertEquals(groupList.size(), 2);
-        assertEquals(((LayoutDragComponentGroup) groupList.get(0)).getName(), COMPONENT_GROUP_A);
-        assertEquals(((LayoutDragComponentGroup) groupList.get(1)).getName(), COMPONENT_GROUP_B);
+        verify(layoutDragComponentPalette).addDraggableGroups(providersCaptor.capture());
+
+        Collection<LayoutComponentPaletteGroupProvider> providers = providersCaptor.getValue();
+
+        Assertions.assertThat(providers)
+                .hasSize(2)
+                .containsExactly(perspectiveEditorGroupA, perspectiveEditorGroupB);
     }
 
     @Test
@@ -139,7 +207,7 @@ public class PerspectiveEditorPresenterTest {
 
         verify(menuBuilder).addSave(any(Command.class));
         verify(menuBuilder).addCopy(any(Path.class), any(Validator.class), any(Caller.class));
-        verify(menuBuilder).addRename(any(Path.class), any(Validator.class), any(Caller.class));
+        verify(menuBuilder).addRename(any(Command.class));
         verify(menuBuilder).addDelete(any(Path.class), any(Caller.class));
         verify(menuBuilder).addDelete(any(Path.class), any(Caller.class));
         verify(menuBuilder, never()).addNewTopLevelMenu(any());
@@ -152,9 +220,40 @@ public class PerspectiveEditorPresenterTest {
 
         verify(menuBuilder).addSave(any(Command.class));
         verify(menuBuilder).addCopy(any(Path.class), any(Validator.class), any(Caller.class));
-        verify(menuBuilder).addRename(any(Path.class), any(Validator.class), any(Caller.class));
+        verify(menuBuilder).addRename(any(Command.class));
         verify(menuBuilder).addDelete(any(Path.class), any(Caller.class));
         verify(menuBuilder).addDelete(any(Path.class), any(Caller.class));
         verify(menuBuilder).addNewTopLevelMenu(any());
+    }
+
+    @Test
+    public void testGetContentSupplier() {
+
+        final LayoutTemplate layoutTemplate = mock(LayoutTemplate.class);
+
+        doReturn(layoutTemplate).when(layoutEditorPlugin).getLayout();
+
+        final Supplier<LayoutTemplate> contentSupplier = presenter.getContentSupplier();
+
+        assertEquals(layoutTemplate, contentSupplier.get());
+    }
+
+    @Test
+    public void testGetSaveAndRenameServiceCaller() {
+        assertEquals(perspectiveServices, presenter.getSaveAndRenameServiceCaller());
+    }
+
+    private void mockSaveAndRenameCommandBuilder() {
+        when(saveAndRenameCommandBuilder.addPathSupplier(any())).thenReturn(saveAndRenameCommandBuilder);
+        when(saveAndRenameCommandBuilder.addValidator(any(Validator.class))).thenReturn(saveAndRenameCommandBuilder);
+        when(saveAndRenameCommandBuilder.addValidator(any(Supplier.class))).thenReturn(saveAndRenameCommandBuilder);
+        when(saveAndRenameCommandBuilder.addRenameService(any())).thenReturn(saveAndRenameCommandBuilder);
+        when(saveAndRenameCommandBuilder.addMetadataSupplier(any())).thenReturn(saveAndRenameCommandBuilder);
+        when(saveAndRenameCommandBuilder.addContentSupplier(any())).thenReturn(saveAndRenameCommandBuilder);
+        when(saveAndRenameCommandBuilder.addIsDirtySupplier(any())).thenReturn(saveAndRenameCommandBuilder);
+        when(saveAndRenameCommandBuilder.addSuccessCallback(any())).thenReturn(saveAndRenameCommandBuilder);
+        when(saveAndRenameCommandBuilder.addBeforeSaveAndRenameCommand(isA(Command.class))).thenReturn(saveAndRenameCommandBuilder);
+        when(saveAndRenameCommandBuilder.build()).thenReturn(() -> {
+        });
     }
 }

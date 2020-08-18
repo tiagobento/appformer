@@ -36,8 +36,8 @@ import org.uberfire.ext.wires.core.grids.client.widget.layer.GridLayer;
  */
 public class GridWidgetDnDMouseDownHandler implements NodeMouseDownHandler {
 
-    private final GridLayer layer;
-    private final GridWidgetDnDHandlersState state;
+    protected final GridLayer layer;
+    protected final GridWidgetDnDHandlersState state;
 
     public GridWidgetDnDMouseDownHandler(final GridLayer layer,
                                          final GridWidgetDnDHandlersState state) {
@@ -74,10 +74,9 @@ public class GridWidgetDnDMouseDownHandler implements NodeMouseDownHandler {
                     return;
                 }
 
-                showColumnHighlight(state.getActiveGridWidget(),
-                                    state.getActiveGridColumns());
                 state.setEventInitialX(ap.getX());
-                state.setOperation(GridWidgetDnDHandlersState.GridWidgetHandlersOperation.COLUMN_MOVE);
+                state.setOperation(GridWidgetDnDHandlersState.GridWidgetHandlersOperation.COLUMN_MOVE_INITIATED);
+                showColumnHighlight(state.getActiveGridWidget(), state.getActiveGridColumns());
                 break;
 
             case ROW_MOVE_PENDING:
@@ -85,10 +84,9 @@ public class GridWidgetDnDMouseDownHandler implements NodeMouseDownHandler {
                     return;
                 }
 
-                showRowHighlight(state.getActiveGridWidget(),
-                                 state.getActiveGridRows());
                 state.setEventInitialX(ap.getX());
-                state.setOperation(GridWidgetDnDHandlersState.GridWidgetHandlersOperation.ROW_MOVE);
+                state.setOperation(GridWidgetDnDHandlersState.GridWidgetHandlersOperation.ROW_MOVE_INITIATED);
+                showRowHighlight(state.getActiveGridWidget(), state.getActiveGridRows());
                 break;
 
             case GRID_MOVE_PENDING:
@@ -105,8 +103,8 @@ public class GridWidgetDnDMouseDownHandler implements NodeMouseDownHandler {
     }
 
     @SuppressWarnings("unchecked")
-    void showColumnHighlight(final GridWidget view,
-                             final List<GridColumn<?>> activeGridColumns) {
+    protected void showColumnHighlight(final GridWidget view,
+                                       final List<GridColumn<?>> activeGridColumns) {
         final BaseGridRendererHelper rendererHelper = view.getRendererHelper();
         final BaseGridRendererHelper.RenderingInformation renderingInformation = rendererHelper.getRenderingInformation();
         if (renderingInformation == null) {
@@ -124,10 +122,11 @@ public class GridWidgetDnDMouseDownHandler implements NodeMouseDownHandler {
                                                           view,
                                                           headerMinY);
 
-        state.getEventColumnHighlight().setWidth(highlightWidth)
-                .setHeight(highlightHeight)
-                .setX(view.getX() + activeColumnX)
-                .setY(view.getY() + headerMinY);
+        final GridWidgetDnDProxy highlight = state.getEventColumnHighlight();
+        highlight.setWidth(highlightWidth);
+        highlight.setHeight(highlightHeight);
+        highlight.setX(view.getComputedLocation().getX() + activeColumnX);
+        highlight.setY(view.getComputedLocation().getY() + headerMinY);
         layer.add(state.getEventColumnHighlight());
         layer.getLayer().batch();
     }
@@ -143,13 +142,13 @@ public class GridWidgetDnDMouseDownHandler implements NodeMouseDownHandler {
     private double getHighlightHeight(final Bounds bounds,
                                       final GridWidget view,
                                       final double headerMinY) {
-        final double highlightHeight = Math.min(bounds.getY() + bounds.getHeight() - view.getY(),
+        final double highlightHeight = Math.min(bounds.getY() + bounds.getHeight() - view.getComputedLocation().getY(),
                                                 view.getHeight()) - headerMinY;
         return highlightHeight;
     }
 
-    void showRowHighlight(final GridWidget view,
-                          final List<GridRow> activeGridRows) {
+    protected void showRowHighlight(final GridWidget view,
+                                    final List<GridRow> activeGridRows) {
         final BaseGridRendererHelper rendererHelper = view.getRendererHelper();
         final BaseGridRendererHelper.RenderingInformation renderingInformation = rendererHelper.getRenderingInformation();
         if (renderingInformation == null) {
@@ -158,16 +157,19 @@ public class GridWidgetDnDMouseDownHandler implements NodeMouseDownHandler {
 
         final Bounds bounds = renderingInformation.getBounds();
         final GridRow row = activeGridRows.get(0);
-        final double rowOffsetY = rendererHelper.getRowOffset(row) + view.getRenderer().getHeaderHeight();
+        final int rowIndex = view.getModel().getRows().indexOf(row);
+        final List<Double> allRowHeights = renderingInformation.getAllRowHeights();
+        final double rowOffsetY = rendererHelper.getRowOffset(rowIndex, allRowHeights) + view.getRenderer().getHeaderHeight();
 
-        final double highlightWidth = Math.min(bounds.getX() + bounds.getWidth() - view.getX(),
+        final double highlightWidth = Math.min(bounds.getX() + bounds.getWidth() - view.getComputedLocation().getX(),
                                                view.getWidth());
-        final double highlightHeight = row.getHeight();
+        final double highlightHeight = allRowHeights.get(rowIndex);
 
-        state.getEventColumnHighlight().setWidth(highlightWidth)
-                .setHeight(highlightHeight)
-                .setX(view.getX())
-                .setY(view.getY() + rowOffsetY);
+        final GridWidgetDnDProxy highlight = state.getEventColumnHighlight();
+        highlight.setWidth(highlightWidth);
+        highlight.setHeight(highlightHeight);
+        highlight.setX(view.getComputedLocation().getX());
+        highlight.setY(view.getComputedLocation().getY() + rowOffsetY);
         layer.add(state.getEventColumnHighlight());
         layer.getLayer().batch();
     }

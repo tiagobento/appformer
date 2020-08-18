@@ -20,7 +20,9 @@ import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collections;
 import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwtmockito.GwtMockitoTestRunner;
 import org.jboss.errai.bus.client.api.ClientMessageBus;
@@ -35,6 +37,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.slf4j.Logger;
+import org.uberfire.client.mvp.ActivityBeansCache;
 import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.workbench.events.ApplicationReadyEvent;
@@ -96,6 +99,8 @@ public class WorkbenchStartupTest {
     PerspectiveActivity perspectiveActivity2;
     @Mock
     Logger logger;
+    @Mock
+    ActivityBeansCache activityBeansCache;
 
     @Before
     public void setup() {
@@ -160,6 +165,32 @@ public class WorkbenchStartupTest {
         workbench.startIfNotBlocked();
         verify(placeManager,
                never()).goTo(any(PlaceRequest.class));
+    }
+
+    @Test
+    public void workbenchCloseCommandTest() {
+        workbench.workbenchCloseCommand.execute();
+        verify(placeManager).closeAllPlaces();
+    }
+
+    @Test
+    public void workbenchClosingCommandWithUnsavedChangesTest() {
+        doReturn(false).when(placeManager).canCloseAllPlaces();
+        final Window.ClosingEvent event = mock(Window.ClosingEvent.class);
+
+        workbench.workbenchClosingCommand.execute(event);
+
+        verify(event).setMessage(anyString());
+    }
+
+    @Test
+    public void workbenchClosingCommandWithoutUnsavedChangesTest() {
+        doReturn(true).when(placeManager).canCloseAllPlaces();
+        final Window.ClosingEvent event = mock(Window.ClosingEvent.class);
+
+        workbench.workbenchClosingCommand.execute(event);
+
+        verify(event, never()).setMessage(anyString());
     }
 
     /**

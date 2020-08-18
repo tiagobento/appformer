@@ -98,8 +98,9 @@ public class LuceneIndexProvider implements IndexProvider {
 
     @Override
     public void delete(String index) {
-        indexManager.delete(() -> index);
+        indexManager.delete(new KClusterImpl(index));
     }
+
 
     @Override
     public void delete(String index,
@@ -202,6 +203,16 @@ public class LuceneIndexProvider implements IndexProvider {
     @Override
     public List<String> getIndices() {
         return this.indexManager.getIndices();
+    }
+
+    @Override
+    public void observerInitialization(Runnable runnable) {
+        // Do nothing
+    }
+
+    @Override
+    public boolean isAlive() {
+        return true;
     }
 
     public ScoreDoc[] findRawByQuery(List<String> indices,

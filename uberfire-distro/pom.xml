@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.uberfire</groupId>
     <artifactId>uberfire-parent</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>7.43.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -55,11 +55,11 @@
     </dependency>
     <dependency>
       <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-security-client</artifactId>
+      <artifactId>uberfire-security-client-backend</artifactId>
     </dependency>
     <dependency>
       <groupId>org.uberfire</groupId>
-      <artifactId>uberfire-security-client</artifactId>
+      <artifactId>uberfire-security-client-backend</artifactId>
       <classifier>sources</classifier>
     </dependency>
     <dependency>
@@ -246,7 +246,7 @@
       <groupId>org.uberfire</groupId>
       <artifactId>showcase-distribution-wars</artifactId>
       <type>war</type>
-      <classifier>wildfly8.1</classifier>
+      <classifier>wildfly</classifier>
     </dependency>
 
     <!-- Testing Utils -->

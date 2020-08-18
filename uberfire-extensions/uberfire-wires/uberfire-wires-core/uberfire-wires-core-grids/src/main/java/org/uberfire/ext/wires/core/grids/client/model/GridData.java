@@ -16,6 +16,7 @@
 package org.uberfire.ext.wires.core.grids.client.model;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * An interface defining a generic grid of data.
@@ -159,12 +160,23 @@ public interface GridData {
      * Sets a cell at the specified physical coordinate.
      * @param rowIndex
      * @param columnIndex
-     * @param value
+     * @param cellSupplier A supplier of new cell instances
      * @return The Range of rows affected by the operation.
      */
     Range setCell(final int rowIndex,
                   final int columnIndex,
-                  final GridCellValue<?> value);
+                  final Supplier<GridCell<?>> cellSupplier);
+
+    /**
+     * Sets a cell value at the specified physical coordinate.
+     * @param rowIndex
+     * @param columnIndex
+     * @param value
+     * @return The Range of rows affected by the operation.
+     */
+    Range setCellValue(final int rowIndex,
+                       final int columnIndex,
+                       final GridCellValue<?> value);
 
     /**
      * Deletes a cell at the specified physical coordinate.
@@ -208,6 +220,21 @@ public interface GridData {
      * @return
      */
     List<SelectedCell> getSelectedCells();
+
+    /**
+     * Selects a header cell at the specified physical coordinate.
+     * @param headerRowIndex
+     * @param headerColumnIndex
+     * @return The Range of rows affected by the operation.
+     */
+    Range selectHeaderCell(final int headerRowIndex,
+                           final int headerColumnIndex);
+
+    /**
+     * Returns all selected header cells.
+     * @return
+     */
+    List<SelectedCell> getSelectedHeaderCells();
 
     /**
      * Clears all cell selections.
@@ -267,6 +294,39 @@ public interface GridData {
      */
     void expandCell(final int rowIndex,
                     final int columnIndex);
+
+    /**
+     * Updates the width of columns with {@link GridColumn.ColumnWidthMode#AUTO}
+     * @return a boolean that indicates if grid need to be redraw or not
+     */
+    boolean refreshWidth();
+
+    /**
+     * Updates the width of columns with {@link GridColumn.ColumnWidthMode#AUTO}
+     * @param currentWidth is the grid width before this resize iteration
+     * @return a boolean that indicates if grid need to be redraw or not
+     */
+    boolean refreshWidth(double currentWidth);
+
+    /**
+     * Update visible size information and refresh columns width. See {@link GridData#refreshWidth()}
+     * @param width
+     * @param height
+     * @return a boolean that indicates if grid need to be redraw or not
+     */
+    boolean setVisibleSizeAndRefresh(int width, int height);
+
+    /**
+     * Get visible width
+     * @return
+     */
+    int getVisibleWidth();
+
+    /**
+     * Get visible height
+     * @return
+     */
+    int getVisibleHeight();
 
     /**
      * A range of rows.

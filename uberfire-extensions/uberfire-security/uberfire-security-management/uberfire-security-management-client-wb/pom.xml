@@ -21,7 +21,7 @@
   <parent>
     <artifactId>uberfire-security-management</artifactId>
     <groupId>org.uberfire</groupId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>7.43.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -52,6 +52,11 @@
       <groupId>org.uberfire</groupId>
       <artifactId>uberfire-client-all</artifactId>
       <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.uberfire</groupId>
+      <artifactId>uberfire-client-api</artifactId>
     </dependency>
 
     <dependency>
@@ -126,6 +131,11 @@
       <artifactId>errai-cdi-client</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.jboss.errai</groupId>
+      <artifactId>errai-ui</artifactId>
+    </dependency>
+
     <!-- Others. -->
 
     <dependency>
@@ -146,19 +156,13 @@
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-user</artifactId>
       <scope>provided</scope>
-    </dependency>    
+    </dependency>
 
     <!-- Test scope. -->
 
     <dependency>
       <groupId>org.uberfire</groupId>
       <artifactId>uberfire-testing-utils</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -170,5 +174,5 @@
 
   </dependencies>
 
-  
+
 </project>

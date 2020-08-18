@@ -18,6 +18,7 @@ package org.uberfire.client.mvp;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
@@ -29,8 +30,6 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Window.ClosingEvent;
-import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
@@ -38,6 +37,7 @@ import org.jboss.errai.security.shared.api.identity.User;
 import org.uberfire.backend.vfs.impl.LockInfo;
 import org.uberfire.backend.vfs.impl.LockResult;
 import org.uberfire.client.resources.i18n.WorkbenchConstants;
+import org.uberfire.client.util.UserAgent;
 import org.uberfire.client.workbench.VFSLockServiceProxy;
 import org.uberfire.client.workbench.events.ChangeTitleWidgetEvent;
 import org.uberfire.mvp.ParameterizedCommand;
@@ -226,13 +226,27 @@ public class LockManagerImpl implements LockManager {
     }
 
     private void releaseLockOnClose() {
-        closeHandler = Window.addWindowClosingHandler(new ClosingHandler() {
-            @Override
-            public void onWindowClosing(ClosingEvent event) {
-                releaseLock();
-            }
-        });
+        if (UserAgent.isChrome()) {
+            closeHandler = Window.addCloseHandler(event -> requestReleaseLock());
+        } else {
+            closeHandler = Window.addWindowClosingHandler(event -> releaseLock());
+        }
     }
+
+    private native void requestReleaseLock()/*-{
+        var pathArray = window.location.pathname.split('/').filter(Boolean);
+
+        var url = "";
+        for (var i = 0; i < pathArray.length - 1; i++) {
+            url += "/" + pathArray[i];
+        }
+
+        url += "/releaseUserLocksServlet";
+
+        var request = new XMLHttpRequest();
+        request.open('GET', url, false);
+        request.send();
+    }-*/;
 
     private void handleLockFailure(final LockInfo lockInfo) {
 
@@ -273,19 +287,32 @@ public class LockManagerImpl implements LockManager {
         return lockInfo.isLocked() && lockInfo.lockedBy().equals(user.getIdentifier());
     }
 
-    private void updateLockInfo(@Observes LockInfo lockInfo) {
-        if (lockTarget != null && lockInfo.getFile().equals(lockTarget.getPath())) {
+    void updateLockInfo(final @Observes LockInfo lockInfo) {
+        /* Comparing URIs since lockInfo.getFile() can be an ObservablePath or a PathImpl. */
+        if (getLockTarget() != null && lockInfo.getFile().toURI().equals(lockTarget.getPath().toURI())) {
             this.lockInfo = lockInfo;
             this.lockSyncComplete = true;
 
             fireChangeTitleEvent();
             fireUpdatedLockStatusEvent();
 
-            for (Runnable runnable : syncCompleteRunnables) {
+            for (Runnable runnable : getSyncCompleteRunnables()) {
                 runnable.run();
             }
-            syncCompleteRunnables.clear();
+            getSyncCompleteRunnables().clear();
         }
+    }
+
+    public LockTarget getLockTarget() {
+        return lockTarget;
+    }
+
+    boolean isLockSyncComplete() {
+        return lockSyncComplete;
+    }
+
+    List<Runnable> getSyncCompleteRunnables() {
+        return syncCompleteRunnables;
     }
 
     void onResourceAdded(@Observes ResourceAddedEvent res) {
@@ -296,15 +323,18 @@ public class LockManagerImpl implements LockManager {
 
     void onResourceUpdated(@Observes ResourceUpdatedEvent res) {
         if (lockTarget != null && res.getPath().equals(lockTarget.getPath())) {
-            if (!res.getSessionInfo().getIdentity().equals(user)) {
-                reload();
-            }
             releaseLock();
         }
     }
 
     void onSaveInProgress(@Observes SaveInProgressEvent evt) {
         if (lockTarget != null && evt.getPath().equals(lockTarget.getPath())) {
+            releaseLock();
+        }
+    }
+
+    void onRenameInProgress(@Observes RenameInProgressEvent event) {
+        if (getLockTarget() != null && event.getPath().equals(lockTarget.getPath())) {
             releaseLock();
         }
     }

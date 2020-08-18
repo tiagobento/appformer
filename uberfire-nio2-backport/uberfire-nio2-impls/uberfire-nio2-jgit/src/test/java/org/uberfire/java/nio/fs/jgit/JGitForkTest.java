@@ -16,34 +16,52 @@
 
 package org.uberfire.java.nio.fs.jgit;
 
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toSet;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.hooks.PostCommitHook;
+import org.eclipse.jgit.hooks.PreCommitHook;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevSort;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.uberfire.java.nio.file.FileSystemAlreadyExistsException;
 import org.uberfire.java.nio.fs.jgit.util.Git;
 import org.uberfire.java.nio.fs.jgit.util.GitImpl;
+import org.uberfire.java.nio.fs.jgit.util.commands.Clone;
 import org.uberfire.java.nio.fs.jgit.util.commands.Commit;
 import org.uberfire.java.nio.fs.jgit.util.commands.CreateRepository;
 import org.uberfire.java.nio.fs.jgit.util.commands.Fork;
 import org.uberfire.java.nio.fs.jgit.util.commands.ListRefs;
 import org.uberfire.java.nio.fs.jgit.util.exceptions.GitException;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.fest.assertions.api.Assertions.fail;
-
 public class JGitForkTest extends AbstractTestInfra {
 
-    public static final String TARGET_GIT = "target/target";
-    public static final String SOURCE_GIT = "source/source";
+    private static final String
+            TARGET_GIT = "target/target",
+            SOURCE_GIT = "source/source";
     private static Logger logger = LoggerFactory.getLogger(JGitForkTest.class);
 
     @Test
@@ -94,7 +112,9 @@ public class JGitForkTest extends AbstractTestInfra {
         new Fork(parentFolder,
                  SOURCE_GIT,
                  TARGET_GIT,
+                 null,
                  CredentialsProvider.getDefault(),
+                 null,
                  null).execute();
 
         final File gitCloned = new File(parentFolder,
@@ -108,8 +128,8 @@ public class JGitForkTest extends AbstractTestInfra {
         assertThat(new ListRefs(cloned.getRepository()).execute().get(0).getName()).isEqualTo("refs/heads/master");
         assertThat(new ListRefs(cloned.getRepository()).execute().get(1).getName()).isEqualTo("refs/heads/user_branch");
 
-        final String remotePath = ((GitImpl) cloned)._remoteList().call().get(0).getURIs().get(0).getPath();
-        assertThat(remotePath).isEqualTo(gitSource.getPath() + "/");
+        final String remotePath = new File(((GitImpl) cloned)._remoteList().call().get(0).getURIs().get(0).getPath()).getAbsolutePath();
+        assertThat(remotePath).isEqualTo(new File(gitSource.getPath()).getAbsolutePath());
     }
 
     @Test(expected = GitException.class)
@@ -153,22 +173,26 @@ public class JGitForkTest extends AbstractTestInfra {
         new Fork(parentFolder,
                  SOURCE_GIT,
                  TARGET_GIT,
+                 null,
                  CredentialsProvider.getDefault(),
+                 null,
                  null).execute();
     }
 
     @Test
-    public void testToForkWrongSource() throws IOException, GitAPIException {
+    public void testToForkWrongSource() throws IOException {
         final File parentFolder = createTempDirectory();
 
         try {
             new Fork(parentFolder,
                      SOURCE_GIT,
                      TARGET_GIT,
+                     null,
                      CredentialsProvider.getDefault(),
+                     null,
                      null).execute();
             fail("If got here is because it could for the repository");
-        } catch (InvalidRemoteException e) {
+        } catch (Clone.CloneException e) {
             assertThat(e).isNotNull();
             logger.info(e.getMessage(),
                         e);
@@ -206,7 +230,7 @@ public class JGitForkTest extends AbstractTestInfra {
     }
 
     @Test(expected = FileSystemAlreadyExistsException.class)
-    public void testForkRepositoryThatAlreadyExists() throws GitAPIException {
+    public void testForkRepositoryThatAlreadyExists() {
 
         String SOURCE = "testforkA/source";
         String TARGET = "testforkB/target";
@@ -232,5 +256,131 @@ public class JGitForkTest extends AbstractTestInfra {
                                forkEnv);
         provider.newFileSystem(forkUri,
                                forkEnv);
+    }
+
+    @Test
+    public void testForkWithoutHookDirShouldNotBeUpdatedAfterGitHookDirAdded() throws IOException, GitAPIException {
+
+        final File hooksDir = createTempDirectory();
+
+        final File parentFolder = createTempDirectory();
+
+        final File gitSource = new File(parentFolder,
+                                        SOURCE_GIT + ".git");
+
+        writeMockHook(hooksDir, PostCommitHook.NAME);
+        writeMockHook(hooksDir, PreCommitHook.NAME);
+
+        final Git repo = new CreateRepository(gitSource, null).execute().get();
+        final Git existentRepoWithHookDirDefined = new CreateRepository(gitSource, hooksDir).execute().get();
+
+        File[] hooks = new File(existentRepoWithHookDirDefined.getRepository().getDirectory(), "hooks").listFiles();
+        assertThat(hooks).isEmpty();
+    }
+
+
+    @Test
+    public void testForkWithHookDir() throws IOException, GitAPIException {
+    	final File hooksDir = createTempDirectory();
+
+        writeMockHook(hooksDir, PostCommitHook.NAME);
+        writeMockHook(hooksDir, PreCommitHook.NAME);
+
+        final File parentFolder = createTempDirectory();
+
+        final File gitSource = new File(parentFolder,
+                                        SOURCE_GIT + ".git");
+        final Git origin = new CreateRepository(gitSource, hooksDir).execute().get();
+
+        new Commit(origin,
+                   "user_branch",
+                   "name",
+                   "name@example.com",
+                   "commit!",
+                   null,
+                   null,
+                   false,
+                   new HashMap<String, File>() {{
+                       put("file2.txt",
+                           tempFile("temp2222"));
+                   }}).execute();
+
+        final Git cloned  = new Fork(parentFolder,
+                 SOURCE_GIT,
+                 TARGET_GIT,
+                 null,
+                 CredentialsProvider.getDefault(),
+                 null,
+                 hooksDir).execute();
+
+        assertThat(cloned).isNotNull();
+
+        assertThat(new ListRefs(cloned.getRepository()).execute()).hasSize(1);
+
+        assertThat(new ListRefs(cloned.getRepository()).execute().get(0).getName()).isEqualTo("refs/heads/user_branch");
+
+        final String remotePath = new File(((GitImpl) cloned)._remoteList().call().get(0).getURIs().get(0).getPath()).getAbsolutePath();
+        assertThat(remotePath).isEqualTo(new File(gitSource.getPath()).getAbsolutePath());
+
+        boolean foundPreCommitHook = false;
+        boolean foundPostCommitHook = false;
+        File[] hooks = new File(cloned.getRepository().getDirectory(), "hooks").listFiles();
+		assertThat(hooks).isNotEmpty().isNotNull();
+		assertThat(hooks.length).isEqualTo(2);
+        for (File hook : hooks) {
+            if (hook.getName().equals(PreCommitHook.NAME)) {
+                foundPreCommitHook = hook.canExecute();
+            } else if (hook.getName().equals(PostCommitHook.NAME)) {
+                foundPostCommitHook = hook.canExecute();
+            }
+        }
+        assertThat(foundPreCommitHook).isTrue();
+        assertThat(foundPostCommitHook).isTrue();
+    }
+
+    @Test
+    public void testForkMultipleBranches() throws Exception {
+        final File parentFolder = createTempDirectory();
+
+        final File gitSource = new File(parentFolder,
+                                        SOURCE_GIT + ".git");
+
+        final Git origin = new CreateRepository(gitSource, null).execute().get();
+
+        commit(origin,
+               "master",
+               "first",
+               content("dir1/file.txt", "foo"),
+               content("dir2/file2.txt", "bar"),
+               content("file3.txt", "moogah"));
+
+        branch(origin, "master", "dev");
+        commit(origin,
+               "dev",
+               "second",
+               content("dir1/file.txt", "foo1"),
+               content("file3.txt", "bar1"));
+
+        branch(origin, "master", "ignored");
+        commit(origin,
+               "ignored",
+               "third",
+               content("dir1/file.txt", "foo2"));
+
+
+        final Git cloned  = new Fork(parentFolder,
+                                     SOURCE_GIT,
+                                     TARGET_GIT,
+                                     asList("master", "dev"),
+                                     CredentialsProvider.getDefault(),
+                                     null,
+                                     null).execute();
+
+        assertThat(cloned).isNotNull();
+        final Set<String> clonedRefs = listRefs(cloned).stream()
+                .map(ref -> ref.getName())
+                .collect(toSet());
+        assertThat(clonedRefs).hasSize(2);
+        assertThat(clonedRefs).containsExactly("refs/heads/master", "refs/heads/dev");
     }
 }

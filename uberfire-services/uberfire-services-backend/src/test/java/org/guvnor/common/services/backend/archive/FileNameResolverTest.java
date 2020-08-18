@@ -42,4 +42,11 @@ public class FileNameResolverTest {
                      Archiver.FileNameResolver.resolve("/file.txt",
                                                        "/"));
     }
+
+    @Test
+    public void testRootFolder() throws Exception {
+        assertEquals("project/file.txt",
+                     Archiver.FileNameResolver.resolve("/repositoryName/file.txt",
+                                                       "/repositoryName/"));
+    }
 }

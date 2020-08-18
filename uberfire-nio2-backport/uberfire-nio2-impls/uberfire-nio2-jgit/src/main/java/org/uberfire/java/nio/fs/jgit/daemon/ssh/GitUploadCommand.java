@@ -16,7 +16,6 @@
 
 package org.uberfire.java.nio.fs.jgit.daemon.ssh;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.ExecutorService;
@@ -24,23 +23,24 @@ import java.util.zip.Deflater;
 
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.pack.PackConfig;
+import org.eclipse.jgit.transport.RefFilter;
 import org.eclipse.jgit.transport.UploadPack;
-import org.uberfire.java.nio.fs.jgit.JGitFileSystem;
+import org.eclipse.jgit.transport.resolver.UploadPackFactory;
 import org.uberfire.java.nio.fs.jgit.JGitFileSystemProvider;
 import org.uberfire.java.nio.fs.jgit.daemon.filters.HiddenBranchRefFilter;
-import org.uberfire.java.nio.security.FileSystemAuthorizer;
-import org.uberfire.java.nio.security.FileSystemUser;
 
 public class GitUploadCommand extends BaseGitCommand {
 
+    private UploadPackFactory<BaseGitCommand> uploadPackFactory;
+
     public GitUploadCommand(final String command,
                             final JGitFileSystemProvider.RepositoryResolverImpl<BaseGitCommand> repositoryResolver,
-                            final FileSystemAuthorizer fileSystemAuthorizer,
+                            final UploadPackFactory uploadPackFactory,
                             final ExecutorService executorService) {
         super(command,
-              fileSystemAuthorizer,
               repositoryResolver,
               executorService);
+        this.uploadPackFactory = uploadPackFactory;
     }
 
     @Override
@@ -49,25 +49,26 @@ public class GitUploadCommand extends BaseGitCommand {
     }
 
     @Override
-    protected void execute(final FileSystemUser user,
-                           final Repository repository,
+    protected void execute(final Repository repository,
                            final InputStream in,
                            final OutputStream out,
-                           final OutputStream err,
-                           final JGitFileSystem fileSystem) {
-        final UploadPack up = new UploadPack(repository);
-
-        final PackConfig config = new PackConfig(repository);
-        config.setCompressionLevel(Deflater.BEST_COMPRESSION);
-        up.setPackConfig(config);
-
-        up.setRefFilter(new HiddenBranchRefFilter());
-
+                           final OutputStream err) {
         try {
+            final UploadPack up = uploadPackFactory.create(this,
+                                                           repository);
+
+            final PackConfig config = new PackConfig(repository);
+            config.setCompressionLevel(Deflater.BEST_COMPRESSION);
+            up.setPackConfig(config);
+
+            if (up.getRefFilter() == RefFilter.DEFAULT) {
+                up.setRefFilter(new HiddenBranchRefFilter());
+            }
+
             up.upload(in,
                       out,
                       err);
-        } catch (final IOException ignored) {
+        } catch (final Exception ignored) {
         }
     }
 }

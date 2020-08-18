@@ -30,16 +30,16 @@ import com.google.gwt.user.client.ui.Widget;
 import org.gwtbootstrap3.client.ui.Alert;
 import org.gwtbootstrap3.client.ui.Button;
 import org.gwtbootstrap3.client.ui.Column;
-import org.gwtbootstrap3.client.ui.html.Text;
+import org.gwtbootstrap3.client.ui.Icon;
+import org.gwtbootstrap3.client.ui.constants.IconType;
+import org.gwtbootstrap3.client.ui.html.Span;
 
 @Dependent
 public class EntityWorkflowViewImpl extends Composite implements EntityWorkflowView {
 
     private static UserEditorWorkflowViewBinder uiBinder = GWT.create(UserEditorWorkflowViewBinder.class);
     @UiField
-    Alert notifications;
-    @UiField
-    Text notificationLabel;
+    Alert notification;
     @UiField
     Column content;
     @UiField
@@ -94,15 +94,19 @@ public class EntityWorkflowViewImpl extends Composite implements EntityWorkflowV
 
     @Override
     public EntityWorkflowView showNotification(final String text) {
-        notificationLabel.setText(text);
-        notifications.setVisible(true);
+        Icon icon = new Icon(IconType.WARNING);
+        icon.setStyleName("pficon pficon-warning-triangle-o");
+        notification.clear();
+        notification.add(icon);
+        notification.add(new Span(text));
+        notification.setVisible(true);
         return this;
     }
 
     @Override
-    public EntityWorkflowView clearNotification() {
-        notificationLabel.setText("");
-        notifications.setVisible(false);
+    public EntityWorkflowView clearNotifications() {
+        notification.clear();
+        notification.setVisible(false);
         return this;
     }
 

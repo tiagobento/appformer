@@ -40,6 +40,7 @@ import org.uberfire.security.authz.PermissionTypeRegistry;
 import org.uberfire.security.authz.RuntimeResource;
 import org.uberfire.security.authz.VotingStrategy;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -132,12 +133,15 @@ public class AuthorizationManagerTest {
                         .build());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void avoidPermissionTypesCollision() {
         PermissionType permissionType = mock(PermissionType.class);
         when(permissionType.getType()).thenReturn("type");
         permissionTypeRegistry.register(permissionType);
-        permissionTypeRegistry.register(permissionType);
+
+        assertThatThrownBy(() -> permissionTypeRegistry.register(permissionType))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("PermissionType already exists: type");
     }
 
     @Test
@@ -510,5 +514,25 @@ public class AuthorizationManagerTest {
         verify(onDenied,
                never()).execute();
         verify(onGranted).execute();
+    }
+
+    @Test
+    public void testInvalidateCache() throws Exception {
+        User user1 = createUserMock("admin",
+                "manager");
+        permissionManager.setDefaultVotingStrategy(VotingStrategy.AFFIRMATIVE);
+        assertTrue(authorizationManager.authorize(perspective1,
+                user1));
+
+        authorizationManager.check(perspective1,
+                user1)
+                .granted(onGranted)
+                .denied(onDenied);
+        verify(onDenied,
+                never()).execute();
+        verify(onGranted).execute();
+
+        authorizationManager.invalidate(user1);
+        verify(permissionManager, times(1)).invalidate(user1);
     }
 }

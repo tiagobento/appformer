@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
 import static org.uberfire.ext.metadata.io.KObjectUtil.toKCluster;
 
 @RunWith(org.jboss.byteman.contrib.bmunit.BMUnitRunner.class)
-@BMScript(value = "byteman/lucene.btm")
+@BMScript(dir = "byteman", value = "lucene.btm")
 public class IOServiceIndexedDotFileGitImplTest extends BaseIndexTest {
 
     @Override
@@ -67,7 +67,7 @@ public class IOServiceIndexedDotFileGitImplTest extends BaseIndexTest {
                      mo.getProperty("name").get().getTypes().size());
         assertTrue(mo.getProperty("name").get().getTypes().contains(String.class));
 
-        final String index = toKCluster(path.getFileSystem()).getClusterId();
+        final String index = toKCluster(path).getClusterId();
 
         TermQuery query = new TermQuery(new Term("name",
                                                  "value"));

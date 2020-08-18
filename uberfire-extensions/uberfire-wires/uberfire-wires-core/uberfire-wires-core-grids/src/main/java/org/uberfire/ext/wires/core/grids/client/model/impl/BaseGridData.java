@@ -15,15 +15,19 @@
  */
 package org.uberfire.ext.wires.core.grids.client.model.impl;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.OptionalInt;
+import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-import org.kie.soup.commons.validation.PortablePreconditions;
 import org.uberfire.ext.wires.core.grids.client.model.GridCell;
 import org.uberfire.ext.wires.core.grids.client.model.GridCellValue;
 import org.uberfire.ext.wires.core.grids.client.model.GridColumn;
@@ -39,13 +43,17 @@ public class BaseGridData implements GridData {
     protected boolean isMerged = true;
     protected boolean isRowDraggingEnabled = true;
     protected boolean isColumnDraggingEnabled = true;
-    protected List<GridRow> rows = new ArrayList<GridRow>();
-    protected List<GridColumn<?>> columns = new ArrayList<GridColumn<?>>();
-    protected List<SelectedCell> selectedCells = new ArrayList<SelectedCell>();
-    protected int headerRowCount = 1;
+    protected List<GridRow> rows = new ArrayList<>();
+    protected List<GridColumn<?>> columns = new ArrayList<>();
+    protected List<SelectedCell> selectedCells = new ArrayList<>();
+    protected List<SelectedCell> selectedHeaderCells = new ArrayList<>();
+    protected int headerRowCount = 0;
 
     protected BaseGridDataIndexManager indexManager = new BaseGridDataIndexManager(this);
     protected BaseGridDataSelectionsManager selectionsManager = new BaseGridDataSelectionsManager(this);
+    private int visibleWidth;
+    private int visibleHeight;
+    private int previousVisibleWidth;
 
     public BaseGridData() {
         this(true);
@@ -67,16 +75,34 @@ public class BaseGridData implements GridData {
 
     @Override
     public void appendColumn(final GridColumn<?> column) {
+        double originalWidth = getWidth();
         column.setIndex(columns.size());
         columns.add(column);
+
+        OptionalDouble optionalOriginalWidth = OptionalDouble.of(originalWidth);
+
+        if (GridColumn.ColumnWidthMode.isAuto(column)) {
+            column.setWidth(calculateInitWidth(column, optionalOriginalWidth));
+            internalRefreshWidth(true, optionalOriginalWidth);
+        }
+        selectionsManager.onInsertColumn(columns.size() - 1);
     }
 
     @Override
     public void insertColumn(final int index,
                              final GridColumn<?> column) {
+        double originalWidth = getWidth();
         column.setIndex(columns.size());
         columns.add(index,
                     column);
+
+        OptionalDouble optionalOriginalWidth = OptionalDouble.of(originalWidth);
+
+        if (GridColumn.ColumnWidthMode.isAuto(column)) {
+            column.setWidth(calculateInitWidth(column, optionalOriginalWidth));
+            internalRefreshWidth(true, optionalOriginalWidth);
+        }
+        selectionsManager.onInsertColumn(index);
     }
 
     @Override
@@ -95,24 +121,26 @@ public class BaseGridData implements GridData {
 
         removeColumn(column);
 
-        //Destroy column data
+        //Destroy column related cell
         for (GridRow row : rows) {
             ((BaseGridRow) row).deleteCell(index);
-            final Map<Integer, GridCell<?>> clone = new HashMap<Integer, GridCell<?>>(row.getCells());
+            //Shift all cells according to the removed one
+            final Map<Integer, GridCell<?>> clone = new TreeMap<>(row.getCells());
             for (Map.Entry<Integer, GridCell<?>> e : clone.entrySet()) {
                 if (e.getKey() > index) {
                     ((BaseGridRow) row).deleteCell(e.getKey());
                     ((BaseGridRow) row).setCell(e.getKey() - 1,
-                                                e.getValue().getValue());
+                                                e.getValue());
                 }
             }
         }
+
+        internalRefreshWidth(true, OptionalDouble.empty());
 
         selectionsManager.onDeleteColumn(index);
     }
 
     void removeColumn(final GridColumn<?> column) {
-
         final IntStream indexes = IntStream.range(0, columns.size());
         final OptionalInt columnIndex = indexes.filter(i -> column == columns.get(i)).findFirst();
 
@@ -121,6 +149,8 @@ public class BaseGridData implements GridData {
         } else {
             columns.remove(column);
         }
+
+        internalRefreshWidth(true, OptionalDouble.empty());
     }
 
     @Override
@@ -260,13 +290,18 @@ public class BaseGridData implements GridData {
 
     @Override
     public int getHeaderRowCount() {
+        int headerRowCount = this.headerRowCount;
+        for (GridColumn<?> column : columns) {
+            headerRowCount = Math.max(headerRowCount, column.getHeaderMetaData().size());
+        }
         return headerRowCount;
     }
 
     @Override
     public void setHeaderRowCount(final int headerRowCount) {
-        PortablePreconditions.checkCondition("headerRowCount",
-                                             headerRowCount > 0);
+        if (!(headerRowCount >= 0)) {
+            throw new IllegalStateException("headerRowCount");
+        }
         this.headerRowCount = headerRowCount;
     }
 
@@ -291,8 +326,14 @@ public class BaseGridData implements GridData {
     }
 
     @Override
+    public List<SelectedCell> getSelectedHeaderCells() {
+        return selectedHeaderCells;
+    }
+
+    @Override
     public void clearSelections() {
         selectedCells.clear();
+        selectedHeaderCells.clear();
     }
 
     @Override
@@ -353,14 +394,34 @@ public class BaseGridData implements GridData {
     @Override
     public Range setCell(final int rowIndex,
                          final int columnIndex,
-                         final GridCellValue<?> value) {
+                         final Supplier<GridCell<?>> cellSupplier) {
+        return doSetCell(rowIndex,
+                         columnIndex,
+                         (pair) -> cellSupplier.get());
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Range setCellValue(final int rowIndex,
+                              final int columnIndex,
+                              final GridCellValue<?> value) {
+        return doSetCell(rowIndex,
+                         columnIndex,
+                         (pair) -> {
+                             final Optional<BaseGridCell> cell = Optional.ofNullable((BaseGridCell) getCell(pair.getKey(), pair.getValue()));
+                             final BaseGridCell c = cell.orElse(new BaseGridCell<>(value));
+                             c.setValue(value);
+                             return c;
+                         });
+    }
+
+    protected Range doSetCell(final int rowIndex,
+                              final int columnIndex,
+                              final Function<Map.Entry<Integer, Integer>, GridCell<?>> cellSupplier) {
         if (rowIndex < 0 || rowIndex > rows.size() - 1) {
             return new Range(rowIndex);
         }
         if (columnIndex < 0 || columnIndex > columns.size() - 1) {
-            return new Range(rowIndex);
-        }
-        if (value == null) {
             return new Range(rowIndex);
         }
 
@@ -369,7 +430,7 @@ public class BaseGridData implements GridData {
         //If we're not merged just set the value of a single cell
         if (!isMerged) {
             ((BaseGridRow) rows.get(rowIndex)).setCell(_columnIndex,
-                                                       value);
+                                                       cellSupplier.apply(new AbstractMap.SimpleEntry<>(rowIndex, columnIndex)));
             return new Range(rowIndex);
         }
 
@@ -385,7 +446,7 @@ public class BaseGridData implements GridData {
         for (int i = minRowIndex; i <= maxRowIndex; i++) {
             final GridRow row = rows.get(i);
             ((BaseGridRow) row).setCell(_columnIndex,
-                                        value);
+                                        cellSupplier.apply(new AbstractMap.SimpleEntry<>(i, columnIndex)));
         }
 
         indexManager.onSetCell(range,
@@ -463,6 +524,22 @@ public class BaseGridData implements GridData {
                                                columnIndex,
                                                width,
                                                height);
+    }
+
+    @Override
+    public Range selectHeaderCell(final int headerRowIndex,
+                                  final int headerColumnIndex) {
+        if (headerColumnIndex < 0 || headerColumnIndex > columns.size() - 1) {
+            return new Range(headerRowIndex);
+        }
+        final GridColumn<?> gridColumn = getColumns().get(headerColumnIndex);
+        final List<GridColumn.HeaderMetaData> gridColumnHeaderMetaData = gridColumn.getHeaderMetaData();
+        if (headerRowIndex < 0 || headerRowIndex > gridColumnHeaderMetaData.size() - 1) {
+            return new Range(headerRowIndex);
+        }
+
+        return selectionsManager.onSelectHeaderCell(headerRowIndex,
+                                                    headerColumnIndex);
     }
 
     @Override
@@ -563,5 +640,138 @@ public class BaseGridData implements GridData {
             maxRowIndex++;
         }
         return maxRowIndex - 1;
+    }
+
+    @Override
+    public boolean refreshWidth() {
+        return internalRefreshWidth(false, OptionalDouble.empty());
+    }
+
+    @Override
+    public boolean refreshWidth(double currentWidth) {
+        return internalRefreshWidth(false, OptionalDouble.of(currentWidth));
+    }
+
+    protected boolean internalRefreshWidth(boolean changedNumberOfColumn, OptionalDouble optionalCurrentWidth) {
+
+        double visibleWidth = getVisibleWidth();
+        // this happens during initialization
+        if (visibleWidth == 0) {
+            return false;
+        }
+        // refresh is not needed if it has not been added a column and visibleWidth doesn't change (except if
+        // previousVisibleWidth is 0 so it is the first refresh)
+        if (!changedNumberOfColumn && previousVisibleWidth != 0 && visibleWidth == previousVisibleWidth) {
+            return false;
+        }
+
+        GridWidthMetadata gridWidthMetadata = new GridWidthMetadata(optionalCurrentWidth);
+
+        // if there are no columns with AUTO width no need to continue
+        if (gridWidthMetadata.numberOfAutoColumn == 0) {
+            return false;
+        }
+
+        // verify if grid was 100% width with a delta
+        boolean wasFullWidth = Math.abs(gridWidthMetadata.currentGrossWidth - previousVisibleWidth) < 0.1;
+
+        // keep 100% width or max between visible area and grid width
+        double targetGrossWidth = wasFullWidth ? visibleWidth : Math.max(visibleWidth, gridWidthMetadata.currentGrossWidth);
+
+        double currentWidth = getWidth() - gridWidthMetadata.fixedWidth;
+        double targetWidth = targetGrossWidth - gridWidthMetadata.fixedWidth;
+
+        // if grid is greater than visible panel and it wasn't at full width no refresh is needed
+        if (visibleWidth < gridWidthMetadata.currentGrossWidth && !wasFullWidth) {
+            return false;
+        }
+
+        boolean toRedraw = false;
+        for (GridColumn<?> column : getColumns()) {
+            if (!column.isVisible() || !GridColumn.ColumnWidthMode.isAuto(column)) {
+                continue;
+            }
+            double oldWidth = column.getWidth();
+            double ratio = oldWidth / currentWidth;
+            double newWidth = ratio * targetWidth;
+            // this could happen during initialization when columns can be added before the first call to setVisibleSizeAndRefresh
+            if (oldWidth == 0) {
+                newWidth = calculateInitWidth(column, OptionalDouble.empty());
+            }
+            if (newWidth < column.getMinimumWidth()) {
+                newWidth = column.getMinimumWidth();
+            }
+            // if nothing changed no need to update nor refresh
+            if (newWidth != oldWidth) {
+                column.setWidth(newWidth);
+                toRedraw = true;
+            }
+        }
+        return toRedraw;
+    }
+
+    protected double getWidth() {
+        return getColumns().stream().filter(GridColumn::isVisible).mapToDouble(GridColumn::getWidth).sum();
+    }
+
+    @Override
+    public boolean setVisibleSizeAndRefresh(int width, int height) {
+        this.previousVisibleWidth = this.visibleWidth;
+        this.visibleWidth = width;
+        this.visibleHeight = height;
+        return refreshWidth();
+    }
+
+    @Override
+    public int getVisibleWidth() {
+        return this.visibleWidth;
+    }
+
+    @Override
+    public int getVisibleHeight() {
+        return this.visibleHeight;
+    }
+
+    double calculateInitWidth(GridColumn<?> column, OptionalDouble optionalCurrentWidth) {
+        if (!GridColumn.ColumnWidthMode.isAuto(column)) {
+            return column.getWidth();
+        }
+        GridWidthMetadata gridWidthMetadata = new GridWidthMetadata(optionalCurrentWidth);
+        int visibleWidth = getVisibleWidth();
+
+        double calculatedWidth;
+        if (gridWidthMetadata.numberOfAutoColumn < 2) {
+            calculatedWidth = visibleWidth - gridWidthMetadata.fixedWidth;
+        } else {
+            calculatedWidth = (visibleWidth - gridWidthMetadata.fixedWidth) / (gridWidthMetadata.numberOfAutoColumn - 1);
+        }
+        return Math.max(calculatedWidth, column.getMinimumWidth());
+    }
+
+    private class GridWidthMetadata {
+
+        // total size of the grid
+        private double currentGrossWidth = 0;
+        private double previousWidth = 0;
+        private long numberOfAutoColumn = 0;
+        // total size of FIXED column
+        private double fixedWidth = 0;
+
+        private GridWidthMetadata(OptionalDouble optionalCurrentWidth) {
+            for (GridColumn<?> column : getColumns()) {
+                if (!column.isVisible()) {
+                    continue;
+                }
+                double columnWidth = column.getWidth();
+
+                currentGrossWidth += columnWidth;
+                numberOfAutoColumn = GridColumn.ColumnWidthMode.isAuto(column) ? numberOfAutoColumn + 1 : numberOfAutoColumn;
+                fixedWidth = GridColumn.ColumnWidthMode.isFixed(column) ? fixedWidth + columnWidth : fixedWidth;
+            }
+            previousWidth = optionalCurrentWidth.orElse(currentGrossWidth);
+            if (optionalCurrentWidth.isPresent()) {
+                currentGrossWidth = optionalCurrentWidth.getAsDouble();
+            }
+        }
     }
 }

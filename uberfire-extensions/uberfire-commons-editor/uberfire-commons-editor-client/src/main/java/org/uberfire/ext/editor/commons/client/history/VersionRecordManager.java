@@ -25,16 +25,19 @@ import javax.inject.Inject;
 import org.jboss.errai.common.client.api.Caller;
 import org.jboss.errai.common.client.api.RemoteCallback;
 import org.kie.soup.commons.validation.PortablePreconditions;
+import org.uberfire.annotations.Customizable;
 import org.uberfire.backend.vfs.ObservablePath;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.callbacks.Callback;
 import org.uberfire.ext.editor.commons.client.file.RestoreUtil;
 import org.uberfire.ext.editor.commons.client.file.popups.RestorePopUpPresenter;
 import org.uberfire.ext.editor.commons.client.history.event.VersionSelectedEvent;
+import org.uberfire.ext.editor.commons.version.CurrentBranch;
 import org.uberfire.ext.editor.commons.version.VersionService;
 import org.uberfire.ext.editor.commons.version.events.RestoreEvent;
 import org.uberfire.java.nio.base.version.VersionRecord;
 import org.uberfire.mvp.Command;
+import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.workbench.model.menu.MenuItem;
 
 public class VersionRecordManager {
@@ -51,6 +54,7 @@ public class VersionRecordManager {
     private ObservablePath pathToLatest;
     private String version;
     private SaveButton saveButton;
+    private CurrentBranch currentBranch;
 
     @Inject
     public VersionRecordManager(final VersionMenuDropDownButton versionMenuDropDownButton,
@@ -58,7 +62,8 @@ public class VersionRecordManager {
                                 final RestorePopUpPresenter restorePopUpPresenter,
                                 final RestoreUtil restoreUtil,
                                 final Event<VersionSelectedEvent> versionSelectedEvent,
-                                final Caller<VersionService> versionService) {
+                                final Caller<VersionService> versionService,
+                                @Customizable final CurrentBranch currentBranch) {
         this.restorePopUpPresenter = restorePopUpPresenter;
         this.versionMenuDropDownButton = versionMenuDropDownButton;
         this.saveButton = saveButton;
@@ -73,6 +78,7 @@ public class VersionRecordManager {
 
         this.restoreUtil = restoreUtil;
         this.versionService = versionService;
+        this.currentBranch = currentBranch;
     }
 
     private void fireVersionSelected(final VersionRecord versionRecord) {
@@ -137,6 +143,11 @@ public class VersionRecordManager {
     }
 
     public MenuItem newSaveMenuItem(final Command command) {
+        saveButton.setCommand(command);
+        return saveButton;
+    }
+
+    public MenuItem newSaveMenuItem(final ParameterizedCommand<Boolean> command) {
         saveButton.setCommand(command);
         return saveButton;
     }
@@ -217,9 +228,17 @@ public class VersionRecordManager {
         return null;
     }
 
-    public void restoreToCurrentVersion() {
-        restorePopUpPresenter.show(getCurrentPath(),
-                                   getCurrentVersionRecordUri());
+    public void restoreToCurrentVersion(boolean withComments) {
+        if (withComments)
+            restorePopUpPresenter.show(getCurrentPath(),
+                                       getCurrentVersionRecordUri(),
+                                       this.currentBranch.getName());
+        else {
+            restorePopUpPresenter.restoreCommand(getCurrentPath(),
+                                                 getCurrentVersionRecordUri(),
+                                                 this.currentBranch.getName())
+                                 .execute("");
+        }
     }
 
     private void loadVersions(final ObservablePath path) {

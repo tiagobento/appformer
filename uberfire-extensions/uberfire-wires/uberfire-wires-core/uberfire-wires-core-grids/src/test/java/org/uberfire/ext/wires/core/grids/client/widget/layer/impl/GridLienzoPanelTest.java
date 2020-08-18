@@ -16,9 +16,16 @@
 
 package org.uberfire.ext.wires.core.grids.client.widget.layer.impl;
 
+import com.ait.lienzo.client.core.Context2D;
+import com.ait.lienzo.client.core.INativeContext2D;
+import com.ait.lienzo.client.core.shape.Node;
 import com.ait.lienzo.client.widget.LienzoPanel;
 import com.ait.lienzo.test.LienzoMockitoTestRunner;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.CanvasElement;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -30,12 +37,29 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.uberfire.ext.wires.core.grids.client.model.GridData;
+import org.uberfire.ext.wires.core.grids.client.widget.grid.GridWidget;
 import org.uberfire.ext.wires.core.grids.client.widget.scrollbars.GridLienzoScrollHandler;
 
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(LienzoMockitoTestRunner.class)
 public class GridLienzoPanelTest {
+
+    private static final int WIDTH = 100;
+
+    private static final int HEIGHT = 200;
 
     @Mock
     private AbsolutePanel rootPanel;
@@ -55,19 +79,48 @@ public class GridLienzoPanelTest {
     @Mock
     private LienzoPanel lienzoPanel;
 
+    @Mock
+    private DefaultGridLayer gridLayer;
+
+    @Mock
+    private DivElement gridLayerDivElement;
+
+    @Mock
+    private Style gridLayerDivElementStyle;
+
+    @Mock
+    private CanvasElement gridLayerCanvasElement;
+
+    @Mock
+    private Node gridLayerNode;
+
+    @Mock
+    private Context2D context2D;
+
+    @Mock
+    private INativeContext2D nativeContext2D;
+
     private GridLienzoPanel gridLienzoPanel;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() {
 
         gridLienzoPanel = spy(new GridLienzoPanel());
 
-        doReturn(rootPanel).when(gridLienzoPanel).getRootPanel();
-        doReturn(scrollPanel).when(gridLienzoPanel).getScrollPanel();
-        doReturn(internalScrollPanel).when(gridLienzoPanel).getInternalScrollPanel();
-        doReturn(domElementContainer).when(gridLienzoPanel).getDomElementContainer();
-        doReturn(lienzoPanel).when(gridLienzoPanel).getLienzoPanel();
-        doReturn(gridLienzoScrollHandler).when(gridLienzoPanel).getGridLienzoScrollHandler();
+        when(gridLienzoPanel.getRootPanel()).thenReturn(rootPanel);
+        when(gridLienzoPanel.getScrollPanel()).thenReturn(scrollPanel);
+        when(gridLienzoPanel.getInternalScrollPanel()).thenReturn(internalScrollPanel);
+        when(gridLienzoPanel.getDomElementContainer()).thenReturn(domElementContainer);
+        when(gridLienzoPanel.getLienzoPanel()).thenReturn(lienzoPanel);
+        when(gridLienzoPanel.getGridLienzoScrollHandler()).thenReturn(gridLienzoScrollHandler);
+
+        when(gridLayer.getElement()).thenReturn(gridLayerDivElement);
+        when(gridLayerDivElement.getStyle()).thenReturn(gridLayerDivElementStyle);
+        when(gridLayer.getCanvasElement()).thenReturn(gridLayerCanvasElement);
+        when(gridLayer.getContext()).thenReturn(context2D);
+        when(gridLayer.asNode()).thenReturn(gridLayerNode);
+        when(context2D.getNativeContext()).thenReturn(nativeContext2D);
     }
 
     @Test
@@ -222,5 +275,44 @@ public class GridLienzoPanelTest {
         gridLienzoPanel.refreshScrollPosition();
 
         verify(lienzoScrollHandler).refreshScrollPosition();
+    }
+
+    @Test
+    public void propagateNewPanelSize() {
+        int visibleWidth = 100;
+        int visibleHeight = 100;
+        GridData gridData = mock(GridData.class);
+        GridWidget gridWidget = mock(GridWidget.class);
+        DefaultGridLayer defaultGridLayer = new DefaultGridLayer();
+        defaultGridLayer.register(gridWidget);
+        when(gridWidget.getModel()).thenReturn(gridData);
+        gridLienzoPanel.propagateNewPanelSize(visibleWidth, visibleHeight);
+        verify(gridData, never()).setVisibleSizeAndRefresh(anyInt(), anyInt());
+
+        gridLienzoPanel.add(defaultGridLayer);
+        gridLienzoPanel.propagateNewPanelSize(visibleWidth, visibleHeight);
+
+        verify(gridData, times(1)).setVisibleSizeAndRefresh(visibleWidth, visibleHeight);
+    }
+
+    @Test
+    public void testConstructorWithSizeAndDefaultGridLayer() {
+        final GridLienzoPanel gridPanel = new GridLienzoPanel(WIDTH, HEIGHT, gridLayer);
+
+        assertThat(gridPanel.getDefaultGridLayer()).isEqualTo(gridLayer);
+    }
+
+    @Test
+    public void testConstructor() {
+        final GridLienzoPanel gridPanel = new GridLienzoPanel(gridLayer);
+
+        assertThat(gridPanel.getDefaultGridLayer()).isEqualTo(gridLayer);
+    }
+
+    @Test
+    public void testMouseDownHandlerDoesNotSetFocus() {
+        gridLienzoPanel.setupDefaultHandlers();
+
+        verify(gridLienzoPanel, never()).addMouseDownHandler(any(MouseDownHandler.class));
     }
 }

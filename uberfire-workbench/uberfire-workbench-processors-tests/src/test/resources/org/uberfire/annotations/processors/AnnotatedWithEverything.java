@@ -18,10 +18,12 @@ package org.uberfire.annotations.processors;
 
 import org.uberfire.client.annotations.WorkbenchPerspective;
 import org.uberfire.client.annotations.WorkbenchEditor;
+import org.uberfire.client.annotations.WorkbenchClientEditor;
 import org.uberfire.client.annotations.WorkbenchContext;
 import org.uberfire.client.annotations.WorkbenchPopup;
 import org.uberfire.client.annotations.WorkbenchScreen;
 import org.uberfire.client.annotations.WorkbenchSplashScreen;
+import org.uberfire.experimental.definition.annotations.ExperimentalFeature;
 
 /**
  * A non-functional class that exists only to support the UF-44 regression test.
@@ -32,6 +34,8 @@ import org.uberfire.client.annotations.WorkbenchSplashScreen;
 @WorkbenchPopup(identifier = "sample")
 @WorkbenchScreen(identifier = "sample")
 @WorkbenchSplashScreen(identifier = "sample")
+@ExperimentalFeature
+@WorkbenchClientEditor(identifier = "sample")
 public class AnnotatedWithEverything {
 
 }

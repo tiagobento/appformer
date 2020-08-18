@@ -17,14 +17,25 @@
 package org.uberfire.io.impl;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.hooks.PostCommitHook;
+import org.eclipse.jgit.hooks.PreCommitHook;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.util.FS_POSIX;
+import org.eclipse.jgit.util.ProcessResult;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -33,16 +44,20 @@ import org.uberfire.commons.lifecycle.PriorityDisposableRegistry;
 import org.uberfire.io.CommonIOServiceDotFileTest;
 import org.uberfire.io.IOService;
 import org.uberfire.io.lock.BatchLockControl;
+import org.uberfire.java.nio.base.WatchContext;
 import org.uberfire.java.nio.base.options.CommentedOption;
 import org.uberfire.java.nio.base.version.VersionAttributeView;
 import org.uberfire.java.nio.file.FileSystem;
 import org.uberfire.java.nio.file.Path;
+import org.uberfire.java.nio.file.StandardWatchEventKind;
 import org.uberfire.java.nio.file.WatchEvent;
 import org.uberfire.java.nio.file.WatchService;
 import org.uberfire.java.nio.file.api.FileSystemProviders;
+import org.uberfire.java.nio.file.spi.FileSystemProvider;
 import org.uberfire.java.nio.fs.jgit.JGitFileSystemImpl;
 import org.uberfire.java.nio.fs.jgit.JGitFileSystemProvider;
 import org.uberfire.java.nio.fs.jgit.JGitFileSystemProxy;
+import org.uberfire.java.nio.fs.jgit.ws.JGitWatchEvent;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -108,6 +123,95 @@ public class BatchTest {
         JGitFileSystemProvider gitFsProvider = (JGitFileSystemProvider) FileSystemProviders.resolveProvider(URI.create("git://whatever"));
         gitFsProvider.shutdown();
         FileUtils.deleteQuietly(gitFsProvider.getGitRepoContainerDir());
+    }
+
+    @Test
+    public void deleteOnBatchEventShouldKeepUserInfo() {
+        final Path init = ioService.get(URI.create("git://amend-repo-test/file.txt"));
+
+        final WatchService ws = init.getFileSystem().newWatchService();
+        String user = "dora";
+        String message = "message";
+        ioService.write(init,
+                        "init!",
+                        new CommentedOption(user,
+                                            message));
+        {
+            List<WatchEvent<?>> events = ws.poll().pollEvents();
+        }
+
+        ioService.startBatch(init.getFileSystem());
+        ioService.delete(init, new CommentedOption(user, message));
+        ioService.endBatch();
+        {
+            List<WatchEvent<?>> events = ws.poll().pollEvents();
+            JGitWatchEvent event = (JGitWatchEvent) events.get(0);
+            WatchContext context = (WatchContext) event.context();
+            assertEquals(user, context.getUser());
+        }
+    }
+
+    @Test
+    public void testMoveAndAddOnBatchShouldTriggerRenameAndModifyEvent() {
+        final Path init = ioService.get(URI.create("git://amend-repo-test/file.txt"));
+        final Path initMoved = ioService.get(URI.create("git://amend-repo-test/fileMoved.txt"));
+
+        final WatchService ws = init.getFileSystem().newWatchService();
+
+        ioService.write(init,
+                        "init!",
+                        new CommentedOption("User Tester",
+                                            "message1"));
+        {
+            List<WatchEvent<?>> events = ws.poll().pollEvents();
+            assertEquals(1,
+                         events.size());
+            assertEquals(StandardWatchEventKind.ENTRY_CREATE, ((JGitWatchEvent) events.get(0)).kind());
+        }
+
+        ioService.move(init, initMoved, new CommentedOption("moved"));
+
+        {
+            List<WatchEvent<?>> events = ws.poll().pollEvents();
+            assertEquals(1,
+                         events.size());
+            assertEquals(StandardWatchEventKind.ENTRY_RENAME, ((JGitWatchEvent) events.get(0)).kind());
+        }
+
+        final Path aNewFile = ioService.get(URI.create("git://amend-repo-test/aNewFile.txt"));
+        final Path aNewFileMoved = ioService.get(URI.create("git://amend-repo-test/aNewFileMoved.txt"));
+
+        ioService.write(aNewFile,
+                        "init!",
+                        new CommentedOption("User Tester",
+                                            "message1"));
+
+        {
+            List<WatchEvent<?>> events = ws.poll().pollEvents();
+            assertEquals(1,
+                         events.size());
+            assertEquals(StandardWatchEventKind.ENTRY_CREATE, ((JGitWatchEvent) events.get(0)).kind());
+        }
+
+        ioService.startBatch(aNewFile.getFileSystem());
+        ioService.move(aNewFile, aNewFileMoved, new CommentedOption("moved"));
+
+        ioService.write(aNewFileMoved,
+                        "aNewFileMoved!",
+                        new CommentedOption("User Tester",
+                                            "message1"));
+
+        ioService.endBatch();
+
+        assertEquals("aNewFileMoved!", ioService.readAllString(aNewFileMoved));
+        {
+            List<WatchEvent<?>> events = ws.poll().pollEvents();
+
+            assertEquals(2,
+                         events.size());
+            assertEquals(StandardWatchEventKind.ENTRY_RENAME, ((JGitWatchEvent) events.get(0)).kind());
+            assertEquals(StandardWatchEventKind.ENTRY_MODIFY, ((JGitWatchEvent) events.get(1)).kind());
+        }
     }
 
     @Test
@@ -183,7 +287,7 @@ public class BatchTest {
         ioService.endBatch();
         {
             List<WatchEvent<?>> events = ws.poll().pollEvents();
-            assertEquals(2,
+            assertEquals(4,
                          events.size()); //adds files
         }
 
@@ -745,12 +849,64 @@ public class BatchTest {
         assertFalse(ioServiceSpy.getLockControl().isLocked());
     }
 
+    @Test
+    public void hooksShouldBeCalledOnBatch() throws IOException {
+
+        final File hooksDir = CommonIOServiceDotFileTest.createTempDirectory();
+        System.setProperty("org.uberfire.nio.git.hooks",
+                           hooksDir.getAbsolutePath());
+
+        writeMockHook(hooksDir,
+                      "post-commit");
+
+        JGitFileSystemProvider provider = (JGitFileSystemProvider) FileSystemProviders.resolveProvider(URI.create("git://hook-fs/"));
+
+        final AtomicInteger postCommitHookCalled = new AtomicInteger();
+
+        provider.setDetectedFS(new FS_POSIX() {
+            @Override
+            public ProcessResult runHookIfPresent(Repository repox,
+                                                  String hookName,
+                                                  String[] args) throws JGitInternalException {
+                if (hookName.equals(PostCommitHook.NAME)) {
+                    postCommitHookCalled.incrementAndGet();
+                    return new ProcessResult(1, ProcessResult.Status.OK);
+                }
+                return new ProcessResult(ProcessResult.Status.NOT_PRESENT);
+            }
+        });
+
+        ioService.newFileSystem(URI.create("git://hook-fs/"),
+                                new HashMap<>());
+
+        Path init = ioService.get(URI.create("git://hook-fs/init.file"));
+
+        ioService.write(init,
+                        "setupFS!");
+
+        ioService.startBatch(init.getFileSystem());
+
+        ioService.write(init,
+                        "onBatch!");
+
+        ioService.endBatch();
+
+        assertEquals(2, postCommitHookCalled.get());
+    }
+
+    static void writeMockHook(final File hooksDirectory,
+                              final String hookName)
+            throws FileNotFoundException, UnsupportedEncodingException {
+        final PrintWriter writer = new PrintWriter(new File(hooksDirectory,
+                                                            hookName),
+                                                   "UTF-8");
+        writer.println("# hook data");
+        writer.close();
+    }
+
     private void assertProperBatchCleanup() {
         assertFalse(fs1Batch.isOnBatch());
-        assertFalse(fs1Batch.isLocked());
         assertFalse(fs2Batch.isOnBatch());
-        assertFalse(fs2Batch.isLocked());
         assertFalse(fs3Batch.isOnBatch());
-        assertFalse(fs3Batch.isLocked());
     }
 }

@@ -16,16 +16,9 @@
 
 package org.uberfire.client.workbench.panels.impl;
 
-import java.lang.annotation.Annotation;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import javax.enterprise.context.Dependent;
-import javax.enterprise.event.Event;
-
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.user.client.ui.HasWidgets;
+import org.assertj.core.api.Assertions;
 import org.jboss.errai.common.client.dom.HTMLElement;
 import org.jboss.errai.ioc.client.QualifierUtil;
 import org.jboss.errai.ioc.client.container.IOC;
@@ -34,57 +27,42 @@ import org.jboss.errai.ioc.client.container.SyncBeanManagerImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.AdditionalAnswers;
-import org.mockito.InOrder;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.uberfire.backend.vfs.ObservablePath;
 import org.uberfire.backend.vfs.Path;
-import org.uberfire.client.mvp.AbstractPopupActivity;
-import org.uberfire.client.mvp.Activity;
-import org.uberfire.client.mvp.ActivityManager;
-import org.uberfire.client.mvp.BookmarkableUrlHelper;
-import org.uberfire.client.mvp.ContextActivity;
-import org.uberfire.client.mvp.PerspectiveActivity;
-import org.uberfire.client.mvp.PerspectiveManager;
-import org.uberfire.client.mvp.PlaceHistoryHandler;
-import org.uberfire.client.mvp.PlaceManager;
-import org.uberfire.client.mvp.PlaceManagerImpl;
-import org.uberfire.client.mvp.PlaceStatus;
-import org.uberfire.client.mvp.SplashScreenActivity;
-import org.uberfire.client.mvp.UIPart;
-import org.uberfire.client.mvp.WorkbenchActivity;
-import org.uberfire.client.mvp.WorkbenchScreenActivity;
+import org.uberfire.client.mvp.*;
 import org.uberfire.client.util.MockIOCBeanDef;
 import org.uberfire.client.workbench.LayoutSelection;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.WorkbenchLayout;
 import org.uberfire.client.workbench.docks.UberfireDocks;
-import org.uberfire.client.workbench.events.BeforeClosePlaceEvent;
-import org.uberfire.client.workbench.events.ClosePlaceEvent;
-import org.uberfire.client.workbench.events.NewSplashScreenActiveEvent;
-import org.uberfire.client.workbench.events.PlaceLostFocusEvent;
-import org.uberfire.client.workbench.events.SelectPlaceEvent;
+import org.uberfire.client.workbench.events.*;
+import org.uberfire.experimental.service.auth.ExperimentalActivitiesAuthorizationManager;
+import org.uberfire.mvp.BiParameterizedCommand;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.ConditionalPlaceRequest;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
 import org.uberfire.mvp.impl.PathPlaceRequest;
-import org.uberfire.workbench.model.ActivityResourceType;
-import org.uberfire.workbench.model.PanelDefinition;
-import org.uberfire.workbench.model.PartDefinition;
-import org.uberfire.workbench.model.PerspectiveDefinition;
-import org.uberfire.workbench.model.Position;
+import org.uberfire.workbench.model.*;
 import org.uberfire.workbench.model.impl.CustomPanelDefinitionImpl;
 import org.uberfire.workbench.model.impl.PanelDefinitionImpl;
 import org.uberfire.workbench.model.impl.PartDefinitionImpl;
 import org.uberfire.workbench.model.impl.PerspectiveDefinitionImpl;
 import org.uberfire.workbench.model.menu.Menus;
 import org.uberfire.workbench.type.ResourceTypeDefinition;
+
+import javax.enterprise.context.Dependent;
+import javax.enterprise.event.Event;
+import java.lang.annotation.Annotation;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static java.util.Collections.singleton;
 import static org.junit.Assert.*;
@@ -142,6 +120,10 @@ public class PlaceManagerTest {
     WorkbenchLayout workbenchLayout;
     @Mock
     LayoutSelection layoutSelection;
+    @Mock
+    ExperimentalActivitiesAuthorizationManager activitiesAuthorizationManager;
+    @Mock
+    PlaceManagerImpl.AppFormerActivityLoader appFormerActivityLoader;
     /**
      * This is the thing we're testing. Weeee!
      */
@@ -162,6 +144,8 @@ public class PlaceManagerTest {
                 .thenReturn(defaultPerspective);
 
         when(activityManager.getActivities(any(PlaceRequest.class))).thenReturn(singleton(notFoundActivity));
+
+        doReturn(false).when(appFormerActivityLoader).triggerLoadOfMatchingEditors(any(), any());
 
         // for now (and this will have to change for UF-61), PathPlaceRequest performs an IOC lookup for ObservablePath in its constructor
         // as part of UF-61, we'll need to refactor ObservablePath and PathFactory so they ask for any beans they need as constructor params.
@@ -275,6 +259,10 @@ public class PlaceManagerTest {
 
         WorkbenchScreenActivity doraActivity = mock(WorkbenchScreenActivity.class);
         when(doraActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(doraActivity).getMenus(any());
         when(activityManager.getActivities(dora)).thenReturn(singleton((Activity) doraActivity));
 
         placeManager.goTo(dora);
@@ -295,6 +283,14 @@ public class PlaceManagerTest {
         WorkbenchScreenActivity otherActivity = mock(WorkbenchScreenActivity.class);
         when(doraActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
         when(otherActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(doraActivity).getMenus(any());
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(otherActivity).getMenus(any());
         when(activityManager.getActivities(dora)).thenReturn(singleton((Activity) doraActivity));
         when(activityManager.getActivities(other)).thenReturn(singleton((Activity) otherActivity));
 
@@ -317,6 +313,10 @@ public class PlaceManagerTest {
         when(ozActivity.isDynamic()).thenReturn(false);
         when(ozActivity.preferredWidth()).thenReturn(-1);
         when(ozActivity.preferredHeight()).thenReturn(-1);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(ozActivity).getMenus(any());
         when(activityManager.getActivities(oz)).thenReturn(singleton((Activity) ozActivity));
 
         placeManager.goTo(oz,
@@ -380,6 +380,10 @@ public class PlaceManagerTest {
         WorkbenchScreenActivity ozActivity = mock(WorkbenchScreenActivity.class);
 
         when(ozActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(ozActivity).getMenus(any());
         when(activityManager.getActivities(yellowBrickRoad)).thenReturn(singleton((Activity) ozActivity));
 
         placeManager.goTo(yellowBrickRoad,
@@ -416,6 +420,17 @@ public class PlaceManagerTest {
                      placeManager.getStatus(kansas));
         assertNull(placeManager.getActivity(kansas));
         assertFalse(placeManager.getActivePlaceRequests().contains(kansas));
+    }
+
+    @Test
+    public void testClosePlaceAlwaysCloseActivityBeforeDestroy() {
+        when(kansasActivity.isType(any())).thenReturn(false);
+
+        placeManager.closePlace(kansas);
+
+        InOrder inOrder = inOrder(activityManager, kansasActivity);
+        inOrder.verify(kansasActivity).onClose();
+        inOrder.verify(activityManager).destroyActivity(kansasActivity);
     }
 
     @Test
@@ -538,6 +553,98 @@ public class PlaceManagerTest {
     }
 
     @Test
+    public void testSwitchingPerspectivesWithProperChain() throws Exception {
+        PerspectiveActivity ozPerspectiveActivity = mock(PerspectiveActivity.class);
+        PlaceRequest ozPerspectivePlace = new DefaultPlaceRequest("oz_perspective");
+        PerspectiveDefinition ozPerspectiveDef = new PerspectiveDefinitionImpl();
+
+        when(activityManager.getActivities(ozPerspectivePlace))
+                .thenReturn(singleton((Activity) ozPerspectiveActivity));
+        when(ozPerspectiveActivity.getDefaultPerspectiveLayout()).thenReturn(ozPerspectiveDef);
+        when(ozPerspectiveActivity.getPlace()).thenReturn(ozPerspectivePlace);
+        when(ozPerspectiveActivity.isType(ActivityResourceType.PERSPECTIVE.name())).thenReturn(true);
+        when(kansasActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+
+        // we'll pretend we started in kansas
+        PerspectiveActivity kansasPerspectiveActivity = mock(PerspectiveActivity.class);
+        when(kansasPerspectiveActivity.getIdentifier()).thenReturn("kansas");
+        when(perspectiveManager.getCurrentPerspective()).thenReturn(kansasPerspectiveActivity);
+
+        final AtomicBoolean chainExecuted = new AtomicBoolean(false);
+        placeManager.registerPerspectiveCloseChain("kansas",
+                                                   (chain, place) -> {
+                                                       chainExecuted.set(true);
+                                                       chain.execute();
+                                                   });
+
+        placeManager.goTo(ozPerspectivePlace);
+
+        // verify close chain was ran
+        assertTrue(chainExecuted.get());
+
+        // verify proper shutdown of kansasPerspective and its contents
+        InOrder inOrder = inOrder(activityManager,
+                                  kansasPerspectiveActivity,
+                                  kansasActivity,
+                                  workbenchLayout);
+
+        // shut down the screens first
+        inOrder.verify(kansasActivity).onClose();
+        inOrder.verify(activityManager).destroyActivity(kansasActivity);
+
+        // then the perspective
+        inOrder.verify(kansasPerspectiveActivity).onClose();
+        inOrder.verify(activityManager).destroyActivity(kansasPerspectiveActivity);
+        inOrder.verify(workbenchLayout).onResize();
+    }
+
+    @Test
+    public void testSwitchingPerspectivesWithChainCancelingTheOperation() throws Exception {
+        PerspectiveActivity ozPerspectiveActivity = mock(PerspectiveActivity.class);
+        PlaceRequest ozPerspectivePlace = new DefaultPlaceRequest("oz_perspective");
+        PerspectiveDefinition ozPerspectiveDef = new PerspectiveDefinitionImpl();
+
+        when(activityManager.getActivities(ozPerspectivePlace))
+                .thenReturn(singleton((Activity) ozPerspectiveActivity));
+        when(ozPerspectiveActivity.getDefaultPerspectiveLayout()).thenReturn(ozPerspectiveDef);
+        when(ozPerspectiveActivity.getPlace()).thenReturn(ozPerspectivePlace);
+        when(ozPerspectiveActivity.isType(ActivityResourceType.PERSPECTIVE.name())).thenReturn(true);
+        when(kansasActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+
+        // we'll pretend we started in kansas
+        PerspectiveActivity kansasPerspectiveActivity = mock(PerspectiveActivity.class);
+        when(kansasPerspectiveActivity.getIdentifier()).thenReturn("kansas");
+        when(perspectiveManager.getCurrentPerspective()).thenReturn(kansasPerspectiveActivity);
+
+        final AtomicBoolean chainExecuted = new AtomicBoolean(false);
+        placeManager.registerPerspectiveCloseChain("kansas",
+                                                   (chain, place) -> {
+                                                       chainExecuted.set(true);
+                                                       // chain was not executed.
+                                                   });
+
+        placeManager.goTo(ozPerspectivePlace);
+
+        // verify close chain was ran
+        assertTrue(chainExecuted.get());
+
+        // verify kansasPerspective and its contents were not closed
+        InOrder inOrder = inOrder(activityManager,
+                                  kansasPerspectiveActivity,
+                                  kansasActivity,
+                                  workbenchLayout);
+
+        // does not shut down the screens
+        inOrder.verify(kansasActivity, never()).onClose();
+        inOrder.verify(activityManager, never()).destroyActivity(kansasActivity);
+
+        // the perspective was not closed
+        inOrder.verify(kansasPerspectiveActivity, never()).onClose();
+        inOrder.verify(activityManager, never()).destroyActivity(kansasPerspectiveActivity);
+        inOrder.verify(workbenchLayout, never()).onResize();
+    }
+
+    @Test
     public void testSwitchingFromPerspectiveToSelf() throws Exception {
         PerspectiveActivity ozPerspectiveActivity = mock(PerspectiveActivity.class);
         PlaceRequest ozPerspectivePlace = new DefaultPlaceRequest("oz_perspective");
@@ -547,11 +654,20 @@ public class PlaceManagerTest {
                 .thenReturn(singleton((Activity) ozPerspectiveActivity));
         when(ozPerspectiveActivity.getDefaultPerspectiveLayout()).thenReturn(ozPerspectiveDef);
         when(ozPerspectiveActivity.getPlace()).thenReturn(ozPerspectivePlace);
+        when(ozPerspectiveActivity.isType(ActivityResourceType.PERSPECTIVE.name())).thenReturn(true);
+        when(ozPerspectiveActivity.getIdentifier()).thenReturn("oz_perspective");
 
         // we'll pretend we started in oz
         when(perspectiveManager.getCurrentPerspective()).thenReturn(ozPerspectiveActivity);
 
+        final BiParameterizedCommand<Command, PlaceRequest> closeChain = mock(BiParameterizedCommand.class);
+        placeManager.registerPerspectiveCloseChain("oz_perspective",
+                                                   closeChain);
+
         placeManager.goTo(ozPerspectivePlace);
+
+        verify(closeChain,
+               never()).execute(any(), any());
 
         // verify no side effects (should stay put)
         verify(ozPerspectiveActivity,
@@ -563,6 +679,83 @@ public class PlaceManagerTest {
                 .switchToPerspective(any(PlaceRequest.class),
                                      any(PerspectiveActivity.class),
                                      any(ParameterizedCommand.class));
+    }
+
+    @Test
+    public void testOpenPerspectiveWithPanels() throws Exception {
+        final String perspectiveId = "perspective";
+        final String panelId = "panel";
+
+        final String param1 = "param1";
+        final String param2 = "param2";
+        final String param3 = "param3";
+
+        PerspectiveActivity perspectiveActivity = mock(PerspectiveActivity.class);
+        WorkbenchScreenActivity screenActivity = mock(WorkbenchScreenActivity.class);
+
+        PlaceRequest panelPlaceRequest = spy(new DefaultPlaceRequest(panelId) {
+            {
+                addParameter(param1, param1);
+                addParameter(param2, param2);
+                addParameter(param3, param3);
+            }
+        });
+        when(panelPlaceRequest.getIdentifier()).thenReturn(panelId);
+
+        PlaceRequest mainPlaceRequest = new DefaultPlaceRequest(perspectiveId);
+
+        final PerspectiveDefinition perspectiveDefinition = new PerspectiveDefinitionImpl();
+        perspectiveDefinition.setName("name");
+
+        final PartDefinition panelPart = spy(new PartDefinitionImpl(panelPlaceRequest));
+        perspectiveDefinition.getRoot().addPart(panelPart);
+
+        when(perspectiveActivity.getDefaultPerspectiveLayout()).thenReturn(perspectiveDefinition);
+        when(perspectiveActivity.getPlace()).thenReturn(mainPlaceRequest);
+        when(perspectiveActivity.isType(ActivityResourceType.PERSPECTIVE.name())).thenReturn(true);
+        when(perspectiveActivity.getIdentifier()).thenReturn(perspectiveId);
+
+        when(screenActivity.getIdentifier()).thenReturn(panelId);
+        when(screenActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+
+        when(activityManager.getActivities(any(PlaceRequest.class))).then((Answer<Set<Activity>>) invocationOnMock -> {
+            PlaceRequest request = (PlaceRequest) invocationOnMock.getArguments()[0];
+
+            if (request.equals(panelPlaceRequest)) {
+                return singleton(screenActivity);
+            } else if(request.equals(mainPlaceRequest)) {
+                return singleton(perspectiveActivity);
+            }
+
+            return null;
+        });
+
+        placeManager.goTo(mainPlaceRequest);
+
+        verify(activitiesAuthorizationManager).securePart(eq(panelPart), eq(perspectiveDefinition.getRoot()));
+
+        verify(panelPlaceRequest).clone();
+
+        ArgumentCaptor<PlaceRequest> requestArgumentCaptor = ArgumentCaptor.forClass(PlaceRequest.class);
+
+        verify(panelPart).setPlace(requestArgumentCaptor.capture());
+
+        PlaceRequest captured = requestArgumentCaptor.getValue();
+
+        Assertions.assertThat(captured)
+                .isNotNull()
+                .isNotSameAs(panelPlaceRequest)
+                .returns(panelId, (Function<PlaceRequest, String>) placeRequest -> placeRequest.getIdentifier());
+
+        Assertions.assertThat(captured.getParameters())
+                .containsOnly(Assertions.entry(param1, param1), Assertions.entry(param2, param2), Assertions.entry(param3, param3));
+
+        verify(perspectiveActivity).onOpen();
+        verify(perspectiveManager).savePerspectiveState(any(Command.class));
+        verify(perspectiveManager)
+                .switchToPerspective(any(PlaceRequest.class),
+                        any(PerspectiveActivity.class),
+                        any(ParameterizedCommand.class));
     }
 
     /**
@@ -580,6 +773,10 @@ public class PlaceManagerTest {
         when(ozPerspectiveActivity.getDefaultPerspectiveLayout()).thenReturn(ozPerspectiveDef);
         when(ozPerspectiveActivity.getPlace()).thenReturn(ozPerspectivePlace);
         when(ozPerspectiveActivity.isType(ActivityResourceType.PERSPECTIVE.name())).thenReturn(true);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(ozPerspectiveActivity).getMenus(any());
 
         PlaceRequest emeraldCityPlace = new DefaultPlaceRequest("emerald_city");
         WorkbenchScreenActivity emeraldCityActivity = mock(WorkbenchScreenActivity.class);
@@ -587,6 +784,10 @@ public class PlaceManagerTest {
                 .thenReturn(singleton((Activity) emeraldCityActivity));
         when(emeraldCityActivity.getOwningPlace()).thenReturn(ozPerspectivePlace);
         when(emeraldCityActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(emeraldCityActivity).getMenus(any());
 
         placeManager.goTo(emeraldCityPlace,
                           (PanelDefinition) null);
@@ -657,6 +858,10 @@ public class PlaceManagerTest {
                 SimpleWorkbenchPanelPresenter.class.getName());
         when(perspectiveActivity.getDefaultPerspectiveLayout()).thenReturn(perspectiveDef);
         when(perspectiveActivity.isType(ActivityResourceType.PERSPECTIVE.name())).thenReturn(true);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(perspectiveActivity).getMenus(any());
         when(activityManager.getActivities(perspectivePlace))
                 .thenReturn(singleton((Activity) perspectiveActivity));
 
@@ -671,6 +876,10 @@ public class PlaceManagerTest {
         when(activityManager.getActivities(kansas)).thenReturn(singleton((Activity) kansasActivity));
         when(splashScreenActivity2.isType(ActivityResourceType.SPLASH.name())).thenReturn(true);
         when(kansasActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(kansasActivity).getMenus(any());
 
         placeManager.goTo(perspectivePlace);
         placeManager.goTo(kansas);
@@ -705,6 +914,10 @@ public class PlaceManagerTest {
         WorkbenchScreenActivity ozActivity = mock(WorkbenchScreenActivity.class);
         when(activityManager.getActivities(oz)).thenReturn(singleton((Activity) ozActivity));
         when(ozActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(ozActivity).getMenus(any());
 
         final SplashScreenActivity lollipopGuildActivity = mock(SplashScreenActivity.class);
         when(activityManager.getSplashScreenInterceptor(oz)).thenReturn(lollipopGuildActivity);
@@ -733,6 +946,10 @@ public class PlaceManagerTest {
         when(lollipopGuildActivity.isType(ActivityResourceType.SPLASH.name())).thenReturn(true);
         when(activityManager.getSplashScreenInterceptor(oz)).thenReturn(lollipopGuildActivity);
         when(ozActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(ozActivity).getMenus(any());
 
         placeManager.goTo(oz,
                           (PanelDefinition) null);
@@ -883,6 +1100,10 @@ public class PlaceManagerTest {
         WorkbenchScreenActivity emeraldCityActivity = mock(WorkbenchScreenActivity.class);
         when(emeraldCityActivity.preferredWidth()).thenReturn(555);
         when(emeraldCityActivity.preferredHeight()).thenReturn(-1);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(emeraldCityActivity).getMenus(any());
         when(activityManager.getActivities(emeraldCityPlace))
                 .thenReturn(singleton((Activity) emeraldCityActivity));
         when(emeraldCityActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
@@ -924,14 +1145,22 @@ public class PlaceManagerTest {
         when(activityManager.getActivities(emeraldCityPlace))
                 .thenReturn(singleton((Activity) emeraldCityActivity));
         when(emeraldCityActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(emeraldCityActivity).getMenus(any());
 
         PlaceRequest emeraldCityPlace2 = new DefaultPlaceRequest("emerald_city2");
         WorkbenchScreenActivity emeraldCityActivity2 = mock(WorkbenchScreenActivity.class);
-        when(emeraldCityActivity.preferredWidth()).thenReturn(555);
-        when(emeraldCityActivity.preferredHeight()).thenReturn(-1);
+        when(emeraldCityActivity2.preferredWidth()).thenReturn(555);
+        when(emeraldCityActivity2.preferredHeight()).thenReturn(-1);
         when(activityManager.getActivities(emeraldCityPlace2))
                 .thenReturn(singleton((Activity) emeraldCityActivity2));
         when(emeraldCityActivity2.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(emeraldCityActivity2).getMenus(any());
 
         placeManagerSpy.goTo(emeraldCityPlace,
                                panel);
@@ -991,14 +1220,22 @@ public class PlaceManagerTest {
         WorkbenchScreenActivity emeraldCityActivity = mock(WorkbenchScreenActivity.class);
         when(emeraldCityActivity.preferredWidth()).thenReturn(555);
         when(emeraldCityActivity.preferredHeight()).thenReturn(-1);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(emeraldCityActivity).getMenus(any());
         when(activityManager.getActivities(emeraldCityPlace))
                 .thenReturn(singleton((Activity) emeraldCityActivity));
         when(emeraldCityActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
 
         PlaceRequest emeraldCityPlace2 = new DefaultPlaceRequest("emerald_city2");
         WorkbenchScreenActivity emeraldCityActivity2 = mock(WorkbenchScreenActivity.class);
-        when(emeraldCityActivity.preferredWidth()).thenReturn(555);
-        when(emeraldCityActivity.preferredHeight()).thenReturn(-1);
+        when(emeraldCityActivity2.preferredWidth()).thenReturn(555);
+        when(emeraldCityActivity2.preferredHeight()).thenReturn(-1);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(emeraldCityActivity2).getMenus(any());
         when(activityManager.getActivities(emeraldCityPlace2))
                 .thenReturn(singleton((Activity) emeraldCityActivity2));
         when(emeraldCityActivity2.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
@@ -1123,6 +1360,10 @@ public class PlaceManagerTest {
         WorkbenchScreenActivity emeraldCityActivity = mock(WorkbenchScreenActivity.class);
         when(emeraldCityActivity.preferredWidth()).thenReturn(555);
         when(emeraldCityActivity.preferredHeight()).thenReturn(-1);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(emeraldCityActivity).getMenus(any());
         when(activityManager.getActivities(emeraldCityPlace))
                 .thenReturn(singleton((Activity) emeraldCityActivity));
         when(emeraldCityActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
@@ -1217,6 +1458,10 @@ public class PlaceManagerTest {
 
         when(activityManager.getActivities(yellowBrickRoad)).thenReturn(singleton((Activity) ozActivity));
         when(ozActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(ozActivity).getMenus(any());
 
         placeManager.goTo(yellowBrickRoad);
 
@@ -1242,6 +1487,10 @@ public class PlaceManagerTest {
 
         when(activityManager.getActivities(yellowBrickRoad)).thenReturn(singleton((Activity) ozActivity));
         when(ozActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+        doAnswer((Answer<Void>) invocationOnMock -> {
+            invocationOnMock.getArgumentAt(0, Consumer.class).accept(null);
+            return null;
+        }).when(ozActivity).getMenus(any());
 
         placeManager.goTo(yellowBrickRoad);
 
@@ -1300,6 +1549,64 @@ public class PlaceManagerTest {
                              kansasActivity);
         verifyPlaceNotClosed(emeraldCityPlace,
                              emeraldCityActivity);
+    }
+
+    @Test
+    public void testAddOnOpenCallbacks() {
+        final Command onOpenCallback1 = mock(Command.class);
+        final Command onOpenCallback2 = mock(Command.class);
+
+        final DefaultPlaceRequest myPlace = new DefaultPlaceRequest("my-place");
+        placeManager.registerOnOpenCallback(myPlace,
+                                            onOpenCallback1);
+        final List<Command> onOpenCallbacks1 = placeManager.getOnOpenCallbacks(myPlace);
+        assertEquals(1,
+                     onOpenCallbacks1.size());
+        assertSame(onOpenCallback1,
+                   onOpenCallbacks1.get(0));
+
+        placeManager.registerOnOpenCallback(myPlace,
+                                            onOpenCallback2);
+        final List<Command> onOpenCallbacks2 = placeManager.getOnOpenCallbacks(myPlace);
+        assertEquals(2,
+                     onOpenCallbacks2.size());
+        assertSame(onOpenCallback1,
+                   onOpenCallbacks2.get(0));
+        assertSame(onOpenCallback2,
+                   onOpenCallbacks2.get(1));
+
+        final DefaultPlaceRequest myOtherPlace = new DefaultPlaceRequest("my-other-place");
+        final List<Command> onOpenCallbacks3 = placeManager.getOnOpenCallbacks(myOtherPlace);
+        assertNull(onOpenCallbacks3);
+    }
+
+    @Test
+    public void testAddOnCloseCallbacks() {
+        final Command onCloseCallback1 = mock(Command.class);
+        final Command onCloseCallback2 = mock(Command.class);
+
+        final DefaultPlaceRequest myPlace = new DefaultPlaceRequest("my-place");
+        placeManager.registerOnCloseCallback(myPlace,
+                                            onCloseCallback1);
+        final List<Command> onCloseCallbacks1 = placeManager.getOnCloseCallbacks(myPlace);
+        assertEquals(1,
+                     onCloseCallbacks1.size());
+        assertSame(onCloseCallback1,
+                   onCloseCallbacks1.get(0));
+
+        placeManager.registerOnCloseCallback(myPlace,
+                                            onCloseCallback2);
+        final List<Command> onCloseCallbacks2 = placeManager.getOnCloseCallbacks(myPlace);
+        assertEquals(2,
+                     onCloseCallbacks2.size());
+        assertSame(onCloseCallback1,
+                   onCloseCallbacks2.get(0));
+        assertSame(onCloseCallback2,
+                   onCloseCallbacks2.get(1));
+
+        final DefaultPlaceRequest myOtherPlace = new DefaultPlaceRequest("my-other-place");
+        final List<Command> onCloseCallbacks3 = placeManager.getOnCloseCallbacks(myOtherPlace);
+        assertNull(onCloseCallbacks3);
     }
 
     private WorkbenchScreenActivity createWorkbenchScreenActivity(final PlaceRequest emeraldCityPlace) {

@@ -17,6 +17,8 @@
 package org.uberfire.ext.layout.editor.client;
 
 import java.util.List;
+
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
@@ -29,9 +31,9 @@ import org.uberfire.client.mvp.UberElement;
 import org.uberfire.ext.editor.commons.client.file.popups.SavePopUpPresenter;
 import org.uberfire.ext.layout.editor.api.PerspectiveServices;
 import org.uberfire.ext.layout.editor.api.editor.LayoutTemplate;
-import org.uberfire.ext.layout.editor.client.api.LayoutDragComponentGroup;
-import org.uberfire.ext.layout.editor.client.api.LayoutDragComponentPalette;
+import org.uberfire.ext.layout.editor.client.api.LayoutEditorElement;
 import org.uberfire.ext.layout.editor.client.api.LayoutEditorPlugin;
+import org.uberfire.ext.layout.editor.client.api.LayoutElementVisitor;
 import org.uberfire.mvp.Command;
 
 @Dependent
@@ -50,16 +52,21 @@ public class LayoutEditorPluginImpl implements LayoutEditorPlugin {
     private String emptyTitleText;
     private String emptySubTitleText;
 
+    private boolean locked = false;
+
+    @PostConstruct
+    public void setup() {
+        layoutEditorPresenter.setup(this::isLocked);
+    }
+
     @Override
     public void init(String layoutName,
-                     List<LayoutDragComponentGroup> layoutDragComponentGroupList,
                      String emptyTitleText,
                      String emptySubTitleText,
                      LayoutTemplate.Style style) {
         this.pluginName = layoutName;
         this.emptyTitleText = emptyTitleText;
         this.emptySubTitleText = emptySubTitleText;
-        layoutDragComponentGroupList.forEach(layoutEditorPresenter::addDraggableGroup);
         layoutEditorPresenter.setPageStyle(style);
     }
 
@@ -106,6 +113,16 @@ public class LayoutEditorPluginImpl implements LayoutEditorPlugin {
     }
 
     @Override
+    public void setPreviewEnabled(boolean enabled) {
+        layoutEditorPresenter.setPreviewEnabled(enabled);
+    }
+
+    @Override
+    public void setElementSelectionEnabled(boolean enabled) {
+        layoutEditorPresenter.setElementSelectionEnabled(enabled);
+    }
+
+    @Override
     public void load(Path currentPath,
                      Command loadCallBack) {
 
@@ -137,7 +154,26 @@ public class LayoutEditorPluginImpl implements LayoutEditorPlugin {
     }
 
     @Override
-    public LayoutDragComponentPalette getDragComponentPalette() {
-        return layoutEditorPresenter;
+    public List<LayoutEditorElement> getLayoutElements() {
+        return layoutEditorPresenter.getLayoutElements();
+    }
+
+    @Override
+    public void visit(LayoutElementVisitor visitor) {
+        layoutEditorPresenter.visit(visitor);
+    }
+
+    public boolean isLocked() {
+        return locked;
+    }
+
+    @Override
+    public void lock() {
+        locked = true;
+    }
+
+    @Override
+    public void unlock() {
+        locked = false;
     }
 }

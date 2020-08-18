@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 JBoss, by Red Hat, Inc
+ * Copyright 2019 JBoss, by Red Hat, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 package org.uberfire.ext.widgets.common.client.tables;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HasWidgets;
@@ -24,11 +27,11 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.AbstractDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 import org.gwtbootstrap3.client.ui.Column;
-import org.gwtbootstrap3.client.ui.ListBox;
+import org.gwtbootstrap3.extras.select.client.ui.Select;
 import org.uberfire.ext.services.shared.preferences.GridGlobalPreferences;
 import org.uberfire.ext.services.shared.preferences.GridPreferencesStore;
-import org.uberfire.ext.widgets.table.client.PagedTableHelper;
 import org.uberfire.ext.widgets.table.client.UberfireSimplePager;
+import org.uberfire.ext.widgets.table.client.resources.UFTableResources;
 
 /**
  * Paged Table Widget that stores user preferences.
@@ -39,15 +42,17 @@ public class PagedTable<T>
         extends SimpleTable<T> {
 
     public static final int DEFAULT_PAGE_SIZE = 10;
-    public static final int ROW_HEIGHT_PX = 33;
-    public static final int HEIGHT_OFFSET_PX = 56;
+    public static final int HEIGHT_OFFSET_PX = 20;
     private static Binder uiBinder = GWT.create(Binder.class);
 
     @UiField
     public UberfireSimplePager pager;
 
     @UiField
-    public ListBox pageSizesSelector;
+    public Select pageSizesSelector;
+
+    @UiField
+    public Column dataGridContainer;
 
     @UiField
     public Column topToolbar;
@@ -55,6 +60,7 @@ public class PagedTable<T>
     protected boolean showPageSizesSelector = false;
     private int pageSize;
     private AbstractDataProvider<T> dataProvider;
+    private boolean dataGridMinWidthEnabled = false;
 
     public PagedTable() {
         this(DEFAULT_PAGE_SIZE);
@@ -106,16 +112,28 @@ public class PagedTable<T>
         this.pageSize = pageSize;
         this.dataGrid.setPageStart(0);
         this.dataGrid.setPageSize(pageSize);
-        PagedTableHelper.setSelectedValue(pageSizesSelector,
-                                          String.valueOf(pageSize));
         this.pager.setDisplay(dataGrid);
         this.pageSizesSelector.setVisible(this.showPageSizesSelector);
         setShowFastFordwardPagerButton(showFFButton);
         setShowLastPagerButton(showLButton);
-        createPageSizesListBox(5,
-                               20,
-                               5);
+        this.pageSizesSelector.addValueChangeHandler(event -> {
+            storePageSizeInGridPreferences(Integer.parseInt(pageSizesSelector.getValue()));
+            loadPageSizePreferences();
+        });
+        loadPageSizePreferences();
+
+        dataGrid.addRedrawHandler(() -> Scheduler.get().scheduleDeferred(() -> setTableHeight()));
+        dataGrid.getElement().getStyle().setMarginBottom(0,
+                                                         Style.Unit.PX);
     }
+
+    protected static native int getTableHeight(final JavaScriptObject grid,
+                                               final String headerCss,
+                                               final String contentCss)/*-{
+        var headerHeight = $wnd.jQuery(grid).find("." + headerCss).outerHeight();
+        var contentHeight = $wnd.jQuery(grid).find("." + contentCss).outerHeight();
+        return headerHeight + contentHeight;
+    }-*/;
 
     @Override
     protected Widget makeWidget() {
@@ -144,26 +162,34 @@ public class PagedTable<T>
         this.dataGrid.setPageStart(0);
         this.dataGrid.setPageSize(pageSize);
         this.pager.setPageSize(pageSize);
-        int height = ((pageSize <= 0 ? 1 : pageSize) * ROW_HEIGHT_PX) + HEIGHT_OFFSET_PX;
-        this.dataGrid.setHeight(height + "px");
+        this.pageSizesSelector.setValue(String.valueOf(pageSize));
+        setTableHeight();
     }
 
-    public void createPageSizesListBox(int minPageSize,
-                                       int maxPageSize,
-                                       int incPageSize) {
-        pageSizesSelector.clear();
-        PagedTableHelper.setSelectIndexOnPageSizesSelector(minPageSize,
-                                                           maxPageSize,
-                                                           incPageSize,
-                                                           pageSizesSelector,
-                                                           pageSize);
+    protected void setTableHeight() {
+        int base = getTableHeight(dataGrid.getElement(),
+                                  UFTableResources.INSTANCE.CSS().dataGridHeader(),
+                                  UFTableResources.INSTANCE.CSS().dataGridContent());
+        String height = (base + HEIGHT_OFFSET_PX) + "px";
+        if (height.equals(dataGrid.getElement().getStyle().getHeight()) == false) {
+            this.dataGrid.setHeight(height);
+            this.dataGrid.redraw();
+        }
+        if (isDataGridMinWidthEnabled()) {
+            dataGridContainer.getElement().setAttribute("style", "min-width:" + super.columnPicker.getDataGridMinWidth() + Style.Unit.PX.getType());
+        }
+    }
 
-        pageSizesSelector.addChangeHandler(event -> {
-            storePageSizeInGridPreferences(Integer.parseInt(pageSizesSelector.getSelectedValue()));
-            loadPageSizePreferences();
-        });
+    public boolean isDataGridMinWidthEnabled() {
+        return dataGridMinWidthEnabled;
+    }
 
-        loadPageSizePreferences();
+    public void enableDataGridMinWidth(boolean enabled) {
+        this.dataGridMinWidthEnabled = enabled;
+    }
+
+    public void setDefaultColumWidthSize(int defaultColumWidthSize) {
+        super.columnPicker.setDefaultColumnWidthSize(defaultColumWidthSize);
     }
 
     public void setShowLastPagerButton(boolean showLastPagerButton) {
@@ -178,7 +204,9 @@ public class PagedTable<T>
         GridPreferencesStore gridPreferencesStore = super.getGridPreferencesStore();
         if (gridPreferencesStore != null) {
             gridPreferencesStore.setPageSizePreferences(pageSize);
-            super.saveGridPreferences();
+            if (isPersistingPreferencesOnChange()) {
+                super.saveGridPreferences();
+            }
         }
         this.pageSize = pageSize;
     }
@@ -189,6 +217,12 @@ public class PagedTable<T>
             return gridPreferencesStore.getPageSizePreferences();
         }
         return pageSize;
+    }
+
+    public void setPageSizesSelectorDropup(boolean forceDropup,
+                                           boolean dropupAuto) {
+        this.pageSizesSelector.setForceDropup(forceDropup);
+        this.pageSizesSelector.setDropupAuto(dropupAuto);
     }
 
     private void resetPageSize() {
@@ -203,6 +237,10 @@ public class PagedTable<T>
 
     public HasWidgets getTopToolbar() {
         return topToolbar;
+    }
+
+    protected void setColumnPicker(ColumnPicker columnPicker) {
+        super.columnPicker = columnPicker;
     }
 
     interface Binder
