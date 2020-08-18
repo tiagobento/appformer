@@ -25,6 +25,7 @@ import javax.inject.Named;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import elemental2.dom.Document;
+import elemental2.dom.DomGlobal;
 import elemental2.dom.Element;
 import elemental2.dom.HTMLButtonElement;
 import elemental2.dom.HTMLDivElement;
@@ -60,9 +61,6 @@ public class ExperimentalExplorerViewImpl implements ExperimentalExplorerView,
     @Inject
     private Elemental2DomUtil elemental2DomUtil;
 
-    @Inject
-    private Document document;
-
     private List<Pair<Element, AssetDisplayer>> assetsList = new ArrayList<>();
 
     @Override
@@ -73,7 +71,7 @@ public class ExperimentalExplorerViewImpl implements ExperimentalExplorerView,
     @Override
     public void show(AssetDisplayer asset) {
         empty.hidden = true;
-        Element listElement = document.createElement("li");
+        Element listElement = DomGlobal.document.createElement("li");
         listElement.className = "list-group-item";
         listElement.appendChild(asset.getElement());
         assets.appendChild(listElement);

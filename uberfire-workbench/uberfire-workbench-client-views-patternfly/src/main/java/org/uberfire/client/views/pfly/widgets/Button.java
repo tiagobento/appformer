@@ -21,6 +21,7 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 import elemental2.dom.Document;
+import elemental2.dom.DomGlobal;
 import elemental2.dom.HTMLButtonElement;
 import elemental2.dom.HTMLElement;
 import elemental2.dom.Text;
@@ -33,14 +34,11 @@ public class Button implements IsElement {
     @Inject
     private HTMLButtonElement button;
 
-    @Inject
-    private Document document;
-
     private Text textNode;
 
     public void setText(final String text) {
         if (textNode == null) {
-            textNode = document.createTextNode(text);
+            textNode = DomGlobal.document.createTextNode(text);
             getElement().appendChild(textNode);
         } else {
             textNode.textContent = text;
@@ -82,7 +80,7 @@ public class Button implements IsElement {
     }
 
     public void addIcon(final String... classes) {
-        final HTMLElement span = (HTMLElement) document.createElement("span");
+        final HTMLElement span = (HTMLElement) DomGlobal.document.createElement("span");
         addClass(span,
                  classes);
         button.appendChild(span);

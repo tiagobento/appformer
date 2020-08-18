@@ -22,6 +22,7 @@ import javax.inject.Named;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import elemental2.dom.Document;
+import elemental2.dom.DomGlobal;
 import elemental2.dom.HTMLAnchorElement;
 import elemental2.dom.HTMLDivElement;
 import elemental2.dom.HTMLElement;
@@ -64,9 +65,6 @@ public class ExperimentalFeaturesGroupViewImpl implements ExperimentalFeaturesGr
     @Inject
     private Elemental2DomUtil util;
 
-    @Inject
-    private Document document;
-
     private Presenter presenter;
 
     @PostConstruct
@@ -88,7 +86,7 @@ public class ExperimentalFeaturesGroupViewImpl implements ExperimentalFeaturesGr
 
     @Override
     public void render(ExperimentalFeatureEditor editor) {
-        HTMLLIElement li = (HTMLLIElement) document.createElement("li");
+        HTMLLIElement li = (HTMLLIElement) DomGlobal.document.createElement("li");
         li.setAttribute("class", "list-group-item");
         li.appendChild(editor.getElement());
         featuresContainer.appendChild(li);

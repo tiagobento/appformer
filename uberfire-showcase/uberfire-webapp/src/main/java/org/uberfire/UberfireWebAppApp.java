@@ -22,6 +22,7 @@ import org.uberfire.client.RuntimePluginsServiceProxyBackendImpl;
 import org.uberfire.client.VFSLockServiceProxyBackendImpl;
 import org.uberfire.client.VFSServiceProxyBackendImpl;
 import org.uberfire.client.WorkbenchServicesProxyBackendImpl;
+import org.uberfire.preferences.client.store.PreferenceBeanStoreClientImpl;
 
 import static org.jboss.errai.common.configuration.Target.GWT;
 import static org.jboss.errai.common.configuration.Target.JAVA;
@@ -36,7 +37,8 @@ import static org.jboss.errai.common.configuration.Target.JAVA;
         iocAlternatives = {WorkbenchServicesProxyBackendImpl.class,
                 VFSServiceProxyBackendImpl.class,
                 VFSLockServiceProxyBackendImpl.class,
-                RuntimePluginsServiceProxyBackendImpl.class})
+                RuntimePluginsServiceProxyBackendImpl.class,
+                PreferenceBeanStoreClientImpl.class})
 public class UberfireWebAppApp {
 
 }

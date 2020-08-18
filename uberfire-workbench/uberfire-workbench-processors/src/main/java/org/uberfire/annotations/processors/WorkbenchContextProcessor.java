@@ -92,6 +92,7 @@ public class WorkbenchContextProcessor extends AbstractErrorAbsorbingProcessor {
                     messager.printMessage(Kind.NOTE,
                                           "Generating code for [" + classNameActivity + "]");
                     final StringBuffer activityCode = activityGenerator.generate(packageName,
+                                                                                 packageElement,
                                                                                  classNameActivity,
                                                                                  classElement,
                                                                                  processingEnv);

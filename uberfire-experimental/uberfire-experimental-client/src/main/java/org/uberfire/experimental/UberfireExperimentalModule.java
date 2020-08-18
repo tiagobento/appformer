@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.uberfire.experimental.client;
+package org.uberfire.experimental;
 
 import org.jboss.errai.common.configuration.ErraiModule;
 

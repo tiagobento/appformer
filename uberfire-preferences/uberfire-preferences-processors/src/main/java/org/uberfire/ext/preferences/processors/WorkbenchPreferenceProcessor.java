@@ -115,7 +115,10 @@ public class WorkbenchPreferenceProcessor extends AbstractErrorAbsorbingProcesso
         try {
             messager.printMessage(Diagnostic.Kind.NOTE,
                                   "Generating code for [" + className + "]");
+
+            PackageElement packageElement = (PackageElement) classElement.getEnclosingElement();
             final StringBuffer generatedImplCode = generator.generate(packageName,
+                                                                      packageElement,
                                                                       className,
                                                                       classElement,
                                                                       processingEnv);

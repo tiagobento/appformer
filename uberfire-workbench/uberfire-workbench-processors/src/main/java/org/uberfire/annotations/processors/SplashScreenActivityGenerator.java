@@ -25,6 +25,7 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic.Kind;
@@ -41,6 +42,7 @@ public class SplashScreenActivityGenerator extends AbstractGenerator {
 
     @Override
     public StringBuffer generate(final String packageName,
+                                 final PackageElement packageElement,
                                  final String className,
                                  final Element element,
                                  final ProcessingEnvironment processingEnvironment) throws GenerationException {
