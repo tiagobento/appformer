@@ -20,7 +20,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.google.gwt.core.client.JsArrayString;
-import org.uberfire.client.views.pfly.monaco.jsinterop.Monaco;
 import org.uberfire.client.views.pfly.monaco.jsinterop.MonacoLoader;
 
 import static com.google.gwt.core.client.JavaScriptObject.createArray;
@@ -35,7 +34,7 @@ public class MonacoEditorInitializer {
 
     static final String VS_EDITOR_EDITOR_MAIN_MODULE = "vs/editor/editor.main";
 
-    public void require(final Consumer<Monaco> monacoConsumer,
+    public void require(final Runnable monacoConsumer,
                         final String... modules) {
         require(MonacoLoader::require,
                 monacoConsumer,
@@ -43,24 +42,22 @@ public class MonacoEditorInitializer {
     }
 
     void require(final BiConsumer<JsArrayString, MonacoLoader.CallbackFunction> monacoLoader,
-                 final Consumer<Monaco> monacoConsumer,
+                 final Runnable monacoConsumer,
                  final String... modules) {
 
         switchAMDLoaderFromDefaultToMonaco();
 
-        final Consumer<Monaco> resultConsumer = monaco -> {
-            monacoConsumer.accept(monaco);
+        final Runnable resultConsumer = () -> {
+            monacoConsumer.run();
             switchAMDLoaderFromMonacoToDefault();
         };
 
         monacoLoader.accept(toJsArrayString(VS_EDITOR_EDITOR_MAIN_MODULE),
-                            monaco -> {
+                            () -> {
                                 if (modules.length == 0) {
-                                    resultConsumer.accept(monaco);
+                                    resultConsumer.run();
                                 } else {
-                                    monacoLoader.accept(toJsArrayString(modules), monaco1 -> {
-                                        resultConsumer.accept(monaco);
-                                    });
+                                    monacoLoader.accept(toJsArrayString(modules), resultConsumer::run);
                                 }
                             });
     }

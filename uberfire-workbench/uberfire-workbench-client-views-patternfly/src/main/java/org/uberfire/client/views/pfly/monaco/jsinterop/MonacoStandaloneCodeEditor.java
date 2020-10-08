@@ -21,32 +21,35 @@ import com.google.gwt.dom.client.NativeEvent;
 import elemental2.core.JsObject;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsOverlay;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
-@JsType(isNative = true)
-public class MonacoStandaloneCodeEditor {
+@JsType(isNative = true, name = "?", namespace = JsPackage.GLOBAL)
+public interface MonacoStandaloneCodeEditor {
 
-    public JsObject _contentWidgets;
+    @JsProperty(name = "_contentWidgets")
+    public JsObject _contentWidgets();
 
-    public native void focus();
+    public void focus();
 
-    public native void layout(JavaScriptObject dimensions);
+    public void layout(JavaScriptObject dimensions);
 
-    public native void dispose();
+    public void dispose();
 
-    public native String getValue();
+    public String getValue();
 
-    public native void trigger(final String source,
-                               final String handlerId);
+    public void trigger(final String source,
+                        final String handlerId);
 
-    public native void setValue(final String value);
+    public void setValue(final String value);
 
-    public native void onKeyDown(final CallbackFunction callback);
+    public void onKeyDown(final CallbackFunction callback);
 
-    public native void onDidBlurEditorWidget(final CallbackFunction callback);
+    public void onDidBlurEditorWidget(final CallbackFunction callback);
 
     @JsOverlay
-    public final boolean isSuggestWidgetVisible() {
+    public default boolean isSuggestWidgetVisible() {
         return MonacoStandaloneCodeEditorHelper.isSuggestWidgetVisible(this);
     }
 

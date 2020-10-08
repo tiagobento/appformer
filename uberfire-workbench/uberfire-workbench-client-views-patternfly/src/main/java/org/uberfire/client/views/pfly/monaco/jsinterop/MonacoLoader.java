@@ -33,6 +33,6 @@ public class MonacoLoader {
     @JsFunction
     public interface CallbackFunction {
 
-        void call(final Monaco monacoEditor);
+        void call();
     }
 }
