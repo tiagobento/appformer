@@ -40,7 +40,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.uberfire.apache.commons.io.FilenameUtils;
 
 import static org.junit.Assert.assertEquals;
@@ -164,8 +164,7 @@ public class RuntimeModelRegistryImplTest {
 
         RuntimeModel runtimeModel1 = mock(RuntimeModel.class);
         RuntimeModel runtimeModel2 = mock(RuntimeModel.class);
-
-        when(runtimeModels.isEmpty()).thenReturn(true);
+        
         when(importValidationService.validate(or(eq(file1), eq(file2)))).thenReturn(true);
         when(parser.parse(eq(importId1), any())).thenReturn(runtimeModel1);
         when(parser.parse(eq(importId2), any())).thenReturn(runtimeModel2);
