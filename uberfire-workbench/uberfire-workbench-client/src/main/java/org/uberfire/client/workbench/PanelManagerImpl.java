@@ -46,9 +46,7 @@ import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.mvp.UIPart;
 import org.uberfire.client.workbench.events.ChangeTitleWidgetEvent;
 import org.uberfire.client.workbench.events.DropPlaceEvent;
-import org.uberfire.client.workbench.events.PanelFocusEvent;
 import org.uberfire.client.workbench.events.PlaceGainFocusEvent;
-import org.uberfire.client.workbench.events.PlaceHiddenEvent;
 import org.uberfire.client.workbench.events.PlaceLostFocusEvent;
 import org.uberfire.client.workbench.events.PlaceMaximizedEvent;
 import org.uberfire.client.workbench.events.PlaceMinimizedEvent;
@@ -96,11 +94,9 @@ public class PanelManagerImpl implements PanelManager {
 
     protected Event<PlaceGainFocusEvent> placeGainFocusEvent;
     protected Event<PlaceLostFocusEvent> placeLostFocusEvent;
-    protected Event<PanelFocusEvent> panelFocusEvent;
     protected Event<SelectPlaceEvent> selectPlaceEvent;
     protected Event<PlaceMaximizedEvent> placeMaximizedEvent;
     protected Event<PlaceMinimizedEvent> placeMinimizedEvent;
-    protected Event<PlaceHiddenEvent> placeHiddenEvent;
     protected SyncBeanManager iocManager;
     protected Instance<PlaceManager> placeManager;
     /**
@@ -127,11 +123,9 @@ public class PanelManagerImpl implements PanelManager {
     public PanelManagerImpl(
             Event<PlaceGainFocusEvent> placeGainFocusEvent,
             Event<PlaceLostFocusEvent> placeLostFocusEvent,
-            Event<PanelFocusEvent> panelFocusEvent,
             Event<SelectPlaceEvent> selectPlaceEvent,
             Event<PlaceMaximizedEvent> placeMaximizedEvent,
             Event<PlaceMinimizedEvent> placeMinimizedEventEvent,
-            Event<PlaceHiddenEvent> placeHiddenEvent,
             SyncBeanManager iocManager,
             Instance<PlaceManager> placeManager,
             LayoutSelection layoutSelection,
@@ -139,11 +133,9 @@ public class PanelManagerImpl implements PanelManager {
             Elemental2DomUtil elemental2DomUtil) {
         this.placeGainFocusEvent = placeGainFocusEvent;
         this.placeLostFocusEvent = placeLostFocusEvent;
-        this.panelFocusEvent = panelFocusEvent;
         this.selectPlaceEvent = selectPlaceEvent;
         this.placeMaximizedEvent = placeMaximizedEvent;
         this.placeMinimizedEvent = placeMinimizedEventEvent;
-        this.placeHiddenEvent = placeHiddenEvent;
         this.iocManager = iocManager;
         this.placeManager = placeManager;
         this.layoutSelection = layoutSelection;
@@ -346,7 +338,6 @@ public class PanelManagerImpl implements PanelManager {
     @Override
     public void onPartFocus(final PartDefinition part) {
         activePart = part;
-        panelFocusEvent.fire(new PanelFocusEvent(part.getParentPanel()));
         placeGainFocusEvent.fire(new PlaceGainFocusEvent(part.getPlace()));
     }
 
@@ -367,7 +358,6 @@ public class PanelManagerImpl implements PanelManager {
 
     @Override
     public void onPartHidden(final PartDefinition part) {
-        placeHiddenEvent.fire(new PlaceHiddenEvent(part.getPlace()));
     }
 
     @Override

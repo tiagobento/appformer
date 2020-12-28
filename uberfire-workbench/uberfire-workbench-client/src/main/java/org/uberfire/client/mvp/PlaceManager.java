@@ -213,9 +213,6 @@ public interface PlaceManager {
     void registerPerspectiveCloseChain(String perspectiveIdentifier,
                                        BiParameterizedCommand<Command, PlaceRequest> closeChain);
 
-    @JsIgnore
-    Collection<SplashScreenActivity> getActiveSplashScreens();
-
     /**
      * Finds the <i>currently open</i> PlaceRequests for Activities that handle the given ResourceTypeDefinition.
      *

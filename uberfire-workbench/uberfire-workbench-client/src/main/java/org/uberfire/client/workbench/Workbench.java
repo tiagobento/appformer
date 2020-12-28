@@ -21,13 +21,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Event;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
@@ -43,11 +42,6 @@ import org.uberfire.client.mvp.ActivityBeansCache;
 import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.resources.WorkbenchResources;
-import org.uberfire.client.resources.i18n.WorkbenchConstants;
-import org.uberfire.client.util.UserAgent;
-import org.uberfire.client.workbench.events.ApplicationReadyEvent;
-import org.uberfire.mvp.Command;
-import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
 import org.uberfire.mvp.impl.PathPlaceRequest;
 import org.uberfire.rpc.SessionInfo;
@@ -104,46 +98,22 @@ public class Workbench {
      */
     private final Set<Class<?>> startupBlockers = new HashSet<>();
     private final Set<String> headersToKeep = new HashSet<>();
-    /**
-     * This indirection exists so we can ignore spurious WindowCloseEvents in IE10.
-     * In all other cases, the {@link WorkbenchCloseHandler} simply executes whatever command we pass it.
-     */
-    private final WorkbenchCloseHandler workbenchCloseHandler = GWT.create(WorkbenchCloseHandler.class);
+
     @Inject
     LayoutSelection layoutSelection;
-    /**
-     * Fired when all startup blockers have cleared and just before the workbench starts to build its components.
-     */
-    @Inject
-    private Event<ApplicationReadyEvent> appReady;
-    private boolean isStandaloneMode = false;
+
     @Inject
     private ActivityBeansCache activityBeansCache;
     @Inject
     private SyncBeanManager iocManager;
     @Inject
     private PlaceManager placeManager;
-    @Inject
-    private VFSServiceProxy vfsService;
     private WorkbenchLayout layout;
     @Inject
     private Logger logger;
     private SessionInfo sessionInfo = null;
     @Inject
     private ManagedInstance<WorkbenchCustomStandalonePerspectiveDefinition> workbenchCustomStandalonePerspectiveDefinition;
-
-    final ParameterizedCommand<Window.ClosingEvent> workbenchClosingCommand = (Window.ClosingEvent event) -> {
-        if (!placeManager.canCloseAllPlaces()) {
-            // Setting a non-null message will make the browser to present a confirmation dialog that asks the user
-            // whether or not they wish to navigate away from the page. The message in the dialog, however,
-            // is not customizable anymore mainly due to scammers using such a message to trick people.
-            // Thus, each browser shows its own message. If the user has an outdated browser, then our custom
-            // message might be shown.
-            event.setMessage(WorkbenchConstants.INSTANCE.closingWindowMessage());
-        }
-    };
-
-    final Command workbenchCloseCommand = () -> placeManager.closeAllPlaces(); // would be preferable to close current perspective, which should be recursive
 
     /**
      * Requests that the workbench does not attempt to create any UI parts until the given responsible party has
@@ -196,7 +166,6 @@ public class Workbench {
         WorkbenchResources.INSTANCE.CSS().ensureInjected();
 
         Map<String, List<String>> windowParamMap = Window.Location.getParameterMap();
-        isStandaloneMode = windowParamMap.containsKey("standalone");
         List<String> headers = windowParamMap.getOrDefault("header", Collections.emptyList());
         headersToKeep.addAll(headers);
         addStartupBlocker(Workbench.class);
@@ -206,29 +175,12 @@ public class Workbench {
         logger.info("Starting workbench...");
         ((SessionInfoImpl) currentSession()).setId("tiago");
 
-        //Lookup PerspectiveProviders and if present launch it to set-up the Workbench
-        if (!isStandaloneMode) {
-            final PerspectiveActivity homePerspective = getHomePerspectiveActivity();
-            appReady.fire(new ApplicationReadyEvent());
-            if (homePerspective != null) {
-                layout.setMarginWidgets(isStandaloneMode, headersToKeep);
-                layout.onBootstrap();
-                addLayoutToRootPanel(layout);
-                placeManager.goTo(new DefaultPlaceRequest(homePerspective.getIdentifier())); //TODO: TIAGO: GRANDE SEGREDO
-            } else {
-                activityBeansCache.noOp();
-                logger.warn("No home perspective available!");
-            }
-        } else {
-            layout.setMarginWidgets(isStandaloneMode,
-                                    headersToKeep);
-            layout.onBootstrap();
+        layout.setMarginWidgets(false,
+                                headersToKeep);
+        layout.onBootstrap();
 
-            addLayoutToRootPanel(layout);
-            handleStandaloneMode(Window.Location.getParameterMap());
-        }
-
-        addCloseHandler();
+        addLayoutToRootPanel(layout);
+        handleStandaloneMode(Window.Location.getParameterMap());
 
         // Resizing the Window should resize everything
         Window.addResizeHandler(event -> layout.resizeTo(event.getWidth(),
@@ -238,21 +190,6 @@ public class Workbench {
         Scheduler.get().scheduleDeferred(() -> layout.onResize());
 
         notifyJSReady();
-    }
-
-    private void addCloseHandler() {
-        if (UserAgent.isChrome()) {
-            setupMessageForUnsavedChanges(); // only works on chrome
-            Window.addCloseHandler(event -> workbenchCloseHandler.onWindowClose(workbenchCloseCommand));
-        } else {
-            // The Window.addCloseHandler does not work as expected for other browsers, thus we need to register the
-            // workbenchCloseCommand in the Window.addWindowClosingHandler.
-            Window.addWindowClosingHandler(event -> workbenchCloseHandler.onWindowClose(workbenchCloseCommand));
-        }
-    }
-
-    private void setupMessageForUnsavedChanges() {
-        Window.addWindowClosingHandler(event -> workbenchCloseHandler.onWindowClosing(workbenchClosingCommand, event));
     }
 
     private native void notifyJSReady() /*-{
@@ -272,34 +209,17 @@ public class Workbench {
 
     private void openStandaloneEditor(final Map<String, List<String>> parameters) {
         String standalonePerspective = "StandaloneEditorPerspective";
-        boolean openEditor = true;
 
         if (!workbenchCustomStandalonePerspectiveDefinition.isUnsatisfied()) {
             final WorkbenchCustomStandalonePerspectiveDefinition workbenchCustomStandalonePerspectiveDefinition = this.workbenchCustomStandalonePerspectiveDefinition.get();
             standalonePerspective = workbenchCustomStandalonePerspectiveDefinition.getStandalonePerspectiveIdentifier();
-            openEditor = workbenchCustomStandalonePerspectiveDefinition.openPathAutomatically();
         }
 
         placeManager.goTo(new DefaultPlaceRequest(standalonePerspective));
-        if (openEditor) {
-            vfsService.get(parameters.get("path").get(0),
-                           path -> {
-                               if (parameters.containsKey("editor") && !parameters.get("editor").isEmpty()) {
-                                   openEditor(path, parameters.get("editor").get(0));
-                               } else {
-                                   openEditor(path);
-                               }
-                           });
-        }
     }
 
     void openEditor(final Path path) {
         placeManager.goTo(new PathPlaceRequest(path));
-    }
-
-    void openEditor(final Path path,
-                    final String editor) {
-        placeManager.goTo(new PathPlaceRequest(path, editor));
     }
 
     /**

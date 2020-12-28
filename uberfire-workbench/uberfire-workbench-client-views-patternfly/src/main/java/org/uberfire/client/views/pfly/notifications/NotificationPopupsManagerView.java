@@ -35,8 +35,6 @@ import org.uberfire.client.workbench.widgets.notifications.NotificationManager.N
 import org.uberfire.security.ResourceRef;
 import org.uberfire.client.workbench.widgets.notifications.NotificationManager;
 import org.uberfire.workbench.events.NotificationEvent;
-import org.uberfire.workbench.model.ActivityResourceType;
-import org.jboss.errai.ioc.client.container.IOC;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 
 @Dependent

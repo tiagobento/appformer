@@ -57,16 +57,6 @@ public interface ActivityManager {
     <T extends Activity> Set<T> getActivities(final Class<T> abstractScreenActivityClass);
 
     /**
-     * Returns the splash screen activity that should appear upon navigation to the given place, if such a splash screen
-     * exists. In case multiple splash screens would intercept the given place request, one of them is chosen at random.
-     * TODO (UF-93) : make this deterministic.
-     * @param placeRequest the place request to look up a splash screen for.
-     * @return a splash screen which should be displayed upon navigation to the given place, or null if no such
-     * activity exists.
-     */
-    SplashScreenActivity getSplashScreenInterceptor(PlaceRequest placeRequest);
-
-    /**
      * Calls to {@link #getActivities(PlaceRequest)} with security checks enabled.
      */
     Set<Activity> getActivities(final PlaceRequest placeRequest);

@@ -541,30 +541,6 @@ public class GeneratorUtils {
                              ClientAPIModule.getPerspectiveClass());
     }
 
-    public static String getSplashFilterMethodName(final TypeElement classElement,
-                                                   final ProcessingEnvironment processingEnvironment) throws GenerationException {
-        return getMethodName(classElement,
-                             processingEnvironment,
-                             "org.uberfire.workbench.model.SplashScreenFilter",
-                             ClientAPIModule.getSplashFilterClass());
-    }
-
-    public static String getBodyHeightMethodName(TypeElement classElement,
-                                                 ProcessingEnvironment processingEnvironment) throws GenerationException {
-        return getMethodName(classElement,
-                             processingEnvironment,
-                             "java.lang.Integer",
-                             ClientAPIModule.getSplashBodyHeightClass());
-    }
-
-    public static String getInterceptMethodName(final TypeElement classElement,
-                                                final ProcessingEnvironment processingEnvironment) throws GenerationException {
-        return getMethodName(classElement,
-                             processingEnvironment,
-                             "java.lang.Boolean",
-                             ClientAPIModule.getInterceptClass());
-    }
-
     public static String getBeanActivatorClassName(final TypeElement classElement,
                                                    final ProcessingEnvironment processingEnvironment) {
         AnnotationMirror activatedByAnnotation = getAnnotation(processingEnvironment.getElementUtils(),
@@ -1320,66 +1296,6 @@ public class GeneratorUtils {
             return result;
         }
         return Collections.singleton(value.getValue().toString());
-    }
-
-    /**
-     * Pulls nested annotations out of the annotation that contains them.
-     * @param elementUtils the current Elements object from this round of annotation processing.
-     * @param element The element targeted by the containing annotation.
-     * @param annotationName The containing annotation's fully-qualified name.
-     * @param paramName The name of the parameter on the containing annotation. The parameter's type must be an array of annotations.
-     */
-    public static List<AnnotationMirror> extractAnnotationsFromAnnotation(Elements elementUtils,
-                                                                          Element element,
-                                                                          String annotationName,
-                                                                          String paramName) {
-        final AnnotationMirror am = getAnnotation(elementUtils,
-                                                  element,
-                                                  annotationName);
-        AnnotationValue nestedAnnotations = GeneratorUtils.extractAnnotationPropertyValue(elementUtils,
-                                                                                          am,
-                                                                                          paramName);
-        if (nestedAnnotations == null) {
-            return Collections.emptyList();
-        }
-        final List<AnnotationMirror> result = new ArrayList<AnnotationMirror>();
-        nestedAnnotations.accept(new SimpleAnnotationValueVisitor6<Void, Void>() {
-                                     @Override
-                                     public Void visitArray(List<? extends AnnotationValue> vals,
-                                                            Void x) {
-                                         for (AnnotationValue av : vals) {
-                                             av.accept(new SimpleAnnotationValueVisitor6<Void, Void>() {
-                                                           @Override
-                                                           public Void visitAnnotation(AnnotationMirror am,
-                                                                                       Void x) {
-                                                               result.add(am);
-                                                               return null;
-                                                           }
-                                                       },
-                                                       null);
-                                         }
-                                         return null;
-                                     }
-                                 },
-                                 null);
-        return result;
-    }
-
-    private static String collectionAsString(final Collection<String> collection) {
-        final StringBuilder sb = new StringBuilder();
-
-        Iterator<String> iterator = collection.iterator();
-        int i = 0;
-        while (iterator.hasNext()) {
-            final String next = iterator.next();
-            sb.append('"').append(next).append('"');
-            if (i + 1 < collection.size()) {
-                sb.append(", ");
-            }
-            i++;
-        }
-
-        return sb.toString();
     }
 
     public static String formatAssociatedResources(final Collection<String> resourceTypes) {

@@ -29,7 +29,6 @@ import java.util.stream.Stream;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -39,8 +38,6 @@ import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.util.GWTEditorNativeRegister;
 import org.uberfire.client.workbench.annotations.AssociatedResources;
-import org.uberfire.client.workbench.events.NewPerspectiveEvent;
-import org.uberfire.client.workbench.events.NewWorkbenchScreenEvent;
 import org.uberfire.commons.data.Pair;
 
 /**
@@ -53,18 +50,12 @@ public class ActivityBeansCache {
     /**
      * All active activity beans mapped by their CDI bean name (names are mandatory for activity beans).
      */
-    private final Map<String, SyncBeanDef<Activity>> activitiesById = new HashMap<String, SyncBeanDef<Activity>>();
+    private final Map<String, SyncBeanDef<Activity>> activitiesById = new HashMap<>();
     /**
      * All active Activities that have an {@link AssociatedResources} annotation and are not splash screens.
      */
 
-    /**
-     * All active activities that are splash screens.
-     */
-    private final List<SplashScreenActivity> splashActivities = new ArrayList<SplashScreenActivity>();
     private SyncBeanManager iocManager;
-    private Event<NewPerspectiveEvent> newPerspectiveEventEvent;
-    private Event<NewWorkbenchScreenEvent> newWorkbenchScreenEventEvent;
     protected ResourceTypeManagerCache resourceTypeManagerCache;
     private GWTEditorNativeRegister gwtEditorNativeRegister;
 
@@ -73,13 +64,9 @@ public class ActivityBeansCache {
 
     @Inject
     public ActivityBeansCache(SyncBeanManager iocManager,
-                              Event<NewPerspectiveEvent> newPerspectiveEventEvent,
-                              Event<NewWorkbenchScreenEvent> newWorkbenchScreenEventEvent,
                               ResourceTypeManagerCache resourceTypeManagerCache,
                               GWTEditorNativeRegister gwtEditorNativeRegister) {
         this.iocManager = iocManager;
-        this.newPerspectiveEventEvent = newPerspectiveEventEvent;
-        this.newWorkbenchScreenEventEvent = newWorkbenchScreenEventEvent;
         this.resourceTypeManagerCache = resourceTypeManagerCache;
         this.gwtEditorNativeRegister = gwtEditorNativeRegister;
     }
@@ -98,28 +85,17 @@ public class ActivityBeansCache {
 
             activitiesById.put(id, activityBean);
 
-            if (isSplashScreen(activityBean.getQualifiers())) {
-                splashActivities.add((SplashScreenActivity) activityBean.getInstance());
-            } else {
-                if (isClientEditor(activityBean.getQualifiers())) {
-                    registerGwtClientBean(id, activityBean);
-                }
-                final Pair<Integer, List<String>> metaInfo = generateActivityMetaInfo(activityBean);
-                if (metaInfo != null) {
-                    addResourceActivity(activityBean,
-                                        metaInfo);
-                }
+            if (isClientEditor(activityBean.getQualifiers())) {
+                registerGwtClientBean(id, activityBean);
+            }
+            final Pair<Integer, List<String>> metaInfo = generateActivityMetaInfo(activityBean);
+            if (metaInfo != null) {
+                addResourceActivity(activityBean,
+                                    metaInfo);
             }
         }
 
         this.resourceTypeManagerCache.sortResourceActivitiesByPriority();
-    }
-
-    private void put(final SyncBeanDef<Activity> activityBean,
-                     final String id) {
-
-        activitiesById.put(id,
-                           activityBean);
     }
 
     void registerGwtEditorProvider() {
@@ -149,15 +125,6 @@ public class ActivityBeansCache {
         return activeBeans;
     }
 
-    private boolean isSplashScreen(final Set<Annotation> qualifiers) {
-        for (final Annotation qualifier : qualifiers) {
-            if (qualifier instanceof IsSplashScreen) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private boolean isClientEditor(final Set<Annotation> qualifiers) {
         for (final Annotation qualifier : qualifiers) {
             if (qualifier instanceof IsClientEditor) {
@@ -165,23 +132,6 @@ public class ActivityBeansCache {
             }
         }
         return false;
-    }
-
-    public void removeActivity(String id) {
-        activitiesById.remove(id);
-    }
-
-    /**
-     * Used for runtime plugins.
-     */
-    public void addNewScreenActivity(final SyncBeanDef<Activity> activityBean) {
-        final String id = activityBean.getName();
-
-        validateUniqueness(id);
-
-        activitiesById.put(id,
-                           activityBean);
-        newWorkbenchScreenEventEvent.fire(new NewWorkbenchScreenEvent(id));
     }
 
     private void validateUniqueness(final String id) {
@@ -200,7 +150,6 @@ public class ActivityBeansCache {
 
         activitiesById.put(id,
                            activityBean);
-        newPerspectiveEventEvent.fire(new NewPerspectiveEvent(id));
     }
 
     /**
@@ -223,37 +172,8 @@ public class ActivityBeansCache {
         this.resourceTypeManagerCache.sortResourceActivitiesByPriority();
     }
 
-    public void addNewEditorActivity(final SyncBeanDef<Activity> syncBeanDef,
-                                     final int priority,
-                                     final List<String> resourceTypes) {
-
-        validateUniqueness(syncBeanDef.getName());
-        put(syncBeanDef, syncBeanDef.getName());
-
-        ActivityAndMetaInfo metaInfo = new ActivityAndMetaInfo(iocManager, syncBeanDef, priority, resourceTypes);
-        this.resourceTypeManagerCache.addResourceActivity(metaInfo);
-        this.resourceTypeManagerCache.sortResourceActivitiesByPriority();
-    }
-
-    public void addNewSplashScreenActivity(final SyncBeanDef<Activity> activityBean) {
-        final String id = activityBean.getName();
-
-        validateUniqueness(id);
-
-        activitiesById.put(id,
-                           activityBean);
-        splashActivities.add((SplashScreenActivity) activityBean.getInstance());
-    }
-
     public boolean hasActivity(String id) {
         return activitiesById.containsKey(id);
-    }
-
-    /**
-     * Returns all active splash screen activities in this cache.
-     */
-    public List<SplashScreenActivity> getSplashScreens() {
-        return splashActivities;
     }
 
     /**

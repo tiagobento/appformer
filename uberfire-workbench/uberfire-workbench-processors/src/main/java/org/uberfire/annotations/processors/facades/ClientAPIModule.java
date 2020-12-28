@@ -17,14 +17,11 @@
 package org.uberfire.annotations.processors.facades;
 
 import java.util.Map;
+
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
-
-import org.uberfire.annotations.processors.GeneratorUtils;
 
 /**
  * A collection of type names in the UberFire Client API module.
@@ -39,10 +36,7 @@ public class ClientAPIModule {
     public static final String IS_DEFAULT = "isDefault";
     public static final String IS_DYNAMIC = "isDynamic";
     public static final String IS_TRANSIENT = "isTransient";
-    public static final String IS_TEMPLATE = "isTemplate";
-    public static final String IS_ENABLED = "isEnabled";
     public static final String VALUE = "value";
-    public static final String workbenchSplashScreen = "org.uberfire.client.annotations.WorkbenchSplashScreen";
     public static final String workbenchPerspective = "org.uberfire.client.annotations.WorkbenchPerspective";
     public static final String workbenchPopup = "org.uberfire.client.annotations.WorkbenchPopup";
     public static final String workbenchScreen = "org.uberfire.client.annotations.WorkbenchScreen";
@@ -57,36 +51,15 @@ public class ClientAPIModule {
     public static final String workbenchMenu = "org.uberfire.client.annotations.WorkbenchMenu";
     public static final String workbenchToolBar = "org.uberfire.client.annotations.WorkbenchToolBar";
     public static final String perspective = "org.uberfire.client.annotations.Perspective";
-    public static final String splashFilter = "org.uberfire.client.annotations.SplashFilter";
-    public static final String splashBodyHeight = "org.uberfire.client.annotations.SplashBodyHeight";
     public static final String intercept = "org.uberfire.client.annotations.Intercept";
     public static final String workbenchPanel = "org.uberfire.client.annotations.WorkbenchPanel";
     public static final String jsType = "jsinterop.annotations.JsType";
-
-    // Experimental Features
-    private static final String scopeGlobal = "GLOBAL";
-    private static final String scope = "scope";
-    private static final String group = "group";
-    private static final String nameI18nKey = "nameI18nKey";
-    private static final String descriptionI18nKey = "descriptionI18nKey";
 
     private ClientAPIModule() {
     }
 
     public static String getWorkbenchScreenClass() {
         return workbenchScreen;
-    }
-
-    public static String getSplashFilterClass() {
-        return splashFilter;
-    }
-
-    public static String getSplashBodyHeightClass() {
-        return splashBodyHeight;
-    }
-
-    public static String getInterceptClass() {
-        return intercept;
     }
 
     public static String getPerspectiveClass() {
@@ -137,10 +110,6 @@ public class ClientAPIModule {
         return workbenchPopup;
     }
 
-    public static String getWorkbenchSplashScreenClass() {
-        return workbenchSplashScreen;
-    }
-
     public static String getWorkbenchPerspectiveClass() {
         return workbenchPerspective;
     }
@@ -164,23 +133,6 @@ public class ClientAPIModule {
             return "";
         }
         return paramValue.getValue().toString();
-    }
-
-    /**
-     * Returns the value of the Boolean-valued Annotation parameter on the given type, ignoring any default value that
-     * exists on the annotation. Returns false if the type lacks the given annotation, or if the annotation
-     * lacks the given parameter.
-     */
-    private static Boolean getAnnotationBooleanParam(TypeElement target,
-                                                     String annotationClassName,
-                                                     String annotationParamName) {
-        AnnotationValue paramValue = getAnnotationParamValue(target,
-                                                             annotationClassName,
-                                                             annotationParamName);
-        if (paramValue == null) {
-            return null;
-        }
-        return Boolean.parseBoolean(paramValue.getValue().toString());
     }
 
     /**
@@ -264,41 +216,9 @@ public class ClientAPIModule {
                                         SIZE);
     }
 
-    public static String getWbSplashScreenIdentifierValueOnClass(TypeElement classElement) {
-        return getAnnotationStringParam(classElement,
-                                        workbenchSplashScreen,
-                                        IDENTIFIER);
-    }
-
-    public static boolean getWbSplashScreenIsEnabledValueOnClass(TypeElement classElement) {
-        final Boolean bool = getAnnotationBooleanParam(classElement,
-                                                       workbenchSplashScreen,
-                                                       IS_ENABLED);
-        return bool == null || bool;
-    }
-
-    public static String getWbScreenIdentifierValueOnClass(TypeElement classElement) {
-        return getAnnotationStringParam(classElement,
-                                        workbenchScreen,
-                                        IDENTIFIER);
-    }
-
-    public static String getWbEditorIdentifierValueOnClass(TypeElement classElement) {
-        return getAnnotationStringParam(classElement,
-                                        workbenchEditor,
-                                        IDENTIFIER);
-    }
-
     public static String getWbContextIdentifierValueOnClass(TypeElement classElement) {
         return getAnnotationStringParam(classElement,
                                         workbenchContext,
                                         IDENTIFIER);
-    }
-
-    public static boolean isATemplate(Elements elementUtils,
-                                      Element element) {
-        return GeneratorUtils.getAnnotation(elementUtils,
-                                            element,
-                                            workbenchPanel) != null;
     }
 }

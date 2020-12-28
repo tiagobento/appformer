@@ -68,23 +68,6 @@ public class ActivityManagerImpl implements ActivityManager {
     }
 
     @Override
-    public SplashScreenActivity getSplashScreenInterceptor(final PlaceRequest placeRequest) {
-
-        SplashScreenActivity resultBean = null;
-        for (SplashScreenActivity splashScreen : activityBeansCache.getSplashScreens()) {
-            if (splashScreen.intercept(placeRequest)) {
-                if (splashScreen.isEnabled()) {
-                    resultBean = splashScreen;
-                    break;
-                }
-            }
-        }
-
-        return startIfNecessary(secure(resultBean),
-                                placeRequest);
-    }
-
-    @Override
     public Set<Activity> getActivities(final PlaceRequest placeRequest) {
         return getActivities(placeRequest,
                              true);
@@ -215,13 +198,6 @@ public class ActivityManagerImpl implements ActivityManager {
      * @param startedActivity an activity that is in the <i>started</i> or <i>open</i> state.
      */
     private Class<?> getBeanScope(Activity startedActivity) {
-
-        // splash screens are tracked separately from other activities
-        if (startedActivity instanceof SplashScreenActivity) {
-            // FIXME this is an assumption based on convention. should modify bean cache to keep bean defs for splash screens too.
-            return ApplicationScoped.class;
-        }
-
         final IOCBeanDef<?> beanDef = activityBeansCache.getActivity(startedActivity.getPlace().getIdentifier());
         if (beanDef == null) {
             return Dependent.class;
@@ -242,13 +218,6 @@ public class ActivityManagerImpl implements ActivityManager {
         }
 
         return activities;
-    }
-
-    private SplashScreenActivity secure(final SplashScreenActivity bean) {
-        if (bean == null) {
-            return null;
-        }
-        return bean;
     }
 
     private <T extends Activity> T startIfNecessary(T activity,

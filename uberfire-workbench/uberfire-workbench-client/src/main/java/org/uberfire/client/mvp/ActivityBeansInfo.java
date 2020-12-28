@@ -56,10 +56,6 @@ public class ActivityBeansInfo {
                 .collect(Collectors.toList());
     }
 
-    public List<String> getAvailableSplashScreensIds() {
-        return lookupBeansId(SplashScreenActivity.class);
-    }
-
     public List<String> getAvailableWorkbenchEditorsIds() {
         return lookupBeansId(WorkbenchEditorActivity.class);
     }

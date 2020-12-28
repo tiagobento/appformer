@@ -19,10 +19,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Instance;
@@ -54,10 +54,8 @@ import org.gwtbootstrap3.client.ui.PanelHeader;
 import org.gwtbootstrap3.client.ui.constants.ButtonSize;
 import org.gwtbootstrap3.client.ui.constants.Pull;
 import org.gwtbootstrap3.client.ui.constants.Toggle;
-import org.jboss.errai.common.client.api.elemental2.IsElement;
 import org.jboss.errai.common.client.ui.ElementWrapperWidget;
 import org.jboss.errai.ioc.client.container.IOCResolutionException;
-import org.uberfire.client.menu.AuthFilterMenuVisitor;
 import org.uberfire.client.util.CSSLocatorsUtils;
 import org.uberfire.client.util.Layouts;
 import org.uberfire.client.views.pfly.maximize.MaximizeToggleButton;
@@ -425,26 +423,25 @@ public class ListBarWidgetImpl
                               boolean isRoot) {
 
         Widget[] menuWidget = new Widget[]{null};
-        item.accept(new AuthFilterMenuVisitor(new BaseMenuVisitor() {
+        item.accept(new BaseMenuVisitor() {
+            @Override
+            public boolean visitEnter(MenuGroup menuGroup) {
+                menuWidget[0] = makeMenuGroup(menuGroup,
+                                              isRoot);
+                return false;
+            }
 
-                                                  @Override
-                                                  public boolean visitEnter(MenuGroup menuGroup) {
-                                                      menuWidget[0] = makeMenuGroup(menuGroup,
-                                                                                    isRoot);
-                                                      return false;
-                                                  }
+            @Override
+            public void visit(MenuItemCommand menuItemCommand) {
+                menuWidget[0] = makeMenuItemCommand(menuItemCommand,
+                                                    isRoot);
+            }
 
-                                                  @Override
-                                                  public void visit(MenuItemCommand menuItemCommand) {
-                                                      menuWidget[0] = makeMenuItemCommand(menuItemCommand,
-                                                                                          isRoot);
-                                                  }
-
-                                                  @Override
-                                                  public void visit(MenuCustom<?> menuCustom) {
-                                                      menuWidget[0] = makeMenuCustom(menuCustom);
-                                                  }
-                                              }));
+            @Override
+            public void visit(MenuCustom<?> menuCustom) {
+                menuWidget[0] = makeMenuCustom(menuCustom);
+            }
+        });
         return menuWidget[0];
     }
 

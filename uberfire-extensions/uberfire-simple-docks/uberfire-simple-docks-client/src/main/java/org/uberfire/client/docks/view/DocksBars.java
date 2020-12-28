@@ -27,7 +27,6 @@ import com.google.gwt.user.client.ui.Widget;
 import org.uberfire.client.docks.view.bars.DocksCollapsedBar;
 import org.uberfire.client.docks.view.bars.DocksExpandedBar;
 import org.uberfire.client.docks.view.menu.MenuBuilder;
-import org.uberfire.client.menu.AuthFilterMenuVisitor;
 import org.uberfire.client.mvp.AbstractWorkbenchScreenActivity;
 import org.uberfire.client.mvp.Activity;
 import org.uberfire.client.mvp.PlaceManager;
@@ -256,7 +255,7 @@ public class DocksBars {
             AbstractWorkbenchScreenActivity screen = (AbstractWorkbenchScreenActivity) activity;
             screen.getMenus(menus -> {
                 if (menus != null) {
-                    menus.accept(new AuthFilterMenuVisitor(new BaseMenuVisitor() {
+                    menus.accept(new BaseMenuVisitor() {
 
                                 @Override
                                 public void visit(MenuItemPlain menuItemPlain) {
@@ -274,7 +273,7 @@ public class DocksBars {
                                 public void visit(MenuCustom<?> menuCustom) {
                                     expandedBar.addContextMenuItem(menuBuilder.makeItem(menuCustom, true));
                                 }
-                            }));
+                            });
                 }
             });
         }
