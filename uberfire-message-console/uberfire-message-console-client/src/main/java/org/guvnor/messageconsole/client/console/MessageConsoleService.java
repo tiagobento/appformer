@@ -39,7 +39,6 @@ import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.workbench.events.PerspectiveChange;
-import org.uberfire.rpc.SessionInfo;
 
 /**
  * Service for Message Console, the Console is a screen that shows compile time errors.
@@ -50,7 +49,6 @@ public class MessageConsoleService {
 
     private SyncBeanManager iocManager;
     private PlaceManager placeManager;
-    private SessionInfo sessionInfo;
     private Event<FilteredMessagesEvent> filteredMessagesEvent;
 
     private ListDataProvider<MessageConsoleServiceRow> dataProvider = new ListDataProvider<MessageConsoleServiceRow>();
@@ -67,12 +65,10 @@ public class MessageConsoleService {
     @Inject
     public MessageConsoleService(final SyncBeanManager iocManager,
                                  final PlaceManager placeManager,
-                                 final SessionInfo sessionInfo,
                                  final Event<FilteredMessagesEvent> filteredMessagesEvent) {
 
         this.iocManager = iocManager;
         this.placeManager = placeManager;
-        this.sessionInfo = sessionInfo;
         this.filteredMessagesEvent = filteredMessagesEvent;
     }
 
@@ -163,7 +159,7 @@ public class MessageConsoleService {
                                    final String messageType,
                                    final List<SystemMessage> messages) {
 
-        String currentSessionId = sessionInfo != null ? sessionInfo.getId() : null;
+        String currentSessionId = "caponetto";
         String currentUserId = null;
 
         List<MessageConsoleServiceRow> rowsToDelete = new ArrayList<MessageConsoleServiceRow>();
@@ -208,7 +204,7 @@ public class MessageConsoleService {
                                                final List<SystemMessage> messages) {
         List<SystemMessage> result = new ArrayList<SystemMessage>();
 
-        String currentSessionId = sessionInfo != null ? sessionInfo.getId() : null;
+        String currentSessionId = "caponetto";
         String currentUserId = null;
 
         if (messages != null) {

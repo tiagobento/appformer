@@ -22,15 +22,8 @@ import javax.inject.Inject;
 @ApplicationScoped
 public class WorkbenchLayoutInfoImpl implements WorkbenchLayoutInfo {
 
-    @Inject
-    private WorkbenchLayoutImpl workbenchLayout;
-
     @Override
     public int getHeaderHeight() {
-        try {
-            return workbenchLayout.getHeaderPanel().getBoundingClientRect().getHeight().intValue();
-        } catch (Exception e) {
-            return 0;
-        }
+        return 0;
     }
 }

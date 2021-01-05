@@ -18,11 +18,8 @@ package org.uberfire.client.mvp;
 import org.uberfire.backend.vfs.ObservablePath;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.annotations.WorkbenchEditor;
-import org.uberfire.client.annotations.WorkbenchEditor.LockingStrategy;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.PathPlaceRequest;
-
-import static org.uberfire.client.annotations.WorkbenchEditor.LockingStrategy.FRAMEWORK_PESSIMISTIC;
 
 /**
  * Implementation of behaviour common to all workbench editor activities. Concrete implementations are typically not
@@ -93,14 +90,5 @@ public abstract class AbstractWorkbenchEditorActivity extends AbstractWorkbenchA
     @Override
     public void onFocus() {
         super.onFocus();
-    }
-
-    /**
-     * Returns the locking strategy for this editor activity, defaulting to
-     * pessimistic. This method is overridden for generated activities returning
-     * the strategy configured at {@link WorkbenchEditor}.
-     */
-    protected LockingStrategy getLockingStrategy() {
-        return LockingStrategy.FRAMEWORK_PESSIMISTIC;
     }
 }

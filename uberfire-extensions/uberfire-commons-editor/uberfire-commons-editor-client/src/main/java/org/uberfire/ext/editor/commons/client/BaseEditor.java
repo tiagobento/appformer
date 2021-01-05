@@ -16,7 +16,6 @@
 
 package org.uberfire.ext.editor.commons.client;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.IsWidget;
 import elemental2.promise.Promise;
 import org.jboss.errai.common.client.api.Caller;
@@ -64,15 +63,12 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static org.uberfire.ext.editor.commons.client.menu.MenuItems.*;
-import static org.uberfire.ext.widgets.common.client.common.ConcurrentChangePopup.*;
 
 public abstract class BaseEditor<T, M> {
 
     protected boolean isReadOnly;
 
     protected BaseEditorView baseView;
-
-    protected ObservablePath.OnConcurrentUpdateEvent concurrentUpdateSessionInfo = null;
 
     protected Menus menus;
 
@@ -215,13 +211,7 @@ public abstract class BaseEditor<T, M> {
                     });
         }
 
-        if (addFileChangeListeners) {
-            addFileChangeListeners(path);
-        }
-
         getMenus(menus -> loadContent());
-
-        concurrentUpdateSessionInfo = null;
     }
 
     protected void showVersions() {
@@ -304,13 +294,7 @@ public abstract class BaseEditor<T, M> {
                 versionRecordManager.restoreToCurrentVersion(saveWithComments);
                 return false;
             }
-
-            if (concurrentUpdateSessionInfo != null) {
-                showConcurrentUpdatePopup();
-                return false;
-            } else {
-                return true;
-            }
+            return true;
         };
     }
 
@@ -372,107 +356,6 @@ public abstract class BaseEditor<T, M> {
         this.originalHash = originalHash;
     }
 
-    private void addFileChangeListeners(final ObservablePath path) {
-        path.onRename(new Command() {
-            @Override
-            public void execute() {
-                onRename();
-            }
-        });
-        path.onDelete(new Command() {
-            @Override
-            public void execute() {
-                onDelete();
-            }
-        });
-
-        path.onConcurrentUpdate(new ParameterizedCommand<ObservablePath.OnConcurrentUpdateEvent>() {
-            @Override
-            public void execute(final ObservablePath.OnConcurrentUpdateEvent eventInfo) {
-                concurrentUpdateSessionInfo = eventInfo;
-                showConcurrentUpdatePopup();
-            }
-        });
-
-        path.onConcurrentRename(this::onConcurrentRename);
-
-        path.onConcurrentDelete(this::onConcurrentDelete);
-    }
-
-    void onConcurrentRename(final ObservablePath.OnConcurrentRenameEvent info) {
-        baseView.hideBusyIndicator();
-        if (concurrentChangePopup == null) {
-            concurrentChangePopup = newConcurrentRename(info.getSource(),
-                                                        info.getTarget(),
-                                                        onConcurrentRenameIgnoreCommand(path),
-                                                        onConcurrentRenameCloseCommand(path));
-        }
-        concurrentChangePopup.show();
-    }
-
-    Command onConcurrentRenameIgnoreCommand(final ObservablePath path) {
-        return () -> {
-            concurrentChangePopup = null;
-            disableMenus();
-            concurrentRenameIgnoredEvent.fire(new ConcurrentRenameIgnoredEvent(path));
-        };
-    }
-
-    Command onConcurrentRenameCloseCommand(final ObservablePath path) {
-        return () -> {
-            concurrentChangePopup = null;
-            reload();
-            concurrentRenameAcceptedEvent.fire(new ConcurrentRenameAcceptedEvent(path));
-        };
-    }
-
-    void onConcurrentDelete(final ObservablePath.OnConcurrentDelete info) {
-        baseView.hideBusyIndicator();
-        if (concurrentChangePopup == null) {
-            concurrentChangePopup = newConcurrentDelete(info.getPath(),
-                                                        onConcurrentDeleteIgnoreCommand(path),
-                                                        onConcurrentDeleteCloseCommand(path));
-        }
-        concurrentChangePopup.show();
-    }
-
-    Command onConcurrentDeleteIgnoreCommand(final ObservablePath path) {
-        return () -> {
-            concurrentChangePopup = null;
-            disableMenus();
-            disableDeletePopup();
-            concurrentDeleteIgnoredEvent.fire(new ConcurrentDeleteIgnoredEvent(path));
-        };
-    }
-
-    Command onConcurrentDeleteCloseCommand(final ObservablePath path) {
-        return () -> {
-            concurrentChangePopup = null;
-            disableDeletePopup();
-            placeManager.closePlace(place);
-            concurrentDeleteAcceptedEvent.fire(new ConcurrentDeleteAcceptedEvent(path));
-        };
-    }
-
-    private void disableDeletePopup() {
-        if (deletePopUpPresenter.isOpened()) {
-            deletePopUpPresenter.cancel();
-        }
-    }
-
-    private void onDelete() {
-        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-            @Override
-            public void execute() {
-                placeManager.forceClosePlace(place);
-            }
-        });
-    }
-
-    protected void onRename() {
-        reload(path);
-    }
-
     /**
      * Override this method and use @WorkbenchPartTitleDecoration
      * @return The widget for the title
@@ -507,38 +390,6 @@ public abstract class BaseEditor<T, M> {
         }
     }
 
-    protected void showConcurrentUpdatePopup() {
-        baseView.hideBusyIndicator();
-        if (concurrentChangePopup == null) {
-            concurrentChangePopup = getConcurrentUpdatePopup();
-        }
-        concurrentChangePopup.show();
-    }
-
-    ConcurrentChangePopup getConcurrentUpdatePopup() {
-        return newConcurrentUpdate(concurrentUpdateSessionInfo.getPath(),
-                                                    new Command() {
-                                                        @Override
-                                                        public void execute() {
-                                                            save();
-                                                            concurrentChangePopup = null;
-                                                        }
-                                                    },
-                                                    new Command() {
-                                                        @Override
-                                                        public void execute() {
-                                                            concurrentChangePopup = null;
-                                                        }
-                                                    },
-                                                    new Command() {
-                                                        @Override
-                                                        public void execute() {
-                                                            reload();
-                                                            concurrentChangePopup = null;
-                                                        }
-                                                    });
-    }
-
     public RemoteCallback<Path> getSaveSuccessCallback(final int newHash) {
         return new RemoteCallback<Path>() {
             @Override
@@ -567,7 +418,6 @@ public abstract class BaseEditor<T, M> {
     }
 
     public void reload() {
-        concurrentUpdateSessionInfo = null;
         reload(versionRecordManager.getCurrentPath());
     }
 

@@ -15,15 +15,11 @@
  */
 package org.uberfire.client.workbench;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import org.jboss.errai.ioc.client.api.EnabledByProperty;
 import org.jboss.errai.ioc.client.api.EntryPoint;
 import org.uberfire.client.mvp.PlaceManager;
-import org.uberfire.rpc.SessionInfo;
-import org.uberfire.rpc.impl.SessionInfoImpl;
 
 @EntryPoint
 @EnabledByProperty(value = "uberfire.plugin.mode.active")
@@ -34,10 +30,4 @@ public class PluginEntryPoint {
     @SuppressWarnings("unused")
     @Inject
     private PlaceManager placeManager;
-
-    @Produces
-    @ApplicationScoped
-    private SessionInfo currentSession() {
-        return new SessionInfoImpl();
-    }
 }

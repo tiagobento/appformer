@@ -112,12 +112,4 @@ public interface WorkbenchLayout {
      */
     void unmaximize(Widget w,
                     Command callback);
-
-    /**
-     * Will insert the implementations of Header and Footer in the Workbench
-     * @see {@link #setHeaderContents(java.util.List)}
-     * @see {@link #setFooterContents(java.util.List)}
-     */
-    void setMarginWidgets(boolean isStandaloneMode,
-                          Set<String> headersToKeep);
 }

@@ -30,7 +30,6 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 import com.google.gwt.animation.client.Animation;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Position;
@@ -93,19 +92,6 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
      * the RootLayoutPanel.
      */
     private HeaderPanel root;
-    /**
-     * The panel within which the current perspective's header widgets reside. This panel lasts the lifetime of the app;
-     * it's cleared and repopulated with the new perspective's root view each time
-     * {@link #setHeaderContents(java.util.List)} gets called.
-     */
-    private Div headerPanel;
-    /**
-     * The panel within which the current perspective's footer widgets reside. This panel lasts the lifetime of the app;
-     * it's cleared and repopulated with the new perspective's root view each time
-     * {@link #setFooterContents(java.util.List)} gets called. The actual panel that's used for this is specified by the
-     * concrete subclass's constructor.
-     */
-    private Div footerPanel;
     private WorkbenchDragAndDropManager dndManager;
     /**
      * An abstraction for DockLayoutPanel used by Uberfire Docks.
@@ -125,24 +111,18 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
                                HeaderPanel root,
                                WorkbenchDragAndDropManager dndManager,
                                UberfireDocksContainer uberfireDocksContainer,
-                               WorkbenchPickupDragController dragController,
-                               Div headerPanel,
-                               Div footerPanel) {
+                               WorkbenchPickupDragController dragController) {
 
         this.iocManager = iocManager;
         this.root = root;
         this.dndManager = dndManager;
         this.uberfireDocksContainer = uberfireDocksContainer;
         this.dragController = dragController;
-        this.headerPanel = headerPanel;
-        this.footerPanel = footerPanel;
     }
 
     @PostConstruct
     private void init() {
         perspectiveRootContainer.ensureDebugId("perspectiveRootContainer");
-        headerPanel.setId("workbenchHeaderPanel");
-        footerPanel.setId("workbenchFooterPanel");
         dragController.getBoundaryPanel().ensureDebugId("workbenchDragBoundary");
         root.addStyleName(UF_ROOT_CSS_CLASS);
     }
@@ -155,30 +135,6 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
     @Override
     public HasWidgets getPerspectiveContainer() {
         return perspectiveRootContainer;
-    }
-
-    void setHeaderContents(List<Header> headers) {
-        DOMUtil.removeAllChildren(headerPanel);
-        if (!headers.isEmpty()) {
-            for (Header h : headers) {
-                headerPanel.appendChild(h.getElement());
-            }
-            root.setHeaderWidget(createWidgetFrom(headerPanel));
-        }
-    }
-
-    void setFooterContents(List<Footer> footers) {
-        DOMUtil.removeAllChildren(footerPanel);
-        if (!footers.isEmpty()) {
-            for (Footer f : footers) {
-                footerPanel.appendChild(f.getElement());
-            }
-            root.setFooterWidget(createWidgetFrom(footerPanel));
-        }
-    }
-
-    ElementWrapperWidget<?> createWidgetFrom(HTMLElement h) {
-        return ElementWrapperWidget.getWidget(h);
     }
 
     @Override
@@ -283,65 +239,10 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
                               callback).run();
     }
 
-    @Override
-    public void setMarginWidgets(boolean isStandaloneMode,
-                                 Set<String> headersToKeep) {
-        setHeaderContents(discoverMarginWidgets(isStandaloneMode,
-                                                headersToKeep,
-                                                Header.class));
-        setFooterContents(discoverMarginWidgets(isStandaloneMode,
-                                                headersToKeep,
-                                                Footer.class));
-    }
-
-    private <T extends Orderable> List<T> discoverMarginWidgets(boolean isStandaloneMode,
-                                                                Set<String> headersToKeep,
-                                                                Class<T> marginType) {
-        final Collection<SyncBeanDef<T>> headerBeans = iocManager.lookupBeans(marginType);
-        final List<T> instances = new ArrayList<T>();
-        for (final SyncBeanDef<T> headerBean : headerBeans) {
-            if (!headerBean.isActivated()) {
-                continue;
-            }
-
-            T instance = headerBean.getInstance();
-
-            // for regular mode (not standalone) we add every header and footer widget;
-            // for standalone mode, we only add the ones requested in the URL
-            if ((!isStandaloneMode) || headersToKeep.contains(instance.getId())) {
-                instances.add(instance);
-            }
-        }
-        sort(instances,
-             new Comparator<Orderable>() {
-                 @Override
-                 public int compare(final Orderable o1,
-                                    final Orderable o2) {
-                     if (o1.getOrder() < o2.getOrder()) {
-                         return 1;
-                     } else if (o1.getOrder() > o2.getOrder()) {
-                         return -1;
-                     } else {
-                         return 0;
-                     }
-                 }
-             });
-
-        return instances;
-    }
-
     public void addWorkbenchProfileCssClass(@Observes WorkbenchProfileCssClass workbenchProfileCssClass) {
         root.removeStyleName(root.getStyleName());
         root.addStyleName(UF_ROOT_CSS_CLASS);
         root.addStyleName(workbenchProfileCssClass.getClassName());
-    }
-
-    protected Div getHeaderPanel() {
-        return headerPanel;
-    }
-
-    protected Div getFooterPanel() {
-        return footerPanel;
     }
 
     protected static abstract class AbstractResizeAnimation extends Animation {
