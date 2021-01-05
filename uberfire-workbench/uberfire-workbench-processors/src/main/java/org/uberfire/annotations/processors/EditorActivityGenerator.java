@@ -58,7 +58,6 @@ public class EditorActivityGenerator extends AbstractGenerator {
         final TypeElement classElement = (TypeElement) element;
 
         final String annotationName = ClientAPIModule.getWorkbenchEditorClass();
-        final boolean isDynamic = ClientAPIModule.getWbEditorIsDynamicValueOnClass(classElement);
         final String owningPlace = GeneratorUtils.getOwningPerspectivePlaceRequest(classElement,
                                                                                    processingEnvironment);
 
@@ -309,8 +308,6 @@ public class EditorActivityGenerator extends AbstractGenerator {
                  getMenuBarMethodName);
         root.put("getToolBarMethodName",
                  getToolBarMethodName);
-        root.put("isDynamic",
-                 isDynamic);
         root.put("qualifiers",
                  qualifiers);
 

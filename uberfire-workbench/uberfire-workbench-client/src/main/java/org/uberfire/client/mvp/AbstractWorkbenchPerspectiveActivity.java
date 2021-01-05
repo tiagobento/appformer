@@ -43,16 +43,6 @@ public abstract class AbstractWorkbenchPerspectiveActivity extends AbstractActiv
     public abstract PerspectiveDefinition getDefaultPerspectiveLayout();
 
     @Override
-    public boolean isDefault() {
-        return false;
-    }
-
-    @Override
-    public boolean isTransient() {
-        return true;
-    }
-
-    @Override
     public void getMenus(final Consumer<Menus> menusConsumer) {
         menusConsumer.accept(null);
     }

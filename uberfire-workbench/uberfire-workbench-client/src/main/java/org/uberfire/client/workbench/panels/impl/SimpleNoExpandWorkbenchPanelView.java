@@ -30,6 +30,5 @@ public class SimpleNoExpandWorkbenchPanelView
     protected void setupListBar() {
         super.setupListBar();
         listBar.disableClosePart();
-        listBar.disableExpandPart();
     }
 }

@@ -100,14 +100,6 @@ public @interface WorkbenchEditor {
     LockingStrategy lockingStrategy() default LockingStrategy.FRAMEWORK_PESSIMISTIC;
 
     /**
-     * Indicates that this screen can be discovered and loaded at runtime.
-     * This is useful when building plugins or extensions where the screen
-     * is part of an external script loaded at runtime, as opposed to being
-     * statically compiled into the main application.
-     */
-    boolean isDynamic() default false;
-
-    /**
      * Locking strategies define how and if locks are acquired when using editors.
      */
     enum LockingStrategy {

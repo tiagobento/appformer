@@ -119,14 +119,4 @@ public abstract class AbstractWorkbenchPanelView<P extends WorkbenchPanelPresent
     public Widget getPartDropRegion() {
         return null;
     }
-
-    @Override
-    public void maximize() {
-        layoutSelection.get().maximize(this);
-    }
-
-    @Override
-    public void unmaximize() {
-        layoutSelection.get().unmaximize(this);
-    }
 }

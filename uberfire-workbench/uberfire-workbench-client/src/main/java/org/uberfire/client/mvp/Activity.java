@@ -94,22 +94,6 @@ public interface Activity extends RuntimeFeatureResource {
     PlaceRequest getPlace();
 
     /**
-     * Returns whether or not this activity should be executed by default (on startup).
-     * @return true, if this activity should be executed by default, otherwise false.
-     */
-    default boolean isDefault() {
-        return false;
-    }
-
-    /**
-     * Returns whether or not this activity is marked as dynamic (provided by external scripts).
-     * @return true if this activity is dynamic, otherwise false.
-     */
-    default boolean isDynamic() {
-        return false;
-    }
-
-    /**
      * Returns the name of this activity, defaulting to {@link #getIdentifier()}.
      * @return the activity's name
      */

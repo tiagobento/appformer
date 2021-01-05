@@ -59,7 +59,6 @@ public interface WorkbenchActivity extends ContextSensitiveActivity {
      * The activity can cancel the close operation by returning {@code false} from this method. This is most often used
      * for implementing a "save before closing" workflow.
      * @return true if the activity is ready to be closed; false if it should remain open.
-     * @see PlaceManager#closeAllPlaces()
      * @see PlaceManager#closePlace(PlaceRequest)
      * @see PlaceManager#closePlace(String)
      */

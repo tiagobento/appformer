@@ -56,9 +56,6 @@ import org.jboss.errai.ioc.client.api.ActivatedBy;
 <#if beanActivatorClass??>
 @ActivatedBy(${beanActivatorClass}.class)
 </#if>
-<#if isDynamic>
-@JsType
-</#if>
 <#list qualifiers as qualifier>
 ${qualifier}
 </#list>
@@ -75,7 +72,7 @@ public class ${className} extends AbstractWorkbenchClientEditorActivity {
 
     @Inject
     //Constructor injection for testing
-    public ${className}(<#if isDynamic>@Shared </#if>final PlaceManager placeManager) {
+    public ${className}(final PlaceManager placeManager) {
         super( placeManager );
     }
 
@@ -149,7 +146,7 @@ public class ${className} extends AbstractWorkbenchClientEditorActivity {
 
     </#if>
     <#if getTitleWidgetMethodName??>
-    <#if isDynamic>@JsIgnore </#if>@Override
+    @Override
     public IsWidget getTitleDecoration() {
         return realPresenter.${getTitleWidgetMethodName}();
     }
@@ -163,7 +160,7 @@ public class ${className} extends AbstractWorkbenchClientEditorActivity {
 
     </#if>
     <#if getWidgetMethodName??>
-    <#if isDynamic>@JsIgnore </#if>@Override
+    @Override
     public IsWidget getWidget() {
         <#if isWidgetMethodReturnTypeElement>
         return ElementWrapperWidget.getWidget( realPresenter.${getWidgetMethodName}().getElement() );
@@ -173,7 +170,7 @@ public class ${className} extends AbstractWorkbenchClientEditorActivity {
     }
 
     <#elseif isWidget>
-    <#if isDynamic>@JsIgnore </#if>@Override
+    @Override
     public IsWidget getWidget() {
         return realPresenter;
     }
@@ -222,12 +219,4 @@ public class ${className} extends AbstractWorkbenchClientEditorActivity {
     public String getIdentifier() {
         return "${identifier}";
     }
-    <#if isDynamic>
-
-    @Override
-    public boolean isDynamic() {
-    	return true;
-    }
-
-    </#if>
 }

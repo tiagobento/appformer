@@ -16,6 +16,7 @@
 package org.uberfire.client.workbench.panels.impl;
 
 import java.util.Collection;
+
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -140,15 +141,5 @@ public class LayoutPanelView implements WorkbenchPanelView<LayoutPanelPresenter>
             asWidget().getElement().setAttribute("id",
                                                  elementId);
         }
-    }
-
-    @Override
-    public void maximize() {
-        layoutSelection.get().maximize(asWidget());
-    }
-
-    @Override
-    public void unmaximize() {
-        layoutSelection.get().unmaximize(asWidget());
     }
 }

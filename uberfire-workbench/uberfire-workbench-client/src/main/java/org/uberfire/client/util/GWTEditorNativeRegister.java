@@ -64,18 +64,18 @@ public class GWTEditorNativeRegister {
             return this.instance.@org.uberfire.client.mvp.WorkbenchClientEditorActivity::getWidgetElement()();
         };
 
-        $wnd.GWTEditorSuplier = function (bean) {
+        $wnd.GWTEditorSupplier = function (bean) {
             this.bean = bean;
         };
 
-        $wnd.GWTEditorSuplier.prototype.get = function () {
+        $wnd.GWTEditorSupplier.prototype.get = function () {
             return new $wnd.GWTEditor(this.bean.@org.jboss.errai.ioc.client.container.SyncBeanDef::newInstance()());
         }
 
     }-*/;
     
     public native void nativeRegisterGwtClientBean(final String id, final SyncBeanDef<Activity> activityBean) /*-{
-        $wnd.gwtEditorBeans.set(id, new $wnd.GWTEditorSuplier(activityBean));
+        $wnd.gwtEditorBeans.set(id, new $wnd.GWTEditorSupplier(activityBean));
     }-*/;
 
 }

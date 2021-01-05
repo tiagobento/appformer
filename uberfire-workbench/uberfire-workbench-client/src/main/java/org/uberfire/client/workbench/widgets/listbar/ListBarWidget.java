@@ -16,11 +16,9 @@
 package org.uberfire.client.workbench.widgets.listbar;
 
 import com.google.gwt.user.client.ui.Widget;
-import org.uberfire.client.workbench.panels.MaximizeToggleButtonPresenter;
 import org.uberfire.client.workbench.panels.MultiPartWidget;
 import org.uberfire.client.workbench.panels.impl.AbstractSimpleWorkbenchPanelView;
 import org.uberfire.client.workbench.panels.impl.MultiListWorkbenchPanelView;
-import org.uberfire.mvp.Command;
 
 /**
  * API contract for the header widget of panel views that extend {@link AbstractSimpleWorkbenchPanelView} and
@@ -50,14 +48,6 @@ public interface ListBarWidget extends MultiPartWidget {
      */
     public void disableDnd();
 
-    /**
-     * Returns the toggle button, which is initially hidden, that can be used to trigger maximizing and unmaximizing
-     * of the panel containing this list bar. Make the button visible by calling {@link Widget#setVisible(boolean)}
-     * and set its maximize and unmaximize actions with {@link MaximizeToggleButtonPresenter#setMaximizeCommand(Command)} and
-     * {@link MaximizeToggleButtonPresenter#setUnmaximizeCommand(Command)}.
-     */
-    public MaximizeToggleButtonPresenter getMaximizeButton();
-
     public boolean isDndEnabled();
 
     /**
@@ -69,9 +59,4 @@ public interface ListBarWidget extends MultiPartWidget {
      * Disable support to close parts.
      */
     void disableClosePart();
-
-    /**
-     * Disable part expansion (maximize)
-     */
-    void disableExpandPart();
 }

@@ -42,7 +42,7 @@ import org.uberfire.workbench.type.ResourceTypeDefinition;
  * classpath that require a place manager). It is not used at runtime as plugins
  * use the {@link SharedSingleton} {@link PlaceManager} provided by the main
  * application. Plugins get access to a fully functional {@link PlaceManager}
- * using @{@link Inject} @{@link Shared} {@link ShareablePlaceManager}.
+ * using @{@link Inject} @{@link Shared}.
  */
 @ApplicationScoped
 @EnabledByProperty(value = "uberfire.plugin.mode.active")
@@ -176,12 +176,6 @@ public class PluginPlaceManagerImpl implements PlaceManager {
     }
 
     @Override
-    public void closePlace(final PlaceRequest placeToClose,
-                           final Command doAfterClose) {
-        fail();
-    }
-
-    @Override
     public void tryClosePlace(final PlaceRequest placeToClose,
                               final Command onAfterClose) {
         fail();
@@ -198,64 +192,14 @@ public class PluginPlaceManagerImpl implements PlaceManager {
     }
 
     @Override
-    public void closeAllPlaces() {
-        fail();
-    }
-
-    @Override
-    public void forceCloseAllPlaces() {
-        fail();
-    }
-
-    @Override
-    public boolean closeAllPlacesOrNothing() {
-        fail();
-        return false;
-    }
-
-    @Override
-    public boolean canClosePlace(final PlaceRequest place) {
-        fail();
-        return false;
-    }
-
-    @Override
-    public boolean canCloseAllPlaces() {
-        fail();
-        return false;
-    }
-
-    @Override
-    public List<PlaceRequest> getUncloseablePlaces() {
-        fail();
-        return null;
-    }
-
-    @Override
     public void registerOnOpenCallback(final PlaceRequest place,
                                        final Command callback) {
         fail();
     }
 
     @Override
-    public void unregisterOnOpenCallbacks(final PlaceRequest place) {
-        fail();
-    }
-
-    @Override
     public void registerOnCloseCallback(final PlaceRequest place,
                                         final Command callback) {
-        fail();
-    }
-
-    @Override
-    public void unregisterOnCloseCallbacks(final PlaceRequest place) {
-        fail();
-    }
-
-    @Override
-    public void registerPerspectiveCloseChain(final String perspectiveIdentifier,
-                                              final BiParameterizedCommand<Command, PlaceRequest> closeChain) {
         fail();
     }
 

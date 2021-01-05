@@ -91,7 +91,7 @@ public interface PlaceManager {
      * The activity will be properly shut down in any of the following scenarios:
      * <ol>
      * <li>by a call to one of the PlaceManager methods for closing a place: {@link #closePlace(PlaceRequest)},
-     * {@link #closePlace(String)}, or {@link #closeAllPlaces()}
+     * {@link #closePlace(String)}
      * <li>by switching to another perspective, which has the side effect of closing all places
      * <li>by removing the activity's view from the DOM, either using the GWT Widget API, or by direct DOM manipulation.
      * <li>by opening another place on the same container.
@@ -165,10 +165,6 @@ public interface PlaceManager {
 
     void closePlace(final PlaceRequest placeToClose);
 
-    @JsMethod(name = "closePlaceWithCallback")
-    void closePlace(final PlaceRequest placeToClose,
-                    final Command doAfterClose);
-
     void tryClosePlace(final PlaceRequest placeToClose,
                        final Command onAfterClose);
 
@@ -178,40 +174,11 @@ public interface PlaceManager {
     @JsMethod(name = "forceCloseByPlaceRequest")
     void forceClosePlace(final PlaceRequest place);
 
-    void closeAllPlaces();
-
-    void forceCloseAllPlaces();
-
-    boolean closeAllPlacesOrNothing();
-
-    boolean canClosePlace(PlaceRequest place);
-
-    boolean canCloseAllPlaces();
-
-    /**
-     * @return All opened PlaceRequests that cannot be closed (@onMayClose method returns false).
-     */
-    List<PlaceRequest> getUncloseablePlaces();
-
     void registerOnOpenCallback(PlaceRequest place,
                                 Command callback);
 
-    void unregisterOnOpenCallbacks(PlaceRequest place);
-
     void registerOnCloseCallback(PlaceRequest place,
                                  Command callback);
-
-    void unregisterOnCloseCallbacks(PlaceRequest place);
-
-    /**
-     * Registers a callback interceptor that uses a chain approach to execute code before a PlaceRequest is closed,
-     * if the perspective passed as a parameter is currently opened. It will not be executed in the case of a forced close.
-     * @param perspectiveIdentifier Perspective identifier for which the close chain must be called when it is being closed.
-     * @param closeChain Callback to be called when a PlaceRequest is being closed. The callback command must invoke the chain
-     * to proceed with the closing operation.
-     */
-    void registerPerspectiveCloseChain(String perspectiveIdentifier,
-                                       BiParameterizedCommand<Command, PlaceRequest> closeChain);
 
     /**
      * Finds the <i>currently open</i> PlaceRequests for Activities that handle the given ResourceTypeDefinition.

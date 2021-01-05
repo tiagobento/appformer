@@ -96,58 +96,12 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
     @Override
     public void savePerspectiveState(Command doWhenFinished) {
-        if (currentPerspective != null && !currentPerspective.isTransient()) {
-            wbServices.save(currentPerspective.getIdentifier(),
-                            livePerspectiveDef,
-                            doWhenFinished);
-        } else {
-            doWhenFinished.execute();
-        }
-    }
-
-    @Override
-    public void loadPerspectiveStates(final ParameterizedCommand<Set<PerspectiveDefinition>> doWhenFinished) {
-        wbServices.loadPerspectives(doWhenFinished);
-    }
-
-    @Override
-    public void removePerspectiveState(final String perspectiveId,
-                                       final Command doWhenFinished) {
-        wbServices.removePerspectiveState(perspectiveId,
-                                          doWhenFinished);
+        doWhenFinished.execute();
     }
 
     @Override
     public void removePerspectiveStates(final Command doWhenFinished) {
         wbServices.removePerspectiveStates(doWhenFinished);
-    }
-
-    @Override
-    public String getDefaultPerspectiveIdentifier() {
-        AbstractWorkbenchPerspectiveActivity defaultPerspective = null;
-        final Iterator<SyncBeanDef<AbstractWorkbenchPerspectiveActivity>> perspectivesIterator = getPerspectivesIterator();
-
-        while (perspectivesIterator.hasNext()) {
-            final SyncBeanDef<AbstractWorkbenchPerspectiveActivity> perspective = perspectivesIterator.next();
-            final AbstractWorkbenchPerspectiveActivity instance = perspective.getInstance();
-            if (instance.isDefault()) {
-                defaultPerspective = instance;
-                break;
-            } else {
-                iocManager.destroyBean(instance);
-            }
-        }
-
-        if (defaultPerspective != null) {
-            return defaultPerspective.getIdentifier();
-        }
-
-        return null;
-    }
-
-    @Override
-    public PlaceRequest getCurrentPerspectivePlaceRequest() {
-        return currentPerspectivePlaceRequest;
     }
 
     Iterator<SyncBeanDef<AbstractWorkbenchPerspectiveActivity>> getPerspectivesIterator() {
@@ -180,24 +134,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
         public void execute() {
             currentPerspectivePlaceRequest = placeRequest;
             currentPerspective = perspective;
-            if (perspective.isTransient()) {
-                //Transient Perspectives are not saved and hence cannot be loaded
-                doAfterFetch.execute(perspective.getDefaultPerspectiveLayout());
-            } else {
-
-                wbServices.loadPerspective(perspective.getIdentifier(),
-                                           new ParameterizedCommand<PerspectiveDefinition>() {
-                                               @Override
-                                               public void execute(final PerspectiveDefinition response) {
-
-                                                   if (isAValidDefinition(response)) {
-                                                       doAfterFetch.execute(response);
-                                                   } else {
-                                                       doAfterFetch.execute(perspective.getDefaultPerspectiveLayout());
-                                                   }
-                                               }
-                                           });
-            }
+            doAfterFetch.execute(perspective.getDefaultPerspectiveLayout());
         }
 
         boolean isAValidDefinition(PerspectiveDefinition response) {

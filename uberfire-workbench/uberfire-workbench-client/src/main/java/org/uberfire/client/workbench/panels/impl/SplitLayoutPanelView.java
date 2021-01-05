@@ -167,14 +167,4 @@ public class SplitLayoutPanelView implements WorkbenchPanelView<SplitLayoutPanel
                                                  elementId);
         }
     }
-
-    @Override
-    public void maximize() {
-        layoutSelection.get().maximize(asWidget());
-    }
-
-    @Override
-    public void unmaximize() {
-        layoutSelection.get().unmaximize(asWidget());
-    }
 }

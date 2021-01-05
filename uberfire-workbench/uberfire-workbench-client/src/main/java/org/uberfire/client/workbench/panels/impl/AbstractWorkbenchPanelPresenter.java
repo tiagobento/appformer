@@ -206,16 +206,6 @@ public abstract class AbstractWorkbenchPanelPresenter<P extends AbstractWorkbenc
     }
 
     @Override
-    public void maximize() {
-        view.maximize();
-    }
-
-    @Override
-    public void unmaximize() {
-        view.unmaximize();
-    }
-
-    @Override
     public WorkbenchPanelView<P> getPanelView() {
         return view;
     }

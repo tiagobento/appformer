@@ -372,20 +372,4 @@ public abstract class AbstractDockingWorkbenchPanelView<P extends WorkbenchPanel
         }
         return false;
     }
-
-    /**
-     * Overridden to maximize the widget returned by {@link #getPartViewContainer()}.
-     */
-    @Override
-    public void maximize() {
-        layoutSelection.get().maximize(getPartViewContainer());
-    }
-
-    /**
-     * Overridden to match {@link #maximize()}.
-     */
-    @Override
-    public void unmaximize() {
-        layoutSelection.get().unmaximize(getPartViewContainer());
-    }
 }

@@ -17,6 +17,7 @@
 package org.uberfire.client.mvp;
 
 import java.util.Set;
+
 import javax.enterprise.context.ApplicationScoped;
 
 import org.jboss.errai.ioc.client.api.EnabledByProperty;
@@ -78,27 +79,5 @@ public class PluginActivityManagerImpl implements ActivityManager {
     public boolean isStarted(final Activity activity) {
         fail();
         return false;
-    }
-
-    @Override
-    public Set<Activity> getActivities(PlaceRequest placeRequest,
-                                       boolean secure) {
-        fail();
-        return null;
-    }
-
-    @Override
-    public Activity getActivity(PlaceRequest placeRequest,
-                                boolean secure) {
-        fail();
-        return null;
-    }
-
-    @Override
-    public <T extends Activity> T getActivity(Class<T> clazz,
-                                              PlaceRequest placeRequest,
-                                              boolean secure) {
-        fail();
-        return null;
     }
 }

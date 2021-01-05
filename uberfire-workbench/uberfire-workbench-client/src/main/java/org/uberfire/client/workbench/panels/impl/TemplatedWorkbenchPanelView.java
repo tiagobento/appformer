@@ -181,14 +181,4 @@ public class TemplatedWorkbenchPanelView implements WorkbenchPanelView<Templated
             }
         }
     }
-
-    @Override
-    public void maximize() {
-        layoutSelection.get().maximize(asWidget());
-    }
-
-    @Override
-    public void unmaximize() {
-        layoutSelection.get().unmaximize(asWidget());
-    }
 }

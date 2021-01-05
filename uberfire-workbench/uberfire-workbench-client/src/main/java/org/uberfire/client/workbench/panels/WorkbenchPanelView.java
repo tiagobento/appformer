@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import org.uberfire.client.mvp.UberView;
-import org.uberfire.client.workbench.WorkbenchLayout;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.model.PanelDefinition;
@@ -142,16 +141,6 @@ public interface WorkbenchPanelView<P extends WorkbenchPanelPresenter> extends U
      * If the return value is null, parts will not be droppable on this view.
      */
     Widget getPartDropRegion();
-
-    /**
-     * Maximizes this view using {@link WorkbenchLayout#maximize(Widget)}.
-     */
-    void maximize();
-
-    /**
-     * Restores this view to its original unmaximized size and position using {@link WorkbenchLayout#unmaximize(Widget)}.
-     */
-    void unmaximize();
 
     /**
      * Returns the parts currently held by the view.

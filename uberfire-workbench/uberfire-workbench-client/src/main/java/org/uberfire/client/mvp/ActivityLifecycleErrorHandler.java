@@ -63,9 +63,7 @@ public class ActivityLifecycleErrorHandler {
 
         try {
             errorHandlingInProgress = true;
-            ActivityLifecycleError event = new ActivityLifecycleError(failedActivity,
-                                                                      failedCall,
-                                                                      exception);
+            ActivityLifecycleError event = new ActivityLifecycleError(exception);
 
             try {
                 lifecycleErrorEvent.fire(event);
@@ -74,15 +72,13 @@ public class ActivityLifecycleErrorHandler {
                             ex);
             }
 
-            if (!event.isErrorMessageSuppressed()) {
-                StringBuilder message = new StringBuilder();
-                message.append(shortName(failedActivity.getClass()) + " failed in ").append(failedCall);
-                if (exception != null) {
-                    message.append(": ").append(exception.toString());
-                }
-                notificationManager.addNotification(new NotificationEvent(message.toString(),
-                                                                          NotificationType.ERROR));
+            StringBuilder message = new StringBuilder();
+            message.append(shortName(failedActivity.getClass()) + " failed in ").append(failedCall);
+            if (exception != null) {
+                message.append(": ").append(exception.toString());
             }
+            notificationManager.addNotification(new NotificationEvent(message.toString(),
+                                                                      NotificationType.ERROR));
         } finally {
             errorHandlingInProgress = false;
         }

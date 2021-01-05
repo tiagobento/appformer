@@ -44,9 +44,6 @@ public abstract class AbstractWorkbenchEditorActivity extends AbstractWorkbenchA
             if (path instanceof ObservablePath) {
                 onStartup((ObservablePath) path,
                           place);
-            } else if (this.isDynamic()) {
-                onStartup(path,
-                          place);
             }
         } else {
             super.onStartup(place);

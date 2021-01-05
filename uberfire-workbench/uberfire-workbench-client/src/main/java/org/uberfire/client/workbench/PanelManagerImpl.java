@@ -45,11 +45,8 @@ import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.mvp.UIPart;
 import org.uberfire.client.workbench.events.ChangeTitleWidgetEvent;
-import org.uberfire.client.workbench.events.DropPlaceEvent;
 import org.uberfire.client.workbench.events.PlaceGainFocusEvent;
 import org.uberfire.client.workbench.events.PlaceLostFocusEvent;
-import org.uberfire.client.workbench.events.PlaceMaximizedEvent;
-import org.uberfire.client.workbench.events.PlaceMinimizedEvent;
 import org.uberfire.client.workbench.events.SelectPlaceEvent;
 import org.uberfire.client.workbench.panels.DockingWorkbenchPanelPresenter;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
@@ -95,8 +92,6 @@ public class PanelManagerImpl implements PanelManager {
     protected Event<PlaceGainFocusEvent> placeGainFocusEvent;
     protected Event<PlaceLostFocusEvent> placeLostFocusEvent;
     protected Event<SelectPlaceEvent> selectPlaceEvent;
-    protected Event<PlaceMaximizedEvent> placeMaximizedEvent;
-    protected Event<PlaceMinimizedEvent> placeMinimizedEvent;
     protected SyncBeanManager iocManager;
     protected Instance<PlaceManager> placeManager;
     /**
@@ -114,18 +109,11 @@ public class PanelManagerImpl implements PanelManager {
      */
     private HandlerRegistration globalHandlerRegistration;
 
-    /**
-     * The currently maximized panel. Set to null when a panel is not maximized.
-     */
-    private WorkbenchPanelPresenter maximizedPanel = null;
-
     @Inject
     public PanelManagerImpl(
             Event<PlaceGainFocusEvent> placeGainFocusEvent,
             Event<PlaceLostFocusEvent> placeLostFocusEvent,
             Event<SelectPlaceEvent> selectPlaceEvent,
-            Event<PlaceMaximizedEvent> placeMaximizedEvent,
-            Event<PlaceMinimizedEvent> placeMinimizedEventEvent,
             SyncBeanManager iocManager,
             Instance<PlaceManager> placeManager,
             LayoutSelection layoutSelection,
@@ -134,8 +122,6 @@ public class PanelManagerImpl implements PanelManager {
         this.placeGainFocusEvent = placeGainFocusEvent;
         this.placeLostFocusEvent = placeLostFocusEvent;
         this.selectPlaceEvent = selectPlaceEvent;
-        this.placeMaximizedEvent = placeMaximizedEvent;
-        this.placeMinimizedEvent = placeMinimizedEventEvent;
         this.iocManager = iocManager;
         this.placeManager = placeManager;
         this.layoutSelection = layoutSelection;
@@ -152,14 +138,6 @@ public class PanelManagerImpl implements PanelManager {
                 if (event.getTypeInt() == com.google.gwt.user.client.Event.ONKEYPRESS &&
                         event.getNativeEvent().getCharCode() == 'm' &&
                         event.getNativeEvent().getCtrlKey()) {
-                    if (maximizedPanel != null) {
-                        maximizedPanel.unmaximize();
-                        maximizedPanel = null;
-                    } else if (activePart != null) {
-                        WorkbenchPanelPresenter activePanelPresenter = mapPanelDefinitionToPresenter.get(activePart.getParentPanel());
-                        activePanelPresenter.maximize();
-                        maximizedPanel = activePanelPresenter;
-                    }
                 }
             }
         });
@@ -342,16 +320,6 @@ public class PanelManagerImpl implements PanelManager {
     }
 
     @Override
-    public void onPartMaximized(final PartDefinition part) {
-        placeMaximizedEvent.fire(new PlaceMaximizedEvent(part.getPlace()));
-    }
-
-    @Override
-    public void onPartMinimized(final PartDefinition part) {
-        placeMinimizedEvent.fire(new PlaceMinimizedEvent(part.getPlace()));
-    }
-
-    @Override
     public PartDefinition getFocusedPart() {
         return activePart;
     }
@@ -393,14 +361,6 @@ public class PanelManagerImpl implements PanelManager {
                     onPanelFocus(e.getKey());
                 }
             }
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private void onDropPlaceEvent(@Observes DropPlaceEvent event) {
-        final PartDefinition part = getPartForPlace(event.getPlace());
-        if (part != null) {
-            removePart(part);
         }
     }
 

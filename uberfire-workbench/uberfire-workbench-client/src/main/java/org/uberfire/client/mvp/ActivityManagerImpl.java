@@ -63,19 +63,11 @@ public class ActivityManagerImpl implements ActivityManager {
     @Override
     public <T extends Activity> Set<T> getActivities(final Class<T> clazz) {
         // not calling onStartup. See UF-105.
-        return secure(iocManager.lookupBeans(clazz),
-                      true);
+        return secure(iocManager.lookupBeans(clazz));
     }
 
     @Override
     public Set<Activity> getActivities(final PlaceRequest placeRequest) {
-        return getActivities(placeRequest,
-                             true);
-    }
-
-    @Override
-    public Set<Activity> getActivities(final PlaceRequest placeRequest,
-                                       boolean secure) {
 
         final Collection<SyncBeanDef<Activity>> beans;
         if (placeRequest instanceof PathPlaceRequest) {
@@ -84,8 +76,7 @@ public class ActivityManagerImpl implements ActivityManager {
             beans = resolveById(placeRequest.getIdentifier());
         }
 
-        final Set<Activity> activities = startIfNecessary(secure(beans,
-                                                                 secure),
+        final Set<Activity> activities = startIfNecessary(secure(beans),
                                                           placeRequest);
 
         if (placeRequest instanceof PathPlaceRequest) {
@@ -130,33 +121,15 @@ public class ActivityManagerImpl implements ActivityManager {
     }
 
     @Override
-    public Activity getActivity(final PlaceRequest placeRequest) {
+    public Activity getActivity(PlaceRequest placeRequest) {
         return getActivity(Activity.class,
                            placeRequest);
     }
 
     @Override
-    public Activity getActivity(PlaceRequest placeRequest,
-                                boolean secure) {
-        return getActivity(Activity.class,
-                           placeRequest,
-                           secure);
-    }
-
-    @Override
     public <T extends Activity> T getActivity(final Class<T> clazz,
                                               final PlaceRequest placeRequest) {
-        return getActivity(clazz,
-                           placeRequest,
-                           true);
-    }
-
-    @Override
-    public <T extends Activity> T getActivity(final Class<T> clazz,
-                                              final PlaceRequest placeRequest,
-                                              final boolean secure) {
-        final Set<Activity> activities = getActivities(placeRequest,
-                                                       secure);
+        final Set<Activity> activities = getActivities(placeRequest);
         if (activities.size() == 0) {
             return null;
         }
@@ -205,8 +178,7 @@ public class ActivityManagerImpl implements ActivityManager {
         return beanDef.getScope();
     }
 
-    private <T extends Activity> Set<T> secure(final Collection<SyncBeanDef<T>> activityBeans,
-                                               final boolean protectedAccess) {
+    private <T extends Activity> Set<T> secure(final Collection<SyncBeanDef<T>> activityBeans) {
         final Set<T> activities = new HashSet<T>(activityBeans.size());
 
         for (final SyncBeanDef<T> activityBean : activityBeans) {
@@ -229,11 +201,7 @@ public class ActivityManagerImpl implements ActivityManager {
             if (!startedActivities.containsKey(activity)) {
                 startedActivities.put(activity,
                                       place);
-                if (activity.isDynamic() && place instanceof PathPlaceRequest) {
-                    activity.onStartup(ExternalPathPlaceRequest.create((PathPlaceRequest) place));
-                } else {
-                    activity.onStartup(place);
-                }
+                activity.onStartup(place);
             }
             return activity;
         } catch (Exception ex) {

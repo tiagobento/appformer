@@ -100,7 +100,6 @@ public class PlaceManagerImpl implements PlaceManager {
     private final Map<PlaceRequest, List<Command>> onOpenCallbacks = new HashMap<>();
     private final Map<PlaceRequest, List<Command>> onCloseCallbacks = new HashMap<>();
     private final Map<String, BiParameterizedCommand<Command, PlaceRequest>> perspectiveCloseChain = new HashMap<>();
-    private final Map<String, PopupActivity> activePopups = new HashMap<String, PopupActivity>();
     private final Map<PlaceRequest, Activity> onMayCloseList = new HashMap<PlaceRequest, Activity>();
     private EventBus tempBus = null;
     @Inject
@@ -357,7 +356,6 @@ public class PlaceManagerImpl implements PlaceManager {
      * {@code org.uberfire.client.mvp.PlaceManagerImpl.ignoreUnkownPlaces} property in {@link UberfirePreferences}.
      * @param place A non-null place request that could have originated from within application code, from within the
      * framework, or by parsing a hash fragment from a browser history event.
-     * @param lazyLoadingSuccessCallback
      * @return a non-null ResolvedRequest, where:
      * <ul>
      * <li>the Activity value is either the unambiguous resolved Activity instance, or null if the activity was
@@ -533,17 +531,6 @@ public class PlaceManagerImpl implements PlaceManager {
     }
 
     @Override
-    public void closePlace(final PlaceRequest placeToClose,
-                           final Command doAfterClose) {
-        if (placeToClose == null) {
-            return;
-        }
-        closePlace(placeToClose,
-                   false,
-                   doAfterClose);
-    }
-
-    @Override
     public void tryClosePlace(final PlaceRequest placeToClose,
                               final Command onAfterClose) {
         boolean execute;
@@ -572,49 +559,12 @@ public class PlaceManagerImpl implements PlaceManager {
                    true);
     }
 
-    @Override
-    public void closeAllPlaces() {
-        closeAllPlaces(false);
-    }
-
-    @Override
-    public void forceCloseAllPlaces() {
-        closeAllPlaces(true);
-    }
-
     private void closeAllPlaces(final boolean force) {
         final List<PlaceRequest> placesToClose = new ArrayList<>(visibleWorkbenchParts.keySet());
         for (PlaceRequest placeToClose : placesToClose) {
             closePlace(placeToClose,
                        force);
         }
-    }
-
-    @Override
-    public boolean closeAllPlacesOrNothing() {
-        final List<PlaceRequest> placesToClose = new ArrayList<>(visibleWorkbenchParts.keySet());
-        for (PlaceRequest placeToClose : placesToClose) {
-            if (!canClosePlace(placeToClose)) {
-                return false;
-            }
-        }
-
-        forceCloseAllPlaces();
-        return true;
-    }
-
-    @Override
-    public List<PlaceRequest> getUncloseablePlaces() {
-        final Set<PlaceRequest> placesToClose = visibleWorkbenchParts.keySet();
-        final List<PlaceRequest> uncloseablePlaces = new ArrayList<>();
-
-        for (PlaceRequest place : placesToClose) {
-            if (!canClosePlace(place)) {
-                uncloseablePlaces.add(place);
-            }
-        }
-
-        return uncloseablePlaces;
     }
 
     private boolean closeAllCurrentPanels() {
@@ -640,13 +590,6 @@ public class PlaceManagerImpl implements PlaceManager {
     }
 
     @Override
-    public void unregisterOnOpenCallbacks(final PlaceRequest place) {
-        checkNotNull("place",
-                     place);
-        this.onOpenCallbacks.remove(place);
-    }
-
-    @Override
     public void registerOnCloseCallback(final PlaceRequest place,
                                         final Command callback) {
         checkNotNull("place",
@@ -662,25 +605,6 @@ public class PlaceManagerImpl implements PlaceManager {
         }
 
         callbacks.add(callback);
-    }
-
-    @Override
-    public void unregisterOnCloseCallbacks(final PlaceRequest place) {
-        checkNotNull("place",
-                     place);
-        this.onCloseCallbacks.remove(place);
-    }
-
-    @Override
-    public void registerPerspectiveCloseChain(final String perspectiveIdentifier,
-                                              final BiParameterizedCommand<Command, PlaceRequest> closeChain) {
-        checkNotNull("perspectiveIdentifier",
-                     perspectiveIdentifier);
-        checkNotNull("closeChain",
-                     closeChain);
-
-        perspectiveCloseChain.put(perspectiveIdentifier,
-                                  closeChain);
     }
 
     @Override
@@ -803,33 +727,7 @@ public class PlaceManagerImpl implements PlaceManager {
     private IsWidget maybeWrapExternalWidget(WorkbenchActivity activity,
                                              Supplier<Element> element,
                                              Supplier<IsWidget> widget) {
-
-        if (activity.isDynamic()) {
-            final Element e = element.get();
-            return (e == null) ? null : ElementWrapperWidget.getWidget(e);
-        }
-
         return widget.get();
-    }
-
-    private void launchPopupActivity(final PlaceRequest place,
-                                     final PopupActivity activity) {
-
-        if (activePopups.get(place.getIdentifier()) != null) {
-            return;
-        }
-
-        activePopups.put(place.getIdentifier(),
-                         activity);
-
-        try {
-            activity.onOpen();
-        } catch (Exception ex) {
-            activePopups.remove(place.getIdentifier());
-            lifecycleErrorHandler.handle(activity,
-                                         LifecyclePhase.OPEN,
-                                         ex);
-        }
     }
 
     /**
@@ -988,25 +886,10 @@ public class PlaceManagerImpl implements PlaceManager {
                 return;
             }
 
-            activePopups.remove(place.getIdentifier());
-
             if (activity.isType(ActivityResourceType.SCREEN.name()) || activity.isType(ActivityResourceType.EDITOR.name())) {
                 WorkbenchActivity activity1 = (WorkbenchActivity) activity;
                 if (force || onMayCloseList.containsKey(place) || activity1.onMayClose()) {
                     onMayCloseList.remove(place);
-                    try {
-                        activity1.onClose();
-                    } catch (Exception ex) {
-                        lifecycleErrorHandler.handle(activity1,
-                                                     LifecyclePhase.CLOSE,
-                                                     ex);
-                    }
-                } else {
-                    return;
-                }
-            } else if (activity.isType(ActivityResourceType.POPUP.name())) {
-                PopupActivity activity1 = (PopupActivity) activity;
-                if (force || activity1.onMayClose()) {
                     try {
                         activity1.onClose();
                     } catch (Exception ex) {
@@ -1045,8 +928,7 @@ public class PlaceManagerImpl implements PlaceManager {
         };
     }
 
-    @Override
-    public boolean canClosePlace(final PlaceRequest place) {
+    private boolean canClosePlace(final PlaceRequest place) {
 
         final Activity activity = existingWorkbenchActivities.get(place);
         if (activity == null) {
@@ -1058,19 +940,9 @@ public class PlaceManagerImpl implements PlaceManager {
             if (onMayCloseList.containsKey(place) || activity1.onMayClose()) {
                 return true;
             }
-        } else if (activity.isType(ActivityResourceType.POPUP.name())) {
-            PopupActivity activity1 = (PopupActivity) activity;
-            if (activity1.onMayClose()) {
-                return true;
-            }
         }
 
         return false;
-    }
-
-    @Override
-    public boolean canCloseAllPlaces() {
-        return getUncloseablePlaces().isEmpty();
     }
 
     @SuppressWarnings("unused")

@@ -60,20 +60,11 @@ import com.google.gwt.user.client.ui.IsWidget;
 import org.jboss.errai.ioc.client.api.ActivatedBy;
 
 </#if>
-<#if isDynamic>
-import jsinterop.annotations.JsIgnore;
-import jsinterop.annotations.JsType;
-import org.jboss.errai.ioc.client.api.Shared;
-
-</#if>
 @Dependent
 @Generated("org.uberfire.annotations.processors.WorkbenchScreenProcessor")
 @Named("${identifier}")
 <#if beanActivatorClass??>
 @ActivatedBy(${beanActivatorClass}.class)
-</#if>
-<#if isDynamic>
-@JsType
 </#if>
 <#list qualifiers as qualifier>
 ${qualifier}
@@ -91,7 +82,7 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
 
     @Inject
     //Constructor injection for testing
-    public ${className}(<#if isDynamic>@Shared </#if>final PlaceManager placeManager) {
+    public ${className}(final PlaceManager placeManager) {
         super( placeManager );
     }
     <#if hasPresenterInitMethod>
@@ -186,7 +177,7 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
     </#if>
     <#if getTitleWidgetMethodName??>
 
-    <#if isDynamic>@JsIgnore </#if>@Override
+    @Override
     public IsWidget getTitleDecoration() {
         <#if isTitleWidgetMethodReturnTypeElement>
         return ElementWrapperWidget.getWidget( realPresenter.${getTitleWidgetMethodName}().getElement() );
@@ -204,7 +195,7 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
 
     </#if>
     <#if getWidgetMethodName??>
-    <#if isDynamic>@JsIgnore </#if>@Override
+    @Override
     public IsWidget getWidget() {
         <#if isWidgetMethodReturnTypeElement>
         return ElementWrapperWidget.getWidget( realPresenter.${getWidgetMethodName}().getElement() );
@@ -214,7 +205,7 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
     }
 
     <#elseif isWidget>
-    <#if isDynamic>@JsIgnore </#if>@Override
+    @Override
     public IsWidget getWidget() {
         return realPresenter;
     }
@@ -252,11 +243,4 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
     public String getIdentifier() {
         return "${identifier}";
     }
-    <#if isDynamic>
-
-    @Override
-    public boolean isDynamic() {
-    	return true;
-    }
-    </#if>
 }

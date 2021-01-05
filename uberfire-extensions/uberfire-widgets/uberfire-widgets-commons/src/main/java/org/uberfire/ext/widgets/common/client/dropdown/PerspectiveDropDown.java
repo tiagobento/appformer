@@ -17,6 +17,7 @@
 package org.uberfire.ext.widgets.common.client.dropdown;
 
 import java.util.Set;
+
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -26,7 +27,6 @@ import com.google.gwt.user.client.ui.Widget;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.uberfire.client.mvp.Activity;
 import org.uberfire.client.mvp.ActivityBeansCache;
-import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.ext.widgets.common.client.resources.i18n.CommonConstants;
 import org.uberfire.mvp.Command;
 
@@ -100,38 +100,6 @@ public class PerspectiveDropDown implements IsWidget {
         this.perspectiveIdsExcluded = perspectiveIdsExcluded;
     }
 
-    public PerspectiveActivity getDefaultPerspective() {
-        for (SyncBeanDef beanDef : activityBeansCache.getPerspectiveActivities()) {
-            PerspectiveActivity p = (PerspectiveActivity) beanDef.getInstance();
-            if (p.isDefault()) {
-                return p;
-            }
-        }
-        return null;
-    }
-
-    public PerspectiveActivity getSelectedPerspective() {
-        String selected = selectionHandler.getSelectedKey();
-        if (selected == null) {
-            return null;
-        }
-        SyncBeanDef beanDef = activityBeansCache.getActivity(selected);
-        PerspectiveActivity p = (PerspectiveActivity) beanDef.getInstance();
-        return p;
-    }
-
-    public void setSelectedPerspective(String perspectiveId) {
-        liveSearchDropDown.setSelectedItem(perspectiveId);
-    }
-
-    public void setSelectedPerspective(PerspectiveActivity selectedPerspective) {
-        liveSearchDropDown.setSelectedItem(selectedPerspective.getIdentifier());
-    }
-
-    public void setMaxItems(int maxItems) {
-        liveSearchDropDown.setMaxItems(maxItems);
-    }
-
     public void setWidth(int minWidth) {
         liveSearchDropDown.setWidth(minWidth);
     }
@@ -142,10 +110,6 @@ public class PerspectiveDropDown implements IsWidget {
 
     public void clear() {
         liveSearchDropDown.clear();
-    }
-
-    public String getItemName(PerspectiveActivity p) {
-        return getItemName(p.getIdentifier());
     }
 
     public String getItemName(String perspectiveId) {

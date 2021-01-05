@@ -17,10 +17,10 @@ package org.uberfire.client.mvp;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -37,34 +37,14 @@ public class ActivityBeansInfo {
     };
 
     private SyncBeanManager beanManager;
-    private ActivityBeansCache activityBeansCache;
 
     @Inject
-    public ActivityBeansInfo(SyncBeanManager beanManager, ActivityBeansCache activityBeansCache) {
+    public ActivityBeansInfo(SyncBeanManager beanManager) {
         this.beanManager = beanManager;
-        this.activityBeansCache = activityBeansCache;
     }
 
     public List<String> getAvailableWorkbenchScreensIds() {
         return lookupBeansId(WorkbenchScreenActivity.class);
-    }
-
-    public List<String> getAvailablePerspectivesIds() {
-        return activityBeansCache.getPerspectiveActivities().stream()
-                .map(this::getId)
-                .sorted(ALPHABETICAL_ORDER)
-                .collect(Collectors.toList());
-    }
-
-    public List<String> getAvailableWorkbenchEditorsIds() {
-        return lookupBeansId(WorkbenchEditorActivity.class);
-    }
-
-    public void addActivityBean(List<String> activityBeans,
-                                String newBean) {
-        activityBeans.add(newBean);
-        Collections.sort(activityBeans,
-                         ALPHABETICAL_ORDER);
     }
 
     private List<String> lookupBeansId(Class<?> activityClass) {

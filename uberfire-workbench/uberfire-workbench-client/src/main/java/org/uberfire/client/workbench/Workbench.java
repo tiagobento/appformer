@@ -129,7 +129,7 @@ public class Workbench {
 
         for (final SyncBeanDef<PerspectiveActivity> perspective : perspectives) {
             final PerspectiveActivity instance = perspective.getInstance();
-            if (instance.isDefault()) {
+            if (instance.getIdentifier().equals("AuthoringPerspective")) {
                 defaultPerspective = instance;
             } else {
                 iocManager.destroyBean(instance);

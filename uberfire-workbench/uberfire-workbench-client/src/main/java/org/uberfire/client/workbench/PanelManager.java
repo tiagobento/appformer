@@ -209,16 +209,6 @@ public interface PanelManager {
     void onPartHidden(PartDefinition part);
 
     /**
-     * @param part the part that has been maximized
-     */
-    void onPartMaximized(PartDefinition part);
-
-    /**
-     * @param part the part that has been minimized
-     */
-    void onPartMinimized(PartDefinition part);
-
-    /**
      * @return the focused {@link PartDefinition}
      */
     PartDefinition getFocusedPart();

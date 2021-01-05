@@ -53,12 +53,9 @@ public class ScreenActivityGenerator extends AbstractGenerator {
         messager.printMessage(Kind.NOTE,
                               "Starting code generation for [" + className + "]");
 
-        final Elements elementUtils = processingEnvironment.getElementUtils();
-
         //Extract required information
         final TypeElement classElement = (TypeElement) element;
         final String annotationName = ClientAPIModule.getWorkbenchScreenClass();
-        final boolean isDynamic = ClientAPIModule.getWbScreenIsDynamicValueOnClass(classElement);
 
         String identifier = null;
         Integer preferredHeight = null;
@@ -286,8 +283,6 @@ public class ScreenActivityGenerator extends AbstractGenerator {
                  getMenuBarMethodName);
         root.put("getToolBarMethodName",
                  getToolBarMethodName);
-        root.put("isDynamic",
-                 isDynamic);
         root.put("qualifiers",
                  qualifiers);
 

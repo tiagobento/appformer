@@ -34,8 +34,6 @@ public class ClientAPIModule {
     public static final String SIZE = "size";
     public static final String OWNING_PERSPECTIVE = "owningPerspective";
     public static final String IS_DEFAULT = "isDefault";
-    public static final String IS_DYNAMIC = "isDynamic";
-    public static final String IS_TRANSIENT = "isTransient";
     public static final String VALUE = "value";
     public static final String workbenchPerspective = "org.uberfire.client.annotations.WorkbenchPerspective";
     public static final String workbenchPopup = "org.uberfire.client.annotations.WorkbenchPopup";
@@ -153,49 +151,6 @@ public class ClientAPIModule {
             }
         }
         return null;
-    }
-
-    public static Boolean getWbPerspectiveScreenIsDefaultValueOnClass(TypeElement classElement) {
-        String bool = (getAnnotationStringParam(classElement,
-                                                workbenchPerspective,
-                                                IS_DEFAULT));
-        return Boolean.valueOf(bool);
-    }
-
-    public static Boolean getWbPerspectiveScreenIsDynamicValueOnClass(TypeElement classElement) {
-        String bool = (getAnnotationStringParam(classElement,
-                                                workbenchPerspective,
-                                                IS_DYNAMIC));
-        return Boolean.valueOf(bool);
-    }
-
-    public static Boolean getWbScreenIsDynamicValueOnClass(TypeElement classElement) {
-        String bool = (getAnnotationStringParam(classElement,
-                                                workbenchScreen,
-                                                IS_DYNAMIC));
-        return Boolean.valueOf(bool);
-    }
-
-    public static Boolean getWbEditorIsDynamicValueOnClass(TypeElement classElement) {
-        String bool = (getAnnotationStringParam(classElement,
-                                                workbenchEditor,
-                                                IS_DYNAMIC));
-        return Boolean.valueOf(bool);
-    }
-
-    public static Boolean getWbPerspectiveScreenIsTransientValueOnClass(TypeElement classElement) {
-        String bool = (getAnnotationStringParam(classElement,
-                                                workbenchPerspective,
-                                                IS_TRANSIENT));
-
-        // XXX this is non-ideal because it restates the default of the isTransient property
-        // we should use the getAnnotationValueWithDefaults method in this entire class so
-        // we aren't redundantly declaring defaults here
-        if (bool.isEmpty()) {
-            return true;
-        }
-
-        return Boolean.valueOf(bool);
     }
 
     public static String getWbPerspectiveScreenIdentifierValueOnClass(TypeElement classElement) {

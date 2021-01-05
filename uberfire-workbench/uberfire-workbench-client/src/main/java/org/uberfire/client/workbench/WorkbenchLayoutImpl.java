@@ -16,13 +16,8 @@
 
 package org.uberfire.client.workbench;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -43,21 +38,13 @@ import com.google.gwt.user.client.ui.HeaderPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.jboss.errai.common.client.dom.DOMUtil;
-import org.jboss.errai.common.client.dom.Div;
-import org.jboss.errai.common.client.dom.HTMLElement;
-import org.jboss.errai.common.client.ui.ElementWrapperWidget;
-import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.util.Layouts;
 import org.uberfire.client.workbench.docks.UberfireDocksContainer;
-import org.uberfire.client.workbench.events.WorkbenchProfileCssClass;
 import org.uberfire.client.workbench.widgets.dnd.WorkbenchDragAndDropManager;
 import org.uberfire.client.workbench.widgets.dnd.WorkbenchPickupDragController;
 import org.uberfire.mvp.Command;
 import org.uberfire.workbench.model.PerspectiveDefinition;
-
-import static java.util.Collections.sort;
 
 /**
  * The default layout implementation.
@@ -199,50 +186,6 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
                 ((RequiresResize) w).onResize();
             }
         }
-    }
-
-    @Override
-    public void maximize(final Widget w) {
-        maximize(w,
-                 null);
-    }
-
-    @Override
-    public void maximize(final Widget w,
-                         final Command callback) {
-        if (maximizedWidgetOriginalStyles.get(w) != null) {
-            return;
-        }
-
-        // this allows application-specified background colour, animation, borders, etc.
-        w.addStyleName(UF_MAXIMIZED_PANEL);
-
-        new ExpandAnimation(w,
-                            maximizedWidgetOriginalStyles,
-                            perspectiveRootContainer,
-                            callback).run();
-    }
-
-    @Override
-    public void unmaximize(final Widget w) {
-        unmaximize(w,
-                   null);
-    }
-
-    @Override
-    public void unmaximize(final Widget w,
-                           final Command callback) {
-        w.removeStyleName(UF_MAXIMIZED_PANEL);
-
-        new CollapseAnimation(w,
-                              maximizedWidgetOriginalStyles,
-                              callback).run();
-    }
-
-    public void addWorkbenchProfileCssClass(@Observes WorkbenchProfileCssClass workbenchProfileCssClass) {
-        root.removeStyleName(root.getStyleName());
-        root.addStyleName(UF_ROOT_CSS_CLASS);
-        root.addStyleName(workbenchProfileCssClass.getClassName());
     }
 
     protected static abstract class AbstractResizeAnimation extends Animation {

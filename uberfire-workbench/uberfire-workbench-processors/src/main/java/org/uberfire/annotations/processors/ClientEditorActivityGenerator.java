@@ -57,7 +57,6 @@ public class ClientEditorActivityGenerator extends AbstractGenerator {
         final TypeElement classElement = (TypeElement) element;
 
         final String annotationName = ClientAPIModule.getWorkbenchClientEditorClass();
-        final boolean isDynamic = ClientAPIModule.getWbEditorIsDynamicValueOnClass(classElement);
 
         String identifier = null;
 
@@ -278,8 +277,6 @@ public class ClientEditorActivityGenerator extends AbstractGenerator {
                  getContentMethodName);
         root.put("getPreviewMethodName",
                  getPreviewMethodName);
-        root.put("isDynamic",
-                 isDynamic);
         root.put("qualifiers",
                  qualifiers);
 

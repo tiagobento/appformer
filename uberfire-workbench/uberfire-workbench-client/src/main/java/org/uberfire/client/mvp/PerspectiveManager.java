@@ -16,9 +16,6 @@
 
 package org.uberfire.client.mvp;
 
-import java.util.Set;
-
-import org.uberfire.client.annotations.WorkbenchPerspective;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.WorkbenchServicesProxy;
 import org.uberfire.mvp.Command;
@@ -55,8 +52,6 @@ public interface PerspectiveManager {
      * perspective. This method has no effect if the current perspective is transient.
      * @param doWhenFinished action to execute after the save is complete (or immediately in the case of a transient perspective).
      * Must not be null. To do nothing, use {@link Commands#DO_NOTHING}.
-     * @see WorkbenchPerspective#isTransient()
-     * @see PerspectiveActivity#isTransient()
      */
     void savePerspectiveState(final Command doWhenFinished);
 
@@ -81,31 +76,9 @@ public interface PerspectiveManager {
                              final ParameterizedCommand<PerspectiveDefinition> doWhenFinished);
 
     /**
-     * Retrieves the definitions of all the persisted perspectives.
-     * @param doWhenFinished The command to execute once the perspective definitions are retrieved.
-     */
-    void loadPerspectiveStates(final ParameterizedCommand<Set<PerspectiveDefinition>> doWhenFinished);
-
-    /**
-     * This method removes any persisted definition for the given perspective. Subsequent requests for a previously
-     * persisted perspective should load the Perspective definition from the applicable object.
-     * @param doWhenFinished The command to execute once the perspective state have been removed. Must not be null.
-     */
-    void removePerspectiveState(final String perspectiveId,
-                                final Command doWhenFinished);
-
-    /**
      * This method removes all persisted Perspective definitions. Subsequent requests for previously persisted
      * perspectives should load the Perspective definition from the applicable object.
      * @param doWhenFinished The command to execute once the perspective states have been removed. Must not be null.
      */
     void removePerspectiveStates(final Command doWhenFinished);
-
-    /**
-     * Fetches the current default perspective identifier.
-     * @return The default perspective identifier of the workbench, if one exists.
-     */
-    String getDefaultPerspectiveIdentifier();
-
-    PlaceRequest getCurrentPerspectivePlaceRequest();
 }

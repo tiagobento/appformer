@@ -27,37 +27,10 @@ import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull
  */
 public class ActivityLifecycleError implements UberFireEvent {
 
-    private final Activity failedActivity;
-    private final LifecyclePhase failedCall;
     private final Throwable exception;
-    private boolean errorMessageSuppressed = false;
 
-    ActivityLifecycleError(Activity failedActivity,
-                           LifecyclePhase failedCall,
-                           Throwable exception) {
-        this.failedActivity = checkNotNull("failedActivity",
-                                           failedActivity);
-        this.failedCall = checkNotNull("failedCall",
-                                       failedCall);
+    ActivityLifecycleError(Throwable exception) {
         this.exception = exception;
-    }
-
-    /**
-     * Returns the Activity instance that threw the exception.
-     *
-     * @return the Activity that failed a lifecycle call. Never null.
-     */
-    public Activity getFailedActivity() {
-        return failedActivity;
-    }
-
-    /**
-     * Tells which lifecycle phase failed.
-     *
-     * @return the lifecycle phase that failed to happen. Never null.
-     */
-    public LifecyclePhase getFailedCall() {
-        return failedCall;
     }
 
     /**
@@ -67,27 +40,6 @@ public class ActivityLifecycleError implements UberFireEvent {
      */
     public Throwable getException() {
         return exception;
-    }
-
-    /**
-     * Tells the framework that it should not mention this failure in the workbench GUI. Once this method has been
-     * invoked, there is no way to flip it back. Any such mechanism would not be reliable, because observers are not
-     * called in a predictable order.
-     */
-    public void suppressErrorMessage() {
-        errorMessageSuppressed = true;
-    }
-
-    /**
-     * Tells whether a previous observer has requested that the standard error message in the GUI be suppressed. This is
-     * only truly useful to the originator of the event, who can examine the value after all observers have been
-     * notified. Application code should not rely on the return value of this method, because there is no guarantee what
-     * order observers are called in.
-     *
-     * @return true if any observer has invoked the {@link #suppressErrorMessage()} method on this event .
-     */
-    public boolean isErrorMessageSuppressed() {
-        return errorMessageSuppressed;
     }
 
     /**

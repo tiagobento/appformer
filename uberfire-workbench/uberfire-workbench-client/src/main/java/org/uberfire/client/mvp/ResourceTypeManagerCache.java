@@ -23,33 +23,24 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 
 import org.uberfire.client.workbench.type.ClientResourceType;
 import org.uberfire.workbench.category.Category;
 import org.uberfire.workbench.type.ResourceTypeDefinition;
 
-import static java.util.Collections.sort;
-
 @ApplicationScoped
 public class ResourceTypeManagerCache {
 
     private List<ActivityAndMetaInfo> resourceActivities = new ArrayList<>();
-    private CategoriesManagerCache categoriesManagerCache;
 
-    @Inject
-    public ResourceTypeManagerCache(CategoriesManagerCache categoriesManagerCache) {
-        this.categoriesManagerCache = categoriesManagerCache;
-    }
-
-    public void addAll(List<ClientResourceType> resourceTypeDefinitions) {
-        this.categoriesManagerCache.addAllFromResourceTypes(resourceTypeDefinitions);
+    public ResourceTypeManagerCache() {
     }
 
     public Set<ResourceTypeDefinition> getResourceTypeDefinitions() {
         return this.resourceActivities.stream()
-                .map(activityAndMetaInfo -> this.getResourceTypes(activityAndMetaInfo))
+                .map(this::getResourceTypes)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toSet());
     }
@@ -60,8 +51,6 @@ public class ResourceTypeManagerCache {
 
     public void addResourceActivity(ActivityAndMetaInfo activityAndMetaInfo) {
         getResourceActivities().add(activityAndMetaInfo);
-        List<ClientResourceType> resourceTypes = getResourceTypes(activityAndMetaInfo);
-        this.addAll(resourceTypes);
     }
 
     private List<ClientResourceType> getResourceTypes(ActivityAndMetaInfo activityAndMetaInfo) {
@@ -82,15 +71,6 @@ public class ResourceTypeManagerCache {
     }
 
     public void sortResourceActivitiesByPriority() {
-        sort(resourceActivities,
-             (o1, o2) -> {
-                 if (o1.getPriority() < o2.getPriority()) {
-                     return 1;
-                 } else if (o1.getPriority() > o2.getPriority()) {
-                     return -1;
-                 } else {
-                     return 0;
-                 }
-             });
+        resourceActivities.sort((o1, o2) -> Integer.compare(o2.getPriority(), o1.getPriority()));
     }
 }

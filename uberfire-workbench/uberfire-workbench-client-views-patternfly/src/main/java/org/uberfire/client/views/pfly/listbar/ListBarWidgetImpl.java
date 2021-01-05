@@ -58,9 +58,7 @@ import org.jboss.errai.common.client.ui.ElementWrapperWidget;
 import org.jboss.errai.ioc.client.container.IOCResolutionException;
 import org.uberfire.client.util.CSSLocatorsUtils;
 import org.uberfire.client.util.Layouts;
-import org.uberfire.client.views.pfly.maximize.MaximizeToggleButton;
 import org.uberfire.client.workbench.PanelManager;
-import org.uberfire.client.workbench.panels.MaximizeToggleButtonPresenter;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.client.workbench.widgets.dnd.WorkbenchDragAndDropManager;
@@ -112,12 +110,6 @@ public class ListBarWidgetImpl
     @UiField
     ButtonGroup toolBar;
     @UiField
-    MaximizeToggleButton maximizeButton;
-    /**
-     * Wraps maximizeButton, which is the view.
-     */
-    MaximizeToggleButtonPresenter maximizeButtonPresenter;
-    @UiField
     PanelBody content;
     WorkbenchPanelPresenter presenter;
     LinkedList<PartDefinition> parts = new LinkedList<>();
@@ -126,7 +118,6 @@ public class ListBarWidgetImpl
     @PostConstruct
     void postConstruct() {
         initWidget(uiBinder.createAndBindUi(this));
-        maximizeButtonPresenter = new MaximizeToggleButtonPresenter(maximizeButton);
         titleDropDown.setHideOnSingleElement(getListbarPreferences().isHideTitleDropDownOnSingleElement());
         setupEventHandlers();
 
@@ -143,19 +134,8 @@ public class ListBarWidgetImpl
             }
         });
 
-        this.maximizeButton.addClickHandler(event -> {
-            if (maximizeButton.isMaximized()) {
-                panelManager.onPartMaximized(currentPart.getK1());
-            } else {
-                panelManager.onPartMinimized(currentPart.getK1());
-            }
-        });
-
         closeButton.addClickHandler(event -> {
             if (currentPart != null) {
-                if (maximizeButton.isMaximized()) {
-                    panelManager.onPartMinimized(currentPart.getK1());
-                }
                 panelManager.closePart(currentPart.getK1());
             }
         });
@@ -556,17 +536,6 @@ public class ListBarWidgetImpl
         }
     }
 
-    /**
-     * Returns the toggle button, that can be used to trigger maximizing and unmaximizing
-     * of the panel containing this list bar. Make the button visible by calling {@link Widget#setVisible(boolean)}
-     * and set its maximize and unmaximize actions with {@link MaximizeToggleButton#setMaximizeCommand(Command)} and
-     * {@link MaximizeToggleButton#setUnmaximizeCommand(Command)}.
-     */
-    @Override
-    public MaximizeToggleButtonPresenter getMaximizeButton() {
-        return maximizeButtonPresenter;
-    }
-
     @Override
     public boolean isDndEnabled() {
         return this.titleDropDown.isDndEnabled();
@@ -580,11 +549,6 @@ public class ListBarWidgetImpl
     @Override
     public void disableClosePart() {
         closeButton.setVisible(false);
-    }
-
-    @Override
-    public void disableExpandPart() {
-        maximizeButton.setVisible(false);
     }
 
     Collection<PartDefinition> getUnselectedParts() {
