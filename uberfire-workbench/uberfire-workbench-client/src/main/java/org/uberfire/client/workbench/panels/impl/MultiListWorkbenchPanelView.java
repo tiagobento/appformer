@@ -38,7 +38,6 @@ public class MultiListWorkbenchPanelView
 
     @Override
     protected MultiPartWidget setupWidget() {
-        listBar.disableDnd();
         addOnFocusHandler(listBar);
         addSelectionHandler(listBar);
         return listBar;

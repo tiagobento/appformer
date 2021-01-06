@@ -56,7 +56,6 @@ public abstract class AbstractMultiPartWorkbenchPanelView<P extends AbstractMult
     public void init(final P presenter) {
         this.presenter = presenter;
         widget.setPresenter(presenter);
-        widget.setDndManager(dndManager);
     }
 
     @Override

@@ -21,7 +21,6 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 import com.google.gwt.animation.client.Animation;
@@ -41,8 +40,6 @@ import com.google.gwt.user.client.ui.Widget;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.util.Layouts;
 import org.uberfire.client.workbench.docks.UberfireDocksContainer;
-import org.uberfire.client.workbench.widgets.dnd.WorkbenchDragAndDropManager;
-import org.uberfire.client.workbench.widgets.dnd.WorkbenchPickupDragController;
 import org.uberfire.mvp.Command;
 import org.uberfire.workbench.model.PerspectiveDefinition;
 
@@ -79,15 +76,10 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
      * the RootLayoutPanel.
      */
     private HeaderPanel root;
-    private WorkbenchDragAndDropManager dndManager;
     /**
      * An abstraction for DockLayoutPanel used by Uberfire Docks.
      */
     private UberfireDocksContainer uberfireDocksContainer;
-    /**
-     * We read the drag boundary panel out of this, and sandwich it between the root panel and the perspective container panel.
-     */
-    private WorkbenchPickupDragController dragController;
 
     public WorkbenchLayoutImpl() {
 
@@ -96,21 +88,16 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
     @Inject
     public WorkbenchLayoutImpl(SyncBeanManager iocManager,
                                HeaderPanel root,
-                               WorkbenchDragAndDropManager dndManager,
-                               UberfireDocksContainer uberfireDocksContainer,
-                               WorkbenchPickupDragController dragController) {
+                               UberfireDocksContainer uberfireDocksContainer) {
 
         this.iocManager = iocManager;
         this.root = root;
-        this.dndManager = dndManager;
         this.uberfireDocksContainer = uberfireDocksContainer;
-        this.dragController = dragController;
     }
 
     @PostConstruct
     private void init() {
         perspectiveRootContainer.ensureDebugId("perspectiveRootContainer");
-        dragController.getBoundaryPanel().ensureDebugId("workbenchDragBoundary");
         root.addStyleName(UF_ROOT_CSS_CLASS);
     }
 
@@ -126,16 +113,10 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
 
     @Override
     public void onBootstrap() {
-        dndManager.unregisterDropControllers();
-
-        AbsolutePanel dragBoundary = dragController.getBoundaryPanel();
-        dragBoundary.add(perspectiveRootContainer);
-
         setupDocksContainer();
-        rootContainer.add(dragBoundary);
+        rootContainer.add(perspectiveRootContainer);
 
         Layouts.setToFillParent(perspectiveRootContainer);
-        Layouts.setToFillParent(dragBoundary);
         Layouts.setToFillParent(rootContainer);
 
         root.setContentWidget(rootContainer);

@@ -61,7 +61,6 @@ import org.uberfire.client.util.Layouts;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
-import org.uberfire.client.workbench.widgets.dnd.WorkbenchDragAndDropManager;
 import org.uberfire.client.workbench.widgets.listbar.ListBarWidget;
 import org.uberfire.client.workbench.widgets.listbar.ListbarPreferences;
 import org.uberfire.client.workbench.widgets.listbar.ResizeFocusPanel;
@@ -98,8 +97,6 @@ public class ListBarWidgetImpl
     @UiField
     FocusPanel container;
     @UiField
-    PartListDropdown titleDropDown;
-    @UiField
     PanelHeader header;
     @UiField
     Panel panel;
@@ -118,7 +115,6 @@ public class ListBarWidgetImpl
     @PostConstruct
     void postConstruct() {
         initWidget(uiBinder.createAndBindUi(this));
-        titleDropDown.setHideOnSingleElement(getListbarPreferences().isHideTitleDropDownOnSingleElement());
         setupEventHandlers();
 
         Layouts.setToFillParent(this);
@@ -126,8 +122,6 @@ public class ListBarWidgetImpl
     }
 
     void setupEventHandlers() {
-        this.container.addMouseOutHandler(event -> titleDropDown.removeStyleName("open"));
-
         this.container.addFocusHandler(event -> {
             if (currentPart != null && currentPart.getK1() != null) {
                 selectPart(currentPart.getK1());
@@ -139,10 +133,6 @@ public class ListBarWidgetImpl
                 panelManager.closePart(currentPart.getK1());
             }
         });
-
-        titleDropDown.addSelectionHandler(event -> selectPart(event.getSelectedItem()));
-
-        titleDropDown.addCloseHandler(event -> panelManager.closePart(event.getTarget()));
     }
 
     ListbarPreferences getListbarPreferences() {
@@ -154,23 +144,8 @@ public class ListBarWidgetImpl
     }
 
     @Override
-    public void enableDnd() {
-        titleDropDown.enableDragAndDrop();
-    }
-
-    @Override
-    public void disableDnd() {
-        titleDropDown.disableDragAndDrop();
-    }
-
-    @Override
     public void setPresenter(final WorkbenchPanelPresenter presenter) {
         this.presenter = presenter;
-    }
-
-    @Override
-    public void setDndManager(final WorkbenchDragAndDropManager dndManager) {
-        this.titleDropDown.setDndManager(dndManager);
     }
 
     @Override
@@ -181,7 +156,6 @@ public class ListBarWidgetImpl
 
         parts.clear();
         partContentView.clear();
-        titleDropDown.clear();
         currentPart = null;
     }
 
@@ -206,10 +180,6 @@ public class ListBarWidgetImpl
         partContentView.put(partDefinition,
                             panel);
 
-        if (partDefinition.isSelectable()) {
-            titleDropDown.addPart(view);
-        }
-
         header.setVisible(true);
 
         resizePanelBody();
@@ -228,11 +198,7 @@ public class ListBarWidgetImpl
     public void changeTitle(final PartDefinition part,
                             final String title,
                             final IsWidget titleDecoration) {
-        if (part.isSelectable()) {
-            titleDropDown.changeTitle(part,
-                                      title,
-                                      titleDecoration);
-        }
+
     }
 
     @Override
@@ -257,7 +223,6 @@ public class ListBarWidgetImpl
         parts.remove(currentPart.getK1());
 
         if (part.isSelectable()) {
-            titleDropDown.selectPart(part);
             setupContextMenu();
             header.setVisible(true);
         } else {
@@ -292,10 +257,6 @@ public class ListBarWidgetImpl
 
     @Override
     public boolean remove(final PartDefinition part) {
-        if (part.isSelectable()) {
-            titleDropDown.removePart(part);
-        }
-
         if (currentPart != null && currentPart.getK1().asString().equals(part.asString())) {
             PartDefinition nextPart = getNextPart(part);
 
@@ -534,11 +495,6 @@ public class ListBarWidgetImpl
             content.getElement().getStyle().setProperty("height",
                                                         "calc(100% - " + header.getOffsetHeight() + "px)");
         }
-    }
-
-    @Override
-    public boolean isDndEnabled() {
-        return this.titleDropDown.isDndEnabled();
     }
 
     @Override

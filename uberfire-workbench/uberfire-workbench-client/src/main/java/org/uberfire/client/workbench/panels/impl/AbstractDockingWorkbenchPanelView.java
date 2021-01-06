@@ -20,7 +20,6 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 
 import com.google.gwt.core.client.Scheduler;
@@ -34,16 +33,15 @@ import org.uberfire.client.workbench.BeanFactory;
 import org.uberfire.client.workbench.panels.DockingWorkbenchPanelView;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
 import org.uberfire.client.workbench.panels.WorkbenchPanelView;
-import org.uberfire.client.workbench.widgets.dnd.WorkbenchDragAndDropManager;
 import org.uberfire.client.workbench.widgets.listbar.ResizeFlowPanel;
 import org.uberfire.client.workbench.widgets.split.WorkbenchSplitLayoutPanel;
 import org.uberfire.workbench.model.CompassPosition;
 import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.Position;
 
+import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull;
 import static org.uberfire.client.util.Layouts.setToFillParent;
 import static org.uberfire.client.util.Layouts.widthOrHeight;
-import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull;
 import static org.uberfire.plugin.PluginUtil.toInteger;
 
 /**
@@ -68,9 +66,6 @@ public abstract class AbstractDockingWorkbenchPanelView<P extends WorkbenchPanel
         extends AbstractWorkbenchPanelView<P> implements DockingWorkbenchPanelView<P> {
 
     private final IdentityHashMap<WorkbenchPanelView<?>, WorkbenchSplitLayoutPanel> viewSplitters = new IdentityHashMap<WorkbenchPanelView<?>, WorkbenchSplitLayoutPanel>();
-
-    @Inject
-    protected WorkbenchDragAndDropManager dndManager;
 
     @Inject
     protected BeanFactory factory;
@@ -181,17 +176,6 @@ public abstract class AbstractDockingWorkbenchPanelView<P extends WorkbenchPanel
         topLevelWidget.add(partViewContainer);
         setToFillParent(topLevelWidget);
         setToFillParent(partViewContainer);
-        if (getPartDropRegion() != null) {
-            dndManager.registerDropController(this,
-                                              factory.newDropController(this));
-        }
-    }
-
-    @PreDestroy
-    private void tearDownDockingPanel() {
-        if (getPartDropRegion() != null) {
-            dndManager.unregisterDropController(this);
-        }
     }
 
     /**

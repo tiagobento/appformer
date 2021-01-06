@@ -27,10 +27,8 @@ import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.TemplatedActivity;
 import org.uberfire.client.mvp.jsbridge.JsWorkbenchLazyPerspective;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
-import org.uberfire.client.workbench.panels.WorkbenchPanelView;
 import org.uberfire.client.workbench.panels.impl.TemplatedWorkbenchPanelPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
-import org.uberfire.client.workbench.widgets.dnd.CompassDropController;
 import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
 import org.uberfire.workbench.model.menu.Menus;
@@ -90,13 +88,6 @@ public class DefaultBeanFactory
             }
         }
         throw new IllegalArgumentException("Unknown panel type: " + definition.getPanelType());
-    }
-
-    @Override
-    public CompassDropController newDropController(final WorkbenchPanelView<?> view) {
-        final CompassDropController dropController = iocManager.lookupBean(CompassDropController.class).getInstance();
-        dropController.setup(view);
-        return dropController;
     }
 
     @Override

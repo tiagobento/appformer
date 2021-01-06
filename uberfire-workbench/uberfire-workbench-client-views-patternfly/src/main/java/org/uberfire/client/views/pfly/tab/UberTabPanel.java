@@ -51,7 +51,6 @@ import org.uberfire.client.workbench.panels.MultiPartWidget;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter.View;
-import org.uberfire.client.workbench.widgets.dnd.WorkbenchDragAndDropManager;
 import org.uberfire.mvp.Command;
 import org.uberfire.workbench.model.PartDefinition;
 
@@ -71,13 +70,11 @@ import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull
 public class UberTabPanel extends ResizeComposite implements MultiPartWidget,
                                                              ClickHandler {
 
-    private static final int MARGIN = 20;
     final List<WorkbenchPartPresenter> parts = new ArrayList<WorkbenchPartPresenter>();
     final Map<WorkbenchPartPresenter.View, TabPanelEntry> tabIndex = new HashMap<WorkbenchPartPresenter.View, TabPanelEntry>();
     final Map<TabPanelEntry, WorkbenchPartPresenter.View> tabInvertedIndex = new HashMap<TabPanelEntry, WorkbenchPartPresenter.View>();
     final Map<PartDefinition, TabPanelEntry> partTabIndex = new HashMap<PartDefinition, TabPanelEntry>();
     private final List<Command> focusGainedHandlers = new ArrayList<Command>();
-    WorkbenchDragAndDropManager dndManager;
     private ResizeTabPanel tabPanel;
     private DropDownTab dropdownTab;
     /**
@@ -290,8 +287,6 @@ public class UberTabPanel extends ResizeComposite implements MultiPartWidget,
             partTabIndex.put(view.getPresenter().getDefinition(),
                              tab);
 
-            dndManager.makeDraggable(view,
-                                     tab.getTabWidget());
             addCloseToTab(tab);
 
             parts.add(view.getPresenter());
@@ -332,11 +327,6 @@ public class UberTabPanel extends ResizeComposite implements MultiPartWidget,
         });
 
         tab.getTabWidget().addToAnchor(close);
-    }
-
-    @Override
-    public void setDndManager(final WorkbenchDragAndDropManager dndManager) {
-        this.dndManager = dndManager;
     }
 
     @Override

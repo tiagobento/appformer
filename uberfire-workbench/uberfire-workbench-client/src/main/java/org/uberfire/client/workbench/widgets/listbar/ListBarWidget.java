@@ -15,7 +15,6 @@
  */
 package org.uberfire.client.workbench.widgets.listbar;
 
-import com.google.gwt.user.client.ui.Widget;
 import org.uberfire.client.workbench.panels.MultiPartWidget;
 import org.uberfire.client.workbench.panels.impl.AbstractSimpleWorkbenchPanelView;
 import org.uberfire.client.workbench.panels.impl.MultiListWorkbenchPanelView;
@@ -26,29 +25,6 @@ import org.uberfire.client.workbench.panels.impl.MultiListWorkbenchPanelView;
  * (usually this will come from the view module). The implementing type must be a Dependent-scoped CDI bean.
  */
 public interface ListBarWidget extends MultiPartWidget {
-
-    /**
-     * When a part is added to the list bar, a special title widget is created for it. This title widget is draggable.
-     * To promote testability, implementations of this interface must set the draggable title widget's debug ID using
-     * the {@code Widget.ensureDebugId()} call. The debug ID must have the form
-     * {@code DEBUG_ID_PREFIX + DEBUG_TITLE_PREFIX + partName}.
-     * <p>
-     * Note that debug IDs are only assigned when the app inherits the GWT Debug module. See
-     * {@link Widget#ensureDebugId(com.google.gwt.dom.client.Element, String)} for details.
-     */
-    public static final String DEBUG_TITLE_PREFIX = "ListBar-title-";
-
-    /**
-     * Enable this list bar's to support drag and drop.
-     */
-    public void enableDnd();
-
-    /**
-     * Disable this list bar's to support drag and drop.
-     */
-    public void disableDnd();
-
-    public boolean isDndEnabled();
 
     /**
      * Enable support to close parts.
