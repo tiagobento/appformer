@@ -16,12 +16,11 @@
 package org.uberfire.client.workbench.widgets.listbar;
 
 import org.uberfire.client.workbench.panels.MultiPartWidget;
-import org.uberfire.client.workbench.panels.impl.AbstractSimpleWorkbenchPanelView;
 import org.uberfire.client.workbench.panels.impl.MultiListWorkbenchPanelView;
 
 /**
- * API contract for the header widget of panel views that extend {@link AbstractSimpleWorkbenchPanelView} and
- * {@link MultiListWorkbenchPanelView}. Each application needs exactly one implementation of this class at compile time
+ * API contract for the header widget of panel views that extend {@link MultiListWorkbenchPanelView}.
+ * Each application needs exactly one implementation of this class at compile time
  * (usually this will come from the view module). The implementing type must be a Dependent-scoped CDI bean.
  */
 public interface ListBarWidget extends MultiPartWidget {

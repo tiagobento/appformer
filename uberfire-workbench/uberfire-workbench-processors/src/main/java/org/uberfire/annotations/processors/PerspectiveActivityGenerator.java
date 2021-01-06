@@ -36,8 +36,6 @@ import freemarker.template.TemplateException;
 import org.uberfire.annotations.processors.exceptions.GenerationException;
 import org.uberfire.annotations.processors.facades.ClientAPIModule;
 
-import static org.uberfire.annotations.processors.TemplateInformationHelper.extractWbTemplatePerspectiveInformation;
-
 /**
  * Generates a Java source file enerator for Activities
  */
@@ -123,25 +121,6 @@ public class PerspectiveActivityGenerator extends AbstractGenerator {
 
         Map<String, Object> root = new HashMap<String, Object>();
 
-        TemplateInformation helper = extractWbTemplatePerspectiveInformation(elementUtils,
-                                                                             classElement);
-
-        if (helper.getDefaultPanel() != null) {
-            root.put("defaultPanel",
-                     helper.getDefaultPanel());
-        }
-        root.put("wbPanels",
-                 helper.getTemplateFields());
-
-        if (getPerspectiveMethodName == null && !helper.thereIsTemplateFields()) {
-            throw new GenerationException("A WorkbenchPerspective class must have either a valid @Perspective method or at least one @WorkbenchPanel field.",
-                                          packageName + "." + className);
-        }
-
-        if (getPerspectiveMethodName != null && helper.thereIsTemplateFields()) {
-            throw new GenerationException("This WorkbenchPerspective has both a @Perspective method and a @WorkbenchPanel field. Only one or the other is allowed.");
-        }
-
         //Setup data for FreeMarker
         root.put("packageName",
                  packageName);
@@ -149,8 +128,6 @@ public class PerspectiveActivityGenerator extends AbstractGenerator {
                  className);
         root.put("identifier",
                  identifier);
-        root.put("isTemplate",
-                 helper.thereIsTemplateFields());
         root.put("realClassName",
                  classElement.getSimpleName().toString());
         root.put("beanActivatorClass",

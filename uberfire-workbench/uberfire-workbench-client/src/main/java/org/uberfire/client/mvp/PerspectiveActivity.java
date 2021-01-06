@@ -18,7 +18,6 @@ package org.uberfire.client.mvp;
 import java.util.function.Consumer;
 
 import jsinterop.annotations.JsType;
-import org.uberfire.client.workbench.WorkbenchServicesProxy;
 import org.uberfire.workbench.model.PerspectiveDefinition;
 import org.uberfire.workbench.model.menu.Menus;
 import org.uberfire.workbench.model.toolbar.ToolBar;
@@ -31,7 +30,6 @@ public interface PerspectiveActivity extends ContextSensitiveActivity {
      * Each time this method is called, it must produce a new PerspectiveDefinition. This rule applies whether or not
      * the perspective is transient.
      * @return the perspective layout to use when a previously saved one is not available.
-     * @see WorkbenchServicesProxy#loadPerspective(String, org.uberfire.mvp.ParameterizedCommand)
      */
     PerspectiveDefinition getDefaultPerspectiveLayout();
 

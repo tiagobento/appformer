@@ -17,7 +17,6 @@
 package org.uberfire.client.mvp;
 
 import org.uberfire.client.workbench.PanelManager;
-import org.uberfire.client.workbench.WorkbenchServicesProxy;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.Commands;
 import org.uberfire.mvp.ParameterizedCommand;
@@ -31,7 +30,7 @@ import org.uberfire.workbench.model.PerspectiveDefinition;
  * modified it (for example, by dragging and dropping components, launching new activities, and so on).
  * <p/>
  * Structurally, the PerspectiveManager performs actions at the request of the {@link PlaceManager}, and it accomplishes
- * these actions by delegating to the {@link PanelManager} and {@link WorkbenchServicesProxy}.
+ * these actions by delegating to the {@link PanelManager}.
  */
 public interface PerspectiveManager {
 
@@ -74,11 +73,4 @@ public interface PerspectiveManager {
     void switchToPerspective(final PlaceRequest placeRequest,
                              final PerspectiveActivity perspective,
                              final ParameterizedCommand<PerspectiveDefinition> doWhenFinished);
-
-    /**
-     * This method removes all persisted Perspective definitions. Subsequent requests for previously persisted
-     * perspectives should load the Perspective definition from the applicable object.
-     * @param doWhenFinished The command to execute once the perspective states have been removed. Must not be null.
-     */
-    void removePerspectiveStates(final Command doWhenFinished);
 }

@@ -18,7 +18,6 @@ package org.uberfire.client.mvp;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Set;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
@@ -27,7 +26,6 @@ import javax.inject.Inject;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.workbench.PanelManager;
-import org.uberfire.client.workbench.WorkbenchServicesProxy;
 import org.uberfire.client.workbench.events.PerspectiveChange;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.ParameterizedCommand;
@@ -46,9 +44,6 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     private PanelManager panelManager;
 
     @Inject
-    private WorkbenchServicesProxy wbServices;
-
-    @Inject
     private Event<PerspectiveChange> perspectiveChangeEvent;
 
     @Inject
@@ -60,8 +55,6 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     private PerspectiveActivity currentPerspective;
 
     private PerspectiveDefinition livePerspectiveDef;
-
-    private PlaceRequest currentPerspectivePlaceRequest;
 
     @Override
     public void switchToPerspective(final PlaceRequest placeRequest,
@@ -99,11 +92,6 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
         doWhenFinished.execute();
     }
 
-    @Override
-    public void removePerspectiveStates(final Command doWhenFinished) {
-        wbServices.removePerspectiveStates(doWhenFinished);
-    }
-
     Iterator<SyncBeanDef<AbstractWorkbenchPerspectiveActivity>> getPerspectivesIterator() {
         final Collection<SyncBeanDef<AbstractWorkbenchPerspectiveActivity>> perspectives = iocManager.lookupBeans(AbstractWorkbenchPerspectiveActivity.class);
         return perspectives.iterator();
@@ -132,7 +120,6 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
         @Override
         public void execute() {
-            currentPerspectivePlaceRequest = placeRequest;
             currentPerspective = perspective;
             doAfterFetch.execute(perspective.getDefaultPerspectiveLayout());
         }

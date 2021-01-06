@@ -24,10 +24,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.mvp.PerspectiveActivity;
-import org.uberfire.client.mvp.TemplatedActivity;
-import org.uberfire.client.mvp.jsbridge.JsWorkbenchLazyPerspective;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
-import org.uberfire.client.workbench.panels.impl.TemplatedWorkbenchPanelPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
@@ -62,19 +59,7 @@ public class DefaultBeanFactory
     @Override
     public WorkbenchPanelPresenter newRootPanel(PerspectiveActivity activity,
                                                 PanelDefinition root) {
-        WorkbenchPanelPresenter panel = newWorkbenchPanel(root);
-        if (panel instanceof TemplatedWorkbenchPanelPresenter) {
-
-            final TemplatedActivity templatedActivity;
-            if (activity instanceof JsWorkbenchLazyPerspective) {
-                templatedActivity = (TemplatedActivity) ((JsWorkbenchLazyPerspective) activity).get();
-            } else {
-                templatedActivity = (TemplatedActivity) activity;
-            }
-
-            ((TemplatedWorkbenchPanelPresenter) panel).setActivity(templatedActivity);
-        }
-        return panel;
+        return newWorkbenchPanel(root);
     }
 
     @Override
