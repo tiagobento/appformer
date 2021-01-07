@@ -25,7 +25,6 @@ import java.util.Set;
 import org.jboss.errai.ioc.client.container.DynamicAnnotation;
 import org.jboss.errai.ioc.client.container.IOCBeanDef;
 import org.uberfire.client.workbench.annotations.AssociatedResources;
-import org.uberfire.client.workbench.annotations.Priority;
 import org.uberfire.client.workbench.type.ClientResourceType;
 import org.uberfire.commons.data.Pair;
 
@@ -36,9 +35,6 @@ public class ActivityMetaInfo {
         AssociatedResources associatedResources = null;
         DynamicAnnotation dynAssociatedResources = null;
 
-        Priority priority = null;
-        DynamicAnnotation dynPriority = null;
-
         final Set<Annotation> annotations = beanDefinition.getQualifiers();
         final boolean dynamic = beanDefinition.isDynamic();
 
@@ -48,10 +44,6 @@ public class ActivityMetaInfo {
                 associatedResources = (AssociatedResources) a;
             } else if (da != null && AssociatedResources.class.getName().equals(da.getName())) {
                 dynAssociatedResources = da;
-            } else if (a instanceof Priority) {
-                priority = (Priority) a;
-            } else if (da != null && Priority.class.getName().equals(da.getName())) {
-                dynPriority = da;
             }
         }
 
@@ -59,18 +51,7 @@ public class ActivityMetaInfo {
             return null;
         }
 
-        final int priorityValue;
-        if (priority == null && dynPriority == null) {
-            priorityValue = 0;
-        } else {
-            if (dynamic) {
-                priorityValue = Integer.valueOf(dynPriority.getMember("value"));
-            } else {
-                priorityValue = priority.value();
-            }
-        }
-
-        final List<String> types = new ArrayList<String>();
+        final List<String> types = new ArrayList<>();
         if (dynamic) {
             String resourceTypes = dynAssociatedResources.getMember("value");
             resourceTypes = resourceTypes.substring(1,
@@ -82,7 +63,7 @@ public class ActivityMetaInfo {
             }
         }
 
-        return Pair.newPair(priorityValue,
+        return Pair.newPair(0,
                             types);
     }
 }

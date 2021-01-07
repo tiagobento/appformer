@@ -17,8 +17,6 @@
 package org.uberfire.client.mvp;
 
 import org.uberfire.client.workbench.PanelManager;
-import org.uberfire.mvp.Command;
-import org.uberfire.mvp.Commands;
 import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.model.PerspectiveDefinition;
@@ -44,15 +42,6 @@ public interface PerspectiveManager {
      * Returns a description of the current perspective which reflects the current visible state of the user interface.
      */
     PerspectiveDefinition getLivePerspectiveDefinition();
-
-    /**
-     * Saves the current live perspective definition to the server. Saved perspective definitions override the default
-     * definition produced by the {@link PerspectiveActivity#getDefaultPerspectiveLayout()} when switching to a new
-     * perspective. This method has no effect if the current perspective is transient.
-     * @param doWhenFinished action to execute after the save is complete (or immediately in the case of a transient perspective).
-     * Must not be null. To do nothing, use {@link Commands#DO_NOTHING}.
-     */
-    void savePerspectiveState(final Command doWhenFinished);
 
     /**
      * This method should only be invoked by PlaceManager. To launch a perspective within an UberFire app, pass a

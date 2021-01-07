@@ -24,8 +24,6 @@ import javax.enterprise.event.Event;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.Widget;
-import org.gwtbootstrap3.client.shared.event.TabShowEvent;
-import org.gwtbootstrap3.client.shared.event.TabShowHandler;
 import org.gwtbootstrap3.client.shared.event.TabShownHandler;
 import org.gwtbootstrap3.client.ui.TabListItem;
 import org.uberfire.client.views.pfly.tab.ResizeTabPanel;
@@ -44,15 +42,11 @@ public class MultiPageEditorViewImpl extends ResizeTabPanel implements MultiPage
     public void init() {
         super.init();
 
-        this.addShowHandler(new TabShowHandler() {
-
-            @Override
-            public void onShow(TabShowEvent e) {
-                onResize();
-                final TabPanelEntry tabPanelEntry = MultiPageEditorViewImpl.this.findEntryForTabWidget(e.getTab());
-                final PageViewImpl page = (PageViewImpl) tabPanelEntry.getContentPane().getWidget(0);
-                page.onFocus();
-            }
+        this.addShowHandler(e -> {
+            onResize();
+            final TabPanelEntry tabPanelEntry = MultiPageEditorViewImpl.this.findEntryForTabWidget(e.getTab());
+            final PageViewImpl page = (PageViewImpl) tabPanelEntry.getContentPane().getWidget(0);
+            page.onFocus();
         });
 
         this.addShownHandler(getTabShownHandler());
@@ -169,8 +163,8 @@ public class MultiPageEditorViewImpl extends ResizeTabPanel implements MultiPage
             final TabPanelEntry tabPanelEntry = findEntryForTabWidget(tab);
             final PageViewImpl page = (PageViewImpl) tabPanelEntry.getContentPane().getWidget(0);
 
-            getSelectedPageEvent().ifPresent(selectedPageEvent -> {
-                selectedPageEvent.fire(new MultiPageEditorSelectedPageEvent(tab.getTabIndex()));
+            getSelectedPageEvent().ifPresent(spEvent -> {
+                spEvent.fire(new MultiPageEditorSelectedPageEvent());
             });
 
             page.onLostFocus();

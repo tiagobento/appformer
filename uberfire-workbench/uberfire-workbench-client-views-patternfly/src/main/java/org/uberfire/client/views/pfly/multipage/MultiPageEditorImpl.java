@@ -47,18 +47,6 @@ public class MultiPageEditorImpl implements MultiPageEditor {
         view.addPage(page);
     }
 
-    public void addPage(int index, final Page page) {
-        getView().addPage(index, page);
-    }
-
-    public void disablePage(int index) {
-        getView().disablePage(index);
-    }
-
-    public void enablePage(int index) {
-        getView().enablePage(index);
-    }
-
     public void selectPage(final int index) {
         view.selectPage(index);
     }
@@ -79,13 +67,6 @@ public class MultiPageEditorImpl implements MultiPageEditor {
     @Override
     public MultiPageEditorView getView() {
         return view;
-    }
-
-    @Override
-    public void addWidget(final IsWidget widget,
-                          final String label) {
-        view.addPage(new PageImpl(widget,
-                                  label));
     }
 
     @Override

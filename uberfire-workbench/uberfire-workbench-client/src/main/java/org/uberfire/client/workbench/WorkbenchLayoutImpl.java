@@ -30,18 +30,15 @@ import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.HeaderPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.util.Layouts;
 import org.uberfire.client.workbench.docks.UberfireDocksContainer;
 import org.uberfire.mvp.Command;
-import org.uberfire.workbench.model.PerspectiveDefinition;
 
 /**
  * The default layout implementation.
@@ -65,11 +62,9 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
     /**
      * The panel within which the current perspective's root view resides. This panel lasts the lifetime of the app; it's
      * cleared and repopulated with the new perspective's root view each time
-     * {@link org.uberfire.client.workbench.PanelManager#setPerspective(PerspectiveDefinition)} gets called.
      */
     private final SimpleLayoutPanel perspectiveRootContainer = new SimpleLayoutPanel();
-    private final Map<Widget, OriginalStyleInfo> maximizedWidgetOriginalStyles = new HashMap<Widget, OriginalStyleInfo>();
-    private SyncBeanManager iocManager;
+    private final Map<Widget, OriginalStyleInfo> maximizedWidgetOriginalStyles = new HashMap<>();
     /**
      * Top-level widget of the whole workbench layout. This panel contains the nested container panels for headers,
      * footers, and the current perspective. During a normal startup of UberFire, this panel would be added directly to
@@ -86,11 +81,9 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
     }
 
     @Inject
-    public WorkbenchLayoutImpl(SyncBeanManager iocManager,
-                               HeaderPanel root,
+    public WorkbenchLayoutImpl(HeaderPanel root,
                                UberfireDocksContainer uberfireDocksContainer) {
 
-        this.iocManager = iocManager;
         this.root = root;
         this.uberfireDocksContainer = uberfireDocksContainer;
     }
@@ -124,7 +117,7 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
 
     private void setupDocksContainer() {
         uberfireDocksContainer.setup(rootContainer,
-                                     () -> Scheduler.get().scheduleDeferred(() -> onResize()));
+                                     () -> Scheduler.get().scheduleDeferred(this::onResize));
     }
 
     @Override
@@ -169,7 +162,7 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
         }
     }
 
-    protected static abstract class AbstractResizeAnimation extends Animation {
+    protected abstract static class AbstractResizeAnimation extends Animation {
 
         protected final Style style;
         protected final Widget w;

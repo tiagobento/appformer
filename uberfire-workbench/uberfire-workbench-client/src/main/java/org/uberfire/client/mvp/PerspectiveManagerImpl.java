@@ -16,14 +16,10 @@
 
 package org.uberfire.client.mvp;
 
-import java.util.Collection;
-import java.util.Iterator;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
-import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.events.PerspectiveChange;
@@ -70,8 +66,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
         BuildPerspectiveFromDefinitionCommand thirdOperation = new BuildPerspectiveFromDefinitionCommand(activity,
                                                                                                          fourthOperation);
 
-        FetchPerspectiveCommand secondOperation = new FetchPerspectiveCommand(placeRequest,
-                                                                              activity,
+        FetchPerspectiveCommand secondOperation = new FetchPerspectiveCommand(activity,
                                                                               thirdOperation);
 
         secondOperation.execute();
@@ -87,31 +82,17 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
         return livePerspectiveDef;
     }
 
-    @Override
-    public void savePerspectiveState(Command doWhenFinished) {
-        doWhenFinished.execute();
-    }
-
-    Iterator<SyncBeanDef<AbstractWorkbenchPerspectiveActivity>> getPerspectivesIterator() {
-        final Collection<SyncBeanDef<AbstractWorkbenchPerspectiveActivity>> perspectives = iocManager.lookupBeans(AbstractWorkbenchPerspectiveActivity.class);
-        return perspectives.iterator();
-    }
-
     /**
      * Fetches the given perspective's definition either from the server (if non-transient) or from the activity itself
      * (if transient or if the fetch call fails).
      */
     class FetchPerspectiveCommand implements Command {
 
-        private final PlaceRequest placeRequest;
         private final PerspectiveActivity perspective;
         private final ParameterizedCommand<PerspectiveDefinition> doAfterFetch;
 
-        public FetchPerspectiveCommand(PlaceRequest placeRequest,
-                                       PerspectiveActivity perspective,
+        public FetchPerspectiveCommand(PerspectiveActivity perspective,
                                        ParameterizedCommand<PerspectiveDefinition> doAfterFetch) {
-            this.placeRequest = checkNotNull("placeRequest",
-                                             placeRequest);
             this.perspective = checkNotNull("perspective",
                                             perspective);
             this.doAfterFetch = checkNotNull("doAfterFetch",

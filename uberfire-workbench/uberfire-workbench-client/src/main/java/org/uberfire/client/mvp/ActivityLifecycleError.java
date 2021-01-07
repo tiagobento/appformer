@@ -18,8 +18,6 @@ package org.uberfire.client.mvp;
 
 import org.uberfire.workbench.events.UberFireEvent;
 
-import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull;
-
 /**
  * CDI event fired by the framework each time an Activity lifecycle method throws an exception. Observers of the event
  * can use its methods to get information about the lifecycle call that failed, and can also ask the framework to

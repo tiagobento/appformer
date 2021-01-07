@@ -132,17 +132,6 @@ public interface WorkbenchPanelView<P extends WorkbenchPanelPresenter> extends U
     void setElementId(String elementId);
 
     /**
-     * Returns the widget that defines the boundaries of this panel view for purposes of drag-and-drop.
-     * @return the widget whose boundaries define the region where workbench parts can be dropped into this panel. For
-     * simple panel types that do not support child panels, this will typically be the same widget returned by
-     * {@link #asWidget()}. For fancier panels, this will typically be some child panel within the view's
-     * internal structure.
-     * <p>
-     * If the return value is null, parts will not be droppable on this view.
-     */
-    Widget getPartDropRegion();
-
-    /**
      * Returns the parts currently held by the view.
      */
     Collection<PartDefinition> getParts();

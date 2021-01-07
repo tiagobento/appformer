@@ -23,14 +23,11 @@ import com.google.gwt.user.client.ui.HasWidgets;
 import jsinterop.annotations.JsIgnore;
 import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsType;
-import org.jboss.errai.common.client.dom.HTMLElement;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.annotations.WorkbenchEditor;
 import org.uberfire.client.annotations.WorkbenchPerspective;
-import org.uberfire.client.annotations.WorkbenchPopup;
 import org.uberfire.client.annotations.WorkbenchScreen;
 import org.uberfire.client.util.Layouts;
-import org.uberfire.mvp.BiParameterizedCommand;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.PathPlaceRequest;
@@ -42,7 +39,7 @@ import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull
 
 /**
  * A Workbench-centric abstraction over the browser's history mechanism. Allows the application to initiate navigation
- * to any displayable thing: a {@link WorkbenchPerspective}, a {@link WorkbenchScreen}, a {@link WorkbenchPopup}, a
+ * to any displayable thing: a {@link WorkbenchPerspective}, a {@link WorkbenchScreen}, a
  * {@link WorkbenchEditor}, a {@link WorkbenchPart} within a screen or editor, or the editor associated with a VFS file
  * located at a particular {@link Path}.
  */
@@ -58,29 +55,12 @@ public interface PlaceManager {
     @JsMethod(name = "goToPath")
     void goTo(final Path path);
 
-    @JsMethod(name = "goToPathAndPlace")
-    void goTo(final Path path,
-              final PlaceRequest place);
-
     @JsMethod(name = "goToPartWithPanel")
     void goTo(final PartDefinition part,
               final PanelDefinition panel);
 
-    @JsMethod(name = "goToIdWithPanel")
-    void goTo(final String identifier,
-              final PanelDefinition panel);
-
     @JsMethod(name = "goToPlaceWithPanel")
     void goTo(final PlaceRequest place,
-              final PanelDefinition panel);
-
-    @JsMethod(name = "goToPathWithPanel")
-    void goTo(final Path path,
-              final PanelDefinition panel);
-
-    @JsMethod(name = "goToPathAndPlaceWithPanel")
-    void goTo(final Path path,
-              final PlaceRequest place,
               final PanelDefinition panel);
 
     /**
@@ -106,18 +86,6 @@ public interface PlaceManager {
     @JsIgnore
     void goTo(final PlaceRequest place,
               final HasWidgets addTo);
-
-    @JsIgnore
-    void goTo(final String id,
-              final HTMLElement addTo);
-
-    @JsIgnore
-    void goTo(final PlaceRequest place,
-              final HTMLElement addTo);
-
-    @JsIgnore
-    void goTo(final PlaceRequest place,
-              final elemental2.dom.HTMLElement addTo);
 
     /**
      * Finds the <i>currently open</i> activity that handles the given PlaceRequest by ID. No attempt is made to match

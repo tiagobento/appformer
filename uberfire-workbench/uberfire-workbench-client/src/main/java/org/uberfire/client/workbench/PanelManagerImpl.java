@@ -101,7 +101,6 @@ public class PanelManagerImpl implements PanelManager {
      */
     protected PanelDefinition rootPanelDef = null;
     protected PartDefinition activePart = null;
-    LayoutSelection layoutSelection;
     private BeanFactory beanFactory;
     private Elemental2DomUtil elemental2DomUtil;
     /**
@@ -116,7 +115,6 @@ public class PanelManagerImpl implements PanelManager {
             Event<SelectPlaceEvent> selectPlaceEvent,
             SyncBeanManager iocManager,
             Instance<PlaceManager> placeManager,
-            LayoutSelection layoutSelection,
             BeanFactory beanFactory,
             Elemental2DomUtil elemental2DomUtil) {
         this.placeGainFocusEvent = placeGainFocusEvent;
@@ -124,7 +122,6 @@ public class PanelManagerImpl implements PanelManager {
         this.selectPlaceEvent = selectPlaceEvent;
         this.iocManager = iocManager;
         this.placeManager = placeManager;
-        this.layoutSelection = layoutSelection;
         this.beanFactory = beanFactory;
         this.elemental2DomUtil = elemental2DomUtil;
     }
@@ -172,7 +169,7 @@ public class PanelManagerImpl implements PanelManager {
             throw new IllegalStateException(message);
         }
 
-        HasWidgets perspectiveContainer = layoutSelection.get().getPerspectiveContainer();
+        HasWidgets perspectiveContainer = iocManager.lookupBean(WorkbenchLayout.class).getInstance().getPerspectiveContainer();
         perspectiveContainer.clear();
 
         getBeanFactory().destroy(oldRootPanelPresenter);

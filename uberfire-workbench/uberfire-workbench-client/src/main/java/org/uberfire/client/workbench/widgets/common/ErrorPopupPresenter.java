@@ -18,7 +18,6 @@ package org.uberfire.client.workbench.widgets.common;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-import org.uberfire.client.annotations.WorkbenchPopup;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.Commands;
 
@@ -26,7 +25,7 @@ import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull
 
 /**
  * Shows simple text-only error messages in a modal popup dialog that sits above the workbench.
- * This is designed to be used only for reporting error conditions; to make a full-featured popup UI, see {@link WorkbenchPopup}.
+ * This is designed to be used only for reporting error conditions.
  */
 @ApplicationScoped
 public class ErrorPopupPresenter {

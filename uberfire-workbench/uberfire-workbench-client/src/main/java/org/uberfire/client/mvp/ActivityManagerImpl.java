@@ -61,12 +61,6 @@ public class ActivityManagerImpl implements ActivityManager {
     private ActivityLifecycleErrorHandler lifecycleErrorHandler;
 
     @Override
-    public <T extends Activity> Set<T> getActivities(final Class<T> clazz) {
-        // not calling onStartup. See UF-105.
-        return secure(iocManager.lookupBeans(clazz));
-    }
-
-    @Override
     public Set<Activity> getActivities(final PlaceRequest placeRequest) {
 
         final Collection<SyncBeanDef<Activity>> beans;
@@ -120,8 +114,7 @@ public class ActivityManagerImpl implements ActivityManager {
         return result != null;
     }
 
-    @Override
-    public Activity getActivity(PlaceRequest placeRequest) {
+    private Activity getActivity(PlaceRequest placeRequest) {
         return getActivity(Activity.class,
                            placeRequest);
     }
@@ -130,7 +123,7 @@ public class ActivityManagerImpl implements ActivityManager {
     public <T extends Activity> T getActivity(final Class<T> clazz,
                                               final PlaceRequest placeRequest) {
         final Set<Activity> activities = getActivities(placeRequest);
-        if (activities.size() == 0) {
+        if (activities.isEmpty()) {
             return null;
         }
 
@@ -156,11 +149,6 @@ public class ActivityManagerImpl implements ActivityManager {
         } else {
             throw new IllegalStateException("Activity " + activity + " is not currently in the started state");
         }
-    }
-
-    @Override
-    public boolean isStarted(final Activity activity) {
-        return startedActivities.containsKey(activity);
     }
 
     /**

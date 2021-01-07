@@ -27,7 +27,7 @@ import javax.inject.Named;
 
 import org.jboss.errai.ioc.client.container.IOCBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
-
+//TODO CAPONETTO: maybe remove it after removing uberfire-preferences-ui-client
 @ApplicationScoped
 public class ActivityBeansInfo {
 

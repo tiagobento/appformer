@@ -16,12 +16,8 @@
 
 package org.uberfire.client.workbench;
 
-import java.util.Set;
-
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.Widget;
-import org.uberfire.mvp.Command;
 
 /**
  * Used by the workbench to construct the outer most DOM structure (header, footer and perspective container).
@@ -45,10 +41,8 @@ public interface WorkbenchLayout {
     /**
      * Will be invoked by the {@link org.uberfire.client.workbench.Workbench}
      * when the discovery of header and footer elements is completed.
-     * @see {@link #setHeaderContents(java.util.List)}
-     * @see {@link #setFooterContents(java.util.List)}
      */
-    public void onBootstrap();
+    void onBootstrap();
 
     /**
      * The {@link org.uberfire.client.workbench.Workbench} listens for resize events and hands them off

@@ -15,8 +15,6 @@
  */
 package org.uberfire.client.workbench;
 
-import java.util.Collection;
-
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
@@ -26,11 +24,8 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import org.jboss.errai.ioc.client.api.AfterInitialization;
 import org.jboss.errai.ioc.client.api.EnabledByProperty;
 import org.jboss.errai.ioc.client.api.EntryPoint;
-import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.slf4j.Logger;
-import org.uberfire.client.mvp.ActivityBeansCache;
-import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.resources.WorkbenchResources;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
@@ -82,14 +77,9 @@ import org.uberfire.mvp.impl.DefaultPlaceRequest;
 public class Workbench {
 
     @Inject
-    LayoutSelection layoutSelection;
-    @Inject
-    private ActivityBeansCache activityBeansCache;
-    @Inject
     private SyncBeanManager iocManager;
     @Inject
     private PlaceManager placeManager;
-    private WorkbenchLayout layout;
     @Inject
     private Logger logger;
 
@@ -97,23 +87,23 @@ public class Workbench {
     private void afterInit() {
         logger.info("Starting workbench...");
 
+        final WorkbenchLayout layout = iocManager.lookupBean(WorkbenchLayout.class).getInstance();
         layout.onBootstrap();
-        addLayoutToRootPanel(layout);
-        placeManager.goTo(new DefaultPlaceRequest(getHomePerspectiveActivity().getIdentifier()));
+        RootLayoutPanel.get().add(layout.getRoot());
+        placeManager.goTo(new DefaultPlaceRequest("AuthoringPerspective"));
 
         // Resizing the Window should resize everything
         Window.addResizeHandler(event -> layout.resizeTo(event.getWidth(),
                                                          event.getHeight()));
 
         // Defer the initial resize call until widgets are rendered and sizes are available
-        Scheduler.get().scheduleDeferred(() -> layout.onResize());
+        Scheduler.get().scheduleDeferred(layout::onResize);
 
         notifyJSReady();
     }
 
     @PostConstruct
     private void earlyInit() {
-        layout = layoutSelection.get();
         WorkbenchResources.INSTANCE.CSS().ensureInjected();
     }
 
@@ -122,24 +112,4 @@ public class Workbench {
             $wnd.appFormerGwtFinishedLoading();
         }
     }-*/;
-
-    public PerspectiveActivity getHomePerspectiveActivity() {
-        PerspectiveActivity defaultPerspective = null;
-        final Collection<SyncBeanDef<PerspectiveActivity>> perspectives = iocManager.lookupBeans(PerspectiveActivity.class);
-
-        for (final SyncBeanDef<PerspectiveActivity> perspective : perspectives) {
-            final PerspectiveActivity instance = perspective.getInstance();
-            if (instance.getIdentifier().equals("AuthoringPerspective")) {
-                defaultPerspective = instance;
-            } else {
-                iocManager.destroyBean(instance);
-            }
-        }
-        // The home perspective has always priority over the default
-        return defaultPerspective;
-    }
-
-    void addLayoutToRootPanel(final WorkbenchLayout layout) {
-        RootLayoutPanel.get().add(layout.getRoot());
-    }
 }

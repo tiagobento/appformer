@@ -17,8 +17,6 @@ package org.uberfire.client.mvp;
 
 import java.util.Set;
 
-import org.jboss.errai.ioc.client.api.ActivatedBy;
-import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.annotations.WorkbenchEditor;
 import org.uberfire.client.annotations.WorkbenchScreen;
 import org.uberfire.mvp.PlaceRequest;
@@ -40,22 +38,6 @@ import org.uberfire.mvp.PlaceRequest;
 public interface ActivityManager {
 
     /**
-     * Obtains the set of activity instances which implement the given type, are {@link ActivatedBy active}, and that
-     * the current user.
-     * @param abstractScreenActivityClass the type of activities to enumerate. Must not be null. Passing in {@code Activity.class} will yield
-     * all possible activity types.
-     * @return the set of available activities. Never null. Each object in the returned set must be freed by the caller
-     * via a call to {@link SyncBeanManager#destroyBean(Object)}.
-     * @deprecated this method returns Activity instances that have not had their onStartup() methods invoked, so they
-     * can not be displayed according to the normal Activity lifecycle. It is also up to the caller to free
-     * each of the returned Activity instances by calling {@link SyncBeanManager#destroyBean(Object)} on
-     * them. Consider using the Errai bean manager and UberFire AuthorizationManager directly instead of
-     * using this method. See UF-105 for details.
-     */
-    @Deprecated
-    <T extends Activity> Set<T> getActivities(final Class<T> abstractScreenActivityClass);
-
-    /**
      * Calls to {@link #getActivities(PlaceRequest)} with security checks enabled.
      */
     Set<Activity> getActivities(final PlaceRequest placeRequest);
@@ -72,11 +54,6 @@ public interface ActivityManager {
     boolean containsActivity(final PlaceRequest placeRequest);
 
     /**
-     * Calls to as {@link #getActivity(PlaceRequest)} with security checks enabled.
-     */
-    Activity getActivity(final PlaceRequest placeRequest);
-
-    /**
      * Calls to as {@link #getActivity(Class, PlaceRequest)} with security checks enabled.
      */
     <T extends Activity> T getActivity(final Class<T> clazz,
@@ -89,12 +66,4 @@ public interface ActivityManager {
      * @throws IllegalArgumentException if {@code activity} is a SplashScreenActivity. TODO (UF-91) : fix this.
      */
     void destroyActivity(final Activity activity);
-
-    /**
-     * Returns true if the given Activity instance is currently in the <i>started</i> or <i>open</i> state and managed
-     * by this ActivityManager.
-     * @param activity the activity to check
-     * @return true if the activity is started; false if it is uninitialized.
-     */
-    boolean isStarted(final Activity activity);
 }
