@@ -18,6 +18,7 @@ package org.uberfire.client.docks.view;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -27,8 +28,6 @@ import com.google.gwt.user.client.ui.Widget;
 import org.uberfire.client.docks.view.bars.DocksCollapsedBar;
 import org.uberfire.client.docks.view.bars.DocksExpandedBar;
 import org.uberfire.client.docks.view.menu.MenuBuilder;
-import org.uberfire.client.mvp.AbstractWorkbenchScreenActivity;
-import org.uberfire.client.mvp.Activity;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.workbench.docks.UberfireDock;
 import org.uberfire.client.workbench.docks.UberfireDockPosition;
@@ -36,11 +35,6 @@ import org.uberfire.client.workbench.docks.UberfireDocksContainer;
 import org.uberfire.client.workbench.docks.UberfireDocksInteractionEvent;
 import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;
-import org.uberfire.workbench.model.menu.MenuCustom;
-import org.uberfire.workbench.model.menu.MenuItemCommand;
-import org.uberfire.workbench.model.menu.MenuItemPerspective;
-import org.uberfire.workbench.model.menu.MenuItemPlain;
-import org.uberfire.workbench.model.menu.impl.BaseMenuVisitor;
 
 @Dependent
 public class DocksBars {
@@ -236,9 +230,6 @@ public class DocksBars {
         show(docksBar.getDockResizeBar());
         goToPlace(expandedBar,
                   placeRequest);
-
-        lookUpContextMenus(placeRequest,
-                           docksBar.getExpandedBar());
     }
 
     private void goToPlace(DocksExpandedBar expandedBar,
@@ -246,37 +237,6 @@ public class DocksBars {
         placeRequest.setUpdateLocationBar(false);
         placeManager.goTo(placeRequest,
                           expandedBar.targetPanel());
-    }
-
-    private void lookUpContextMenus(PlaceRequest placeRequest,
-                                    DocksExpandedBar expandedBar) {
-        Activity activity = placeManager.getActivity(placeRequest);
-        if (activity instanceof AbstractWorkbenchScreenActivity) {
-            AbstractWorkbenchScreenActivity screen = (AbstractWorkbenchScreenActivity) activity;
-            screen.getMenus(menus -> {
-                if (menus != null) {
-                    menus.accept(new BaseMenuVisitor() {
-
-                                @Override
-                                public void visit(MenuItemPlain menuItemPlain) {
-                                    expandedBar.addContextMenuItem(menuBuilder.makeItem(menuItemPlain, true));
-                                }
-                                @Override
-                                public void visit(MenuItemCommand menuItemCommand) {
-                                    expandedBar.addContextMenuItem(menuBuilder.makeItem(menuItemCommand, true));
-                                }
-                                @Override
-                                public void visit(MenuItemPerspective menuItemPerspective) {
-                                    expandedBar.addContextMenuItem(menuBuilder.makeItem(menuItemPerspective, true));
-                                }
-                                @Override
-                                public void visit(MenuCustom<?> menuCustom) {
-                                    expandedBar.addContextMenuItem(menuBuilder.makeItem(menuCustom, true));
-                                }
-                            });
-                }
-            });
-        }
     }
 
     private void setupCollapsedBar(UberfireDock targetDock,

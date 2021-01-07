@@ -67,44 +67,4 @@ public @interface WorkbenchEditor {
      * Array that defines all supported types of this editor.
      */
     Class<? extends ClientResourceType>[] supportedTypes() default {};
-
-    /**
-     * Defines the priority of editor over type resolution, editors with same supported type will be resolved by priority.
-     */
-    int priority() default 0;
-
-    /**
-     * By default, a Workbench Editor will show up in the current active perspective. If this parameter is specified,
-     * this screen will only be shown on the given perspective. An attempt to navigate to this editor when
-     * a different perspective is active will first result in a switch to the owning perspective, then the editor will
-     * be shown in that perspective.
-     */
-    Class<?> owningPerspective() default void.class;
-
-    /**
-     * Defines the preferred height. Preferred means that this Height will be used only if this screen
-     * is the trigger to create a new panel, if panel already exists this information is ignored.
-     */
-    int preferredHeight() default -1;
-
-    /**
-     * Defines the preferred width. Preferred means that this Width will be used only if this screen
-     * is the trigger to create a new panel, if panel already exists this information is ignored.
-     */
-    int preferredWidth() default -1;
-
-    /**
-     * Defines how and if locks are acquired when using this editor. By default, a pessimistic locking
-     * strategy is used, allowing edits by only one user at a time.
-     */
-    LockingStrategy lockingStrategy() default LockingStrategy.FRAMEWORK_PESSIMISTIC;
-
-    /**
-     * Locking strategies define how and if locks are acquired when using editors.
-     */
-    enum LockingStrategy {
-        EDITOR_PROVIDED,
-        // No locks are acquired, editor implementations need their own conflict resolution logic (if desired).
-        FRAMEWORK_PESSIMISTIC // Locks are acquired allowing edits by only one user at a time
-    }
 }

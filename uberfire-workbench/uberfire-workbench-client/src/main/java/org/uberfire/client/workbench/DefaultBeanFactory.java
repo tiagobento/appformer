@@ -49,7 +49,6 @@ public class DefaultBeanFactory
         final WorkbenchPartPresenter part = iocManager.lookupBean(partType).getInstance();
 
         part.setTitle(title);
-        part.setMenus(menus);
         part.setTitleDecoration(titleDecoration);
         part.setDefinition(definition);
 

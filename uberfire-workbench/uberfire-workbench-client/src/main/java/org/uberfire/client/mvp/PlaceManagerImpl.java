@@ -270,13 +270,6 @@ public class PlaceManagerImpl implements PlaceManager {
             if (activity.isType(ActivityResourceType.SCREEN.name()) || activity.isType(ActivityResourceType.EDITOR.name())) {
                 final WorkbenchActivity workbenchActivity = (WorkbenchActivity) activity;
 
-                // check if we need to open the owning perspective before launching this screen/editor
-                if (workbenchActivity.getOwningPlace() != null && getStatus(workbenchActivity.getOwningPlace()) == PlaceStatus.CLOSE) {
-                    goTo(workbenchActivity.getOwningPlace(),
-                         null,
-                         () -> goTo(place, panel, doWhenFinished));
-                    return;
-                }
                 launchWorkbenchActivityAtPosition(resolved.getPlaceRequest(),
                                                   workbenchActivity,
                                                   workbenchActivity.getDefaultPosition(),
@@ -666,8 +659,8 @@ public class PlaceManagerImpl implements PlaceManager {
         } else {
             panel = panelManager.addWorkbenchPanel(panelManager.getRoot(), //FIXME: TIAGO -> O SEGREDO ALI
                                                    position,
-                                                   activity.preferredHeight(),
-                                                   activity.preferredWidth(),
+                                                   -1,
+                                                   -1,
                                                    null,
                                                    null);
         }
@@ -703,25 +696,23 @@ public class PlaceManagerImpl implements PlaceManager {
                                          titleDecoration,
                                          widget);
 
-        activity.getMenus(menus -> {
-            panelManager.addWorkbenchPart(place,
-                                          part,
-                                          panel,
-                                          menus,
-                                          uiPart,
-                                          activity.contextId(),
-                                          toInteger(panel.getWidthAsInt()),
-                                          toInteger(panel.getHeightAsInt()));
+        panelManager.addWorkbenchPart(place,
+                                      part,
+                                      panel,
+                                      null,
+                                      uiPart,
+                                      activity.contextId(),
+                                      toInteger(panel.getWidthAsInt()),
+                                      toInteger(panel.getHeightAsInt()));
 
-            try {
-                activity.onOpen();
-            } catch (Exception ex) {
-                lifecycleErrorHandler.handle(activity,
-                                             LifecyclePhase.OPEN,
-                                             ex);
-                closePlace(place);
-            }
-        });
+        try {
+            activity.onOpen();
+        } catch (Exception ex) {
+            lifecycleErrorHandler.handle(activity,
+                                         LifecyclePhase.OPEN,
+                                         ex);
+            closePlace(place);
+        }
     }
 
     private IsWidget maybeWrapExternalWidget(WorkbenchActivity activity,

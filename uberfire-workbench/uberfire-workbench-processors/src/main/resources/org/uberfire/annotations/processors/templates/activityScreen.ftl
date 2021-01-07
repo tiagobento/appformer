@@ -50,10 +50,7 @@ import org.uberfire.mvp.impl.DefaultPlaceRequest;
 import org.uberfire.workbench.model.menu.Menus;
 
 </#if>
-<#if getToolBarMethodName??>
-import org.uberfire.workbench.model.toolbar.ToolBar;
 
-</#if>
 import com.google.gwt.user.client.ui.IsWidget;
 
 <#if beanActivatorClass??>
@@ -90,20 +87,6 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
     @PostConstruct
     public void init() {
         ((HasPresenter) realPresenter.${getWidgetMethodName}()).init( realPresenter );
-    }
-    </#if>
-    <#if preferredHeight??>
-
-    @Override
-    public int preferredHeight() {
-       return ${preferredHeight};
-    }
-    </#if>
-    <#if preferredWidth??>
-
-    @Override
-    public int preferredWidth() {
-       return ${preferredWidth};
     }
     </#if>
     <#if onStartup1ParameterMethodName??>
@@ -168,13 +151,6 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
         realPresenter.${onFocusMethodName}();
     }
     </#if>
-    <#if owningPlace??>
-
-    @Override
-    public PlaceRequest getOwningPlace() {
-        return new DefaultPlaceRequest("${owningPlace}");
-    }
-    </#if>
     <#if getTitleWidgetMethodName??>
 
     @Override
@@ -218,20 +194,7 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
         return realPresenter.${getDefaultPositionMethodName}();
     }
     </#if>
-    <#if getMenuBarMethodName??>
-    @Override
-    public void getMenus(final Consumer<Menus> menusConsumer) {
-        realPresenter.${getMenuBarMethodName}(menusConsumer);
-    }
 
-    </#if>
-    <#if getToolBarMethodName??>
-    @Override
-    public ToolBar getToolBar() {
-        return realPresenter.${getToolBarMethodName}();
-    }
-
-    </#if>
     <#if getContextIdMethodName??>
 
     @Override

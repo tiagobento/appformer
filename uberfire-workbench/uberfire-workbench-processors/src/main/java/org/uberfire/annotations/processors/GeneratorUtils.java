@@ -36,7 +36,6 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.SimpleAnnotationValueVisitor6;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
@@ -46,9 +45,6 @@ import org.uberfire.annotations.processors.facades.BackendModule;
 import org.uberfire.annotations.processors.facades.ClientAPIModule;
 
 import static java.util.Collections.singletonList;
-import static org.uberfire.annotations.processors.facades.ClientAPIModule.OWNING_PERSPECTIVE;
-import static org.uberfire.annotations.processors.facades.ClientAPIModule.workbenchEditor;
-import static org.uberfire.annotations.processors.facades.ClientAPIModule.workbenchScreen;
 
 /**
  * Utilities for code generation
@@ -552,49 +548,6 @@ public class GeneratorUtils {
                                                 "value");
         }
         return null;
-    }
-
-    /**
-     * Returns the identifier (PlaceRequest ID) of the perspective that owns the given part.
-     * @param screenOrEditorClass a type annotated with either {@code @WorkbenchScreen} or {@code @WorkbenchEditor}. Not null.
-     * @param processingEnvironment the current annotation processing environment.
-     * @return
-     * @throws GenerationException if the owningPerspective parameter is present, but points to something other than a
-     * {@code @WorkbenchPerspective} class.
-     */
-    public static String getOwningPerspectivePlaceRequest(TypeElement screenOrEditorClass,
-                                                          ProcessingEnvironment processingEnvironment) throws GenerationException {
-        Elements elementUtils = processingEnvironment.getElementUtils();
-        final Types typeUtils = processingEnvironment.getTypeUtils();
-
-        AnnotationMirror screenOrEditorAnnotation = getAnnotation(elementUtils,
-                                                                  screenOrEditorClass,
-                                                                  workbenchScreen);
-        if (screenOrEditorAnnotation == null) {
-            screenOrEditorAnnotation = getAnnotation(elementUtils,
-                                                     screenOrEditorClass,
-                                                     workbenchEditor);
-        }
-
-        AnnotationValue owningPerspectiveParam = extractAnnotationPropertyValue(elementUtils,
-                                                                                screenOrEditorAnnotation,
-                                                                                OWNING_PERSPECTIVE);
-        final TypeElement owningPerspectiveType = (TypeElement) typeUtils.asElement((TypeMirror) owningPerspectiveParam.getValue());
-        if (owningPerspectiveType == null) {
-            return null;
-        }
-
-        final String owningPerspectivePlace = ClientAPIModule.getWbPerspectiveScreenIdentifierValueOnClass(owningPerspectiveType);
-        if (owningPerspectivePlace.equals("")) {
-            processingEnvironment.getMessager()
-                    .printMessage(Kind.ERROR,
-                                  "owningPerspective must be a class annotated with @WorkbenchPerspective.",
-                                  screenOrEditorClass,
-                                  screenOrEditorAnnotation,
-                                  owningPerspectiveParam);
-            return null;
-        }
-        return owningPerspectivePlace;
     }
 
     /**

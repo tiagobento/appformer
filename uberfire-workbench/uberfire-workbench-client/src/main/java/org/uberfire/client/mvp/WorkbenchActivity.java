@@ -15,8 +15,6 @@
  */
 package org.uberfire.client.mvp;
 
-import java.util.function.Consumer;
-
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.IsWidget;
 import jsinterop.annotations.JsIgnore;
@@ -27,8 +25,6 @@ import org.uberfire.client.annotations.WorkbenchScreen;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.model.Position;
-import org.uberfire.workbench.model.menu.Menus;
-import org.uberfire.workbench.model.toolbar.ToolBar;
 
 /**
  * WorkbenchActivity and its subinterfaces define the interface between UberFire framework behaviour and
@@ -50,7 +46,7 @@ import org.uberfire.workbench.model.toolbar.ToolBar;
  * on.
  */
 @JsType
-public interface WorkbenchActivity extends ContextSensitiveActivity {
+public interface WorkbenchActivity extends Activity {
 
     /**
      * Invoked by the framework before this activity is closed, unless the framework has been told to "force close" the
@@ -80,14 +76,6 @@ public interface WorkbenchActivity extends ContextSensitiveActivity {
      * activity's view should be added directly to the root panel.
      */
     Position getDefaultPosition();
-
-    /**
-     * Returns the PlaceRequest for the perspective that this activity should always be displayed in. When the
-     * PlaceManager is asked to go to this activity, it will switching to the owning perspective first, and then show
-     * this activity in it.
-     * @return the owning perspective's place request, or null if this activity can appear in any perspective.
-     */
-    PlaceRequest getOwningPlace();
 
     /**
      * Invoked by the UberFire framework when this activity is the current activity in the current panel. Activities may
@@ -123,31 +111,5 @@ public interface WorkbenchActivity extends ContextSensitiveActivity {
         return (widget == null) ? null : widget.asWidget().getElement();
     }
 
-    void getMenus(Consumer<Menus> menusConsumer);
-
-    ToolBar getToolBar();
-
     String contextId();
-
-    /**
-     * Returns the amount of space that should be allocated to this activity if a new Workbench Panel is created when
-     * first displaying it. Has no effect when the activity is added to a pre-existing panel, including the case where
-     * the activity is added to a panel as part of a default perspective layout.
-     * @return the height, in pixels, that should be allocated for a new panel created to house this activity. -1 (default)
-     * means no particular height is preferred, and the framework can choose a default height.
-     */
-    default int preferredHeight() {
-        return -1;
-    }
-
-    /**
-     * Returns the amount of space that should be allocated to this activity if a new Workbench Panel is created when
-     * first displaying it. Has no effect when the activity is added to a pre-existing panel, including the case where
-     * the activity is added to a panel as part of a default perspective layout.
-     * @return the width, in pixels, that should be allocated for a new panel created to house this activity. -1 (default)
-     * means no particular width is preferred, and the framework can choose a default width.
-     */
-    default int preferredWidth() {
-        return -1;
-    }
 }

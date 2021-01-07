@@ -15,15 +15,11 @@
  */
 package org.uberfire.client.mvp;
 
-import java.util.function.Consumer;
-
 import jsinterop.annotations.JsType;
 import org.uberfire.workbench.model.PerspectiveDefinition;
-import org.uberfire.workbench.model.menu.Menus;
-import org.uberfire.workbench.model.toolbar.ToolBar;
 
 @JsType
-public interface PerspectiveActivity extends ContextSensitiveActivity {
+public interface PerspectiveActivity extends Activity {
 
     /**
      * Returns a new copy of the layout (panels and their parts) that should be used if no persisted state is available.
@@ -37,13 +33,4 @@ public interface PerspectiveActivity extends ContextSensitiveActivity {
     default String getName() {
         return getDefaultPerspectiveLayout().getName();
     }
-
-    /**
-     * Returns a new copy of the menus that should be used with this perspective. Each time this method is called, it
-     * must produce a new set of menus.
-     * @return the menus to use while this perspective is active.
-     */
-    void getMenus(final Consumer<Menus> menusConsumer);
-
-    ToolBar getToolBar();
 }

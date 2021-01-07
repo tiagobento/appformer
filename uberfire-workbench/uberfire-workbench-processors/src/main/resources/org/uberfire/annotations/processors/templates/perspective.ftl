@@ -35,10 +35,7 @@ import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.model.menu.Menus;
 
 </#if>
-<#if getToolBarMethodName??>
-import org.uberfire.workbench.model.toolbar.ToolBar;
 
-</#if>
 <#if beanActivatorClass??>
 import org.jboss.errai.ioc.client.api.ActivatedBy;
 
@@ -120,18 +117,5 @@ public class ${className} extends AbstractWorkbenchPerspectiveActivity {
         return realPresenter.${getPerspectiveMethodName}();
     }
 
-</#if>
-<#if getMenuBarMethodName??>
-    @Override
-    public void getMenus(final Consumer<Menus> menusConsumer) {
-        realPresenter.${getMenuBarMethodName}(menusConsumer);
-    }
-
-</#if>
-<#if getToolBarMethodName??>
-    @Override
-    public ToolBar getToolBar() {
-        return realPresenter.${getToolBarMethodName}();
-    }    
 </#if>
 }

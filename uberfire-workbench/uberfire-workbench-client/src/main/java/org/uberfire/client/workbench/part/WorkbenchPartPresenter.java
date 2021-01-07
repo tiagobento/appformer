@@ -16,8 +16,6 @@
 
 package org.uberfire.client.workbench.part;
 
-import java.util.function.Consumer;
-
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
 import org.uberfire.client.mvp.UberView;
@@ -47,18 +45,6 @@ public interface WorkbenchPartPresenter {
     void setTitle(String title);
 
     /**
-     * Returns the menus associated with this part.
-     * @return the menus associated with this part. Null if this part does not have menus.
-     */
-    void getMenus(final Consumer<Menus> menusConsumer);
-
-    /**
-     * Sets the menus associated with this part.
-     * @param menus the menus associated with this part. Can be null, which means this part does not have menus.
-     */
-    void setMenus(Menus menus);
-
-    /**
      * Returns the widget that a panel may choose to display beside this part's title.
      * @return The title decoration widget to use. Null means no title decoration.
      */
@@ -76,7 +62,7 @@ public interface WorkbenchPartPresenter {
 
     void setContextId(String contextId);
 
-    public interface View
+    interface View
             extends
             UberView<WorkbenchPartPresenter>,
             RequiresResize {

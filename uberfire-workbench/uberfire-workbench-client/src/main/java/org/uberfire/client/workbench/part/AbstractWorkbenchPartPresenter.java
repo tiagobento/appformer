@@ -82,16 +82,6 @@ public abstract class AbstractWorkbenchPartPresenter implements WorkbenchPartPre
     }
 
     @Override
-    public void getMenus(final Consumer<Menus> menusConsumer) {
-        menusConsumer.accept(menus);
-    }
-
-    @Override
-    public void setMenus(Menus menus) {
-        this.menus = menus;
-    }
-
-    @Override
     public IsWidget getTitleDecoration() {
         return titleDecoration;
     }

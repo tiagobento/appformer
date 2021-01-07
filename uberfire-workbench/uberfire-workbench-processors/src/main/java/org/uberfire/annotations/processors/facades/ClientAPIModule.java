@@ -32,8 +32,6 @@ public class ClientAPIModule {
 
     public static final String IDENTIFIER = "identifier";
     public static final String SIZE = "size";
-    public static final String OWNING_PERSPECTIVE = "owningPerspective";
-    public static final String IS_DEFAULT = "isDefault";
     public static final String VALUE = "value";
     public static final String workbenchPerspective = "org.uberfire.client.annotations.WorkbenchPerspective";
     public static final String workbenchPopup = "org.uberfire.client.annotations.WorkbenchPopup";

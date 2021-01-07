@@ -58,15 +58,9 @@ public class EditorActivityGenerator extends AbstractGenerator {
         final TypeElement classElement = (TypeElement) element;
 
         final String annotationName = ClientAPIModule.getWorkbenchEditorClass();
-        final String owningPlace = GeneratorUtils.getOwningPerspectivePlaceRequest(classElement,
-                                                                                   processingEnvironment);
 
-        Integer priority = 0;
         Collection<String> associatedResources = null;
         String identifier = null;
-        String lockingStrategy = null;
-        Integer preferredHeight = null;
-        Integer preferredWidth = null;
 
         for (final AnnotationMirror am : classElement.getAnnotationMirrors()) {
             if (annotationName.equals(am.getAnnotationType().toString())) {
@@ -74,22 +68,8 @@ public class EditorActivityGenerator extends AbstractGenerator {
                     AnnotationValue aval = entry.getValue();
                     if ("identifier".equals(entry.getKey().getSimpleName().toString())) {
                         identifier = aval.getValue().toString();
-                    } else if ("priority".equals(entry.getKey().getSimpleName().toString())) {
-                        priority = (Integer) aval.getValue();
                     } else if ("supportedTypes".equals(entry.getKey().getSimpleName().toString())) {
                         associatedResources = GeneratorUtils.extractValue(aval);
-                    } else if ("preferredHeight".equals(entry.getKey().getSimpleName().toString())) {
-                        final int _preferredHeight = (Integer) aval.getValue();
-                        if (_preferredHeight > 0) {
-                            preferredHeight = _preferredHeight;
-                        }
-                    } else if ("preferredWidth".equals(entry.getKey().getSimpleName().toString())) {
-                        final int _preferredWidth = (Integer) aval.getValue();
-                        if (_preferredWidth > 0) {
-                            preferredWidth = _preferredWidth;
-                        }
-                    } else if ("lockingStrategy".equals(entry.getKey().getSimpleName().toString())) {
-                        lockingStrategy = aval.getValue().toString();
                     }
                 }
                 break;
@@ -173,19 +153,9 @@ public class EditorActivityGenerator extends AbstractGenerator {
             messager.printMessage(Kind.NOTE,
                                   "Identifier: " + identifier);
             messager.printMessage(Kind.NOTE,
-                                  "Locking strategy: " + lockingStrategy);
-            messager.printMessage(Kind.NOTE,
-                                  "Owning Perspective Identifier: " + owningPlace);
-            messager.printMessage(Kind.NOTE,
                                   "getContextIdMethodName: " + getContextIdMethodName);
             messager.printMessage(Kind.NOTE,
-                                  "Priority: " + priority);
-            messager.printMessage(Kind.NOTE,
                                   "Resource types: " + associatedResources);
-            messager.printMessage(Kind.NOTE,
-                                  "Preferred Height: " + preferredHeight);
-            messager.printMessage(Kind.NOTE,
-                                  "Preferred Width: " + preferredWidth);
             messager.printMessage(Kind.NOTE,
                                   "onStartup1ParameterMethodName: " + onStartup1ParameterMethodName);
             messager.printMessage(Kind.NOTE,
@@ -253,21 +223,10 @@ public class EditorActivityGenerator extends AbstractGenerator {
                  className);
         root.put("identifier",
                  identifier);
-        root.put("lockingStrategy",
-                 lockingStrategy);
-        root.put("owningPlace",
-                 owningPlace);
         root.put("getContextIdMethodName",
                  getContextIdMethodName);
-        root.put("priority",
-                 priority.toString().replace(",",
-                                             ""));
         root.put("associatedResources",
                  GeneratorUtils.formatAssociatedResources(associatedResources));
-        root.put("preferredHeight",
-                 preferredHeight);
-        root.put("preferredWidth",
-                 preferredWidth);
         root.put("realClassName",
                  classElement.getSimpleName().toString());
         root.put("beanActivatorClass",

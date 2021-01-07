@@ -65,11 +65,6 @@ public abstract class AbstractWorkbenchEditorActivity extends AbstractWorkbenchA
     }
 
     @Override
-    public void onOpen() {
-        super.onOpen();
-    }
-
-    @Override
     public void onSave() {
         //Do nothing.
     }
@@ -77,15 +72,5 @@ public abstract class AbstractWorkbenchEditorActivity extends AbstractWorkbenchA
     @Override
     public boolean isDirty() {
         return false;
-    }
-
-    @Override
-    public void onClose() {
-        super.onClose();
-    }
-
-    @Override
-    public void onFocus() {
-        super.onFocus();
     }
 }

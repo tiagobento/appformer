@@ -33,7 +33,6 @@ import javax.inject.Named;
 <#if associatedResources??>
 import org.uberfire.client.workbench.annotations.AssociatedResources;
 </#if>
-import org.uberfire.client.workbench.annotations.Priority;
 import org.uberfire.client.mvp.AbstractWorkbenchEditorActivity;
 import org.uberfire.client.mvp.PlaceManager;
 
@@ -50,10 +49,7 @@ import org.uberfire.mvp.impl.DefaultPlaceRequest;
 import org.uberfire.workbench.model.menu.Menus;
 
 </#if>
-<#if getToolBarMethodName??>
-import org.uberfire.workbench.model.toolbar.ToolBar;
 
-</#if>
 import org.uberfire.backend.vfs.ObservablePath;
 
 import com.google.gwt.user.client.ui.IsWidget;
@@ -62,18 +58,13 @@ import com.google.gwt.user.client.ui.IsWidget;
 import org.jboss.errai.ioc.client.api.ActivatedBy;
 
 </#if>
-<#if lockingStrategy??>
-import org.uberfire.client.annotations.WorkbenchEditor.LockingStrategy;
-import static org.uberfire.client.annotations.WorkbenchEditor.LockingStrategy.*;
 
-</#if>
 @Dependent
 @Generated("org.uberfire.annotations.processors.WorkbenchEditorProcessor")
 @Named("${identifier}")
 <#if associatedResources??>
 ${associatedResources}
 </#if>
-@Priority(${priority})
 <#if beanActivatorClass??>
 @ActivatedBy(${beanActivatorClass}.class)
 </#if>
@@ -104,20 +95,7 @@ public class ${className} extends AbstractWorkbenchEditorActivity {
     }
 
     </#if>
-    <#if preferredHeight??>
-    @Override
-    public int preferredHeight() {
-       return ${preferredHeight};
-    }
 
-    </#if>
-    <#if preferredWidth??>
-    @Override
-    public int preferredWidth() {
-       return ${preferredWidth};
-    }
-
-    </#if>
     <#if onStartup2ParameterMethodName??>
     @Override
     public void onStartup(final ObservablePath path,
@@ -182,13 +160,6 @@ public class ${className} extends AbstractWorkbenchEditorActivity {
     }
 
     </#if>
-    <#if owningPlace??>
-    @Override
-    public PlaceRequest getOwningPlace() {
-        return new DefaultPlaceRequest("${owningPlace}");
-    }
-
-    </#if>
     <#if getTitleWidgetMethodName??>
     @Override
     public IsWidget getTitleDecoration() {
@@ -235,20 +206,7 @@ public class ${className} extends AbstractWorkbenchEditorActivity {
         realPresenter.${onSaveMethodName}();
     }
     </#if>
-    <#if getMenuBarMethodName??>
-    @Override
-    public void getMenus(final Consumer<Menus> menusConsumer) {
-        realPresenter.${getMenuBarMethodName}(menusConsumer);
-    }
 
-    </#if>
-    <#if getToolBarMethodName??>
-    @Override
-    public ToolBar getToolBar() {
-        return realPresenter.${getToolBarMethodName}();
-    }
-
-    </#if>
     <#if getContextIdMethodName??>
     @Override
     public String contextId() {
@@ -256,13 +214,7 @@ public class ${className} extends AbstractWorkbenchEditorActivity {
     }
 
     </#if>
-    <#if lockingStrategy??>
-    @Override
-    public LockingStrategy getLockingStrategy() {
-        return ${lockingStrategy};
-    }
 
-    </#if>
     @Override
     public String getIdentifier() {
         return "${identifier}";
