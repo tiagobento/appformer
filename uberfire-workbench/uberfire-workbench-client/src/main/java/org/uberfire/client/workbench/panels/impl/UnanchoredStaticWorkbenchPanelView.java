@@ -18,15 +18,12 @@ package org.uberfire.client.workbench.panels.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import org.uberfire.client.mvp.PlaceManager;
@@ -53,20 +50,12 @@ public class UnanchoredStaticWorkbenchPanelView
     @PostConstruct
     void postConstruct() {
 
-        panel.addFocusHandler(new FocusHandler() {
-            @Override
-            public void onFocus(final FocusEvent event) {
-                panelManager.onPanelFocus(presenter.getDefinition());
-            }
-        });
+        panel.addFocusHandler(event -> panelManager.onPanelFocus(presenter.getDefinition()));
 
         //When a tab is selected ensure content is resized and set focus
-        panel.addSelectionHandler(new SelectionHandler<PartDefinition>() {
-            @Override
-            public void onSelection(final SelectionEvent<PartDefinition> event) {
-                panelManager.onPartLostFocus();
-                panelManager.onPartFocus(event.getSelectedItem());
-            }
+        panel.addSelectionHandler(event -> {
+            panelManager.onPartLostFocus();
+            panelManager.onPartFocus(event.getSelectedItem());
         });
 
         Layouts.setToFillParent(panel);

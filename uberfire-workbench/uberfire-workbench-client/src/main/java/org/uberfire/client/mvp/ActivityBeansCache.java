@@ -116,7 +116,7 @@ public class ActivityBeansCache {
     }
 
     Collection<SyncBeanDef<Activity>> getAvailableActivities() {
-        Collection<SyncBeanDef<Activity>> activeBeans = new ArrayList<SyncBeanDef<Activity>>();
+        Collection<SyncBeanDef<Activity>> activeBeans = new ArrayList<>();
         for (SyncBeanDef<Activity> bean : iocManager.lookupBeans(Activity.class)) {
             if (bean.isActivated()) {
                 activeBeans.add(bean);
@@ -135,7 +135,7 @@ public class ActivityBeansCache {
     }
 
     private void validateUniqueness(final String id) {
-        if (activitiesById.keySet().contains(id)) {
+        if (activitiesById.containsKey(id)) {
             throw new RuntimeException("Conflict detected: Activity already exists with id " + id);
         }
     }
@@ -230,10 +230,6 @@ public class ActivityBeansCache {
 
     public List<String> getActivitiesById() {
         return new ArrayList<String>(activitiesById.keySet());
-    }
-
-    public void noOp() {
-        // intentionally left empty, can be called to activate this bean in a CDI context
     }
 
     public class EditorResourceTypeNotFound extends RuntimeException {

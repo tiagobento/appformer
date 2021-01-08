@@ -37,33 +37,8 @@
     box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
-.uf-drop-target-highlight {
-
-}
-
-.uf-drop-target-compass {
-
-}
-
-.statusBar {
-    cursor: default;
-    height: 36px;
-    width: 100%;
-    border-spacing: 0px;
-    background: #c0c0c0;
-    padding-top: 0px;
-    padding-bottom: 0px;
-    padding-left: 2px;
-    padding-right: 2px;
-}
-
 .uf-activeNavTabs {
 
-}
-
-.tabCloseButton {
-    float: none;
-    margin: -2px 0 0 10px;
 }
 
 .uf-listbar {
@@ -108,15 +83,6 @@
     width: 100%;
 }
 
-.show-context {
-    margin-left: 0;
-    -webkit-transition: all 0.7s ease-out;
-    -moz-transition: all 0.7s ease-out;
-    -ms-transition: all 0.7s ease-out;
-    -o-transition: all 0.7s ease-out;
-    transition: all 0.7s ease-out;
-}
-
 @external .navbar-fixed-top, .navbar-fixed-bottom;
 
 .navbar-fixed-top, .navbar-fixed-bottom {
@@ -130,26 +96,6 @@
    Size and position are handled programmatically in the WorkbenchLayout implementation. */
 .uf-maximized-panel {
     background-color: #fff;
-}
-
-.uf-split-layout-panel {
-
-}
-
-.uf-split-layout-panel-hdragger {
-    background-color: #ddd;
-}
-
-.uf-split-layout-panel-hdragger:hover {
-    cursor: col-resize;
-}
-
-.uf-split-layout-panel-vdragger {
-    background-color: #ddd;
-}
-
-.uf-split-layout-panel-vdragger:hover {
-    cursor: row-resize;
 }
 
 .uf-modal {

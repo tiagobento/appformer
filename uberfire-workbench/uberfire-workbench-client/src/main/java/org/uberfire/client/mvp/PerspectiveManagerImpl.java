@@ -20,7 +20,6 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
-import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.events.PerspectiveChange;
 import org.uberfire.mvp.Command;
@@ -44,9 +43,6 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
     @Inject
     private ActivityBeansCache activityBeansCache;
-
-    @Inject
-    private SyncBeanManager iocManager;
 
     private PerspectiveActivity currentPerspective;
 
@@ -75,11 +71,6 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     @Override
     public PerspectiveActivity getCurrentPerspective() {
         return currentPerspective;
-    }
-
-    @Override
-    public PerspectiveDefinition getLivePerspectiveDefinition() {
-        return livePerspectiveDef;
     }
 
     /**

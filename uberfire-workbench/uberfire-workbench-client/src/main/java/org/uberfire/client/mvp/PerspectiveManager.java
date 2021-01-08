@@ -39,11 +39,6 @@ public interface PerspectiveManager {
     PerspectiveActivity getCurrentPerspective();
 
     /**
-     * Returns a description of the current perspective which reflects the current visible state of the user interface.
-     */
-    PerspectiveDefinition getLivePerspectiveDefinition();
-
-    /**
      * This method should only be invoked by PlaceManager. To launch a perspective within an UberFire app, pass a
      * PlaceRequest for that perspective to {@link PlaceManager#goTo(org.uberfire.mvp.PlaceRequest)}.
      * <p/>

@@ -48,7 +48,6 @@ import org.uberfire.client.workbench.events.ChangeTitleWidgetEvent;
 import org.uberfire.client.workbench.events.PlaceGainFocusEvent;
 import org.uberfire.client.workbench.events.PlaceLostFocusEvent;
 import org.uberfire.client.workbench.events.SelectPlaceEvent;
-import org.uberfire.client.workbench.panels.DockingWorkbenchPanelPresenter;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.debug.Debug;
@@ -217,12 +216,6 @@ public class PanelManagerImpl implements PanelManager {
 
         panelPresenter.addPart(partPresenter,
                                contextId);
-        if (panelPresenter.getParent() instanceof DockingWorkbenchPanelPresenter) {
-            DockingWorkbenchPanelPresenter parent = (DockingWorkbenchPanelPresenter) panelPresenter.getParent();
-            parent.setChildSize(panelPresenter,
-                                preferredWidth,
-                                preferredHeight);
-        }
 
         //Select newly inserted part
         selectPlaceEvent.fire(new SelectPlaceEvent(place));

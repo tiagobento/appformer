@@ -114,19 +114,16 @@ public class DocksBars {
     }
 
     ParameterizedCommand<Double> createResizeCommand(final DocksBar docksBar) {
-        return new ParameterizedCommand<Double>() {
-            @Override
-            public void execute(Double size) {
-                if (sizeIsValid(size,
-                                docksBar)) {
-                    docksBar.setExpandedSize(size);
-                    uberfireDocksContainer.setWidgetSize(docksBar.getExpandedBar(),
-                                                         docksBar.getExpandedBarSize());
-                    docksBar.getExpandedBar().setupDockContentSize();
-                    uberfireDocksContainer.resize();
-                    dockInteractionEvent.fire(new UberfireDocksInteractionEvent(docksBar.getPosition(),
-                                                                                UberfireDocksInteractionEvent.InteractionType.RESIZED));
-                }
+        return size -> {
+            if (sizeIsValid(size,
+                            docksBar)) {
+                docksBar.setExpandedSize(size);
+                uberfireDocksContainer.setWidgetSize(docksBar.getExpandedBar(),
+                                                     docksBar.getExpandedBarSize());
+                docksBar.getExpandedBar().setupDockContentSize();
+                uberfireDocksContainer.resize();
+                dockInteractionEvent.fire(new UberfireDocksInteractionEvent(docksBar.getPosition(),
+                                                                            UberfireDocksInteractionEvent.InteractionType.RESIZED));
             }
         };
     }
@@ -140,7 +137,7 @@ public class DocksBars {
 
     private int calculateMaxSize(DocksBar docksBar) {
         UberfireDockPosition position = docksBar.getPosition();
-        int collapsedSize = new Double(docksBar.getCollapsedBarSize()).intValue();
+        int collapsedSize = docksBar.getCollapsedBarSize().intValue();
 
         int max = 0;
         if (position == UberfireDockPosition.SOUTH) {
@@ -336,9 +333,9 @@ public class DocksBars {
                                                  targetDock.getSize());
         } else {
             int width = uberfireDocksContainer.getClientWidth();
-            Double height = new Double(docksBar.getExpandedBarSize());
+            double height = docksBar.getExpandedBarSize();
             expandedBar.setPanelSize(width,
-                                     height.intValue());
+                                     (int) height);
             uberfireDocksContainer.setWidgetSize(expandedBar,
                                                  docksBar.getExpandedBarSize());
         }

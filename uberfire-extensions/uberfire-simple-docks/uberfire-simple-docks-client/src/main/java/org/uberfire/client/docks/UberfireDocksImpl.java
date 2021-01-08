@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
@@ -43,7 +44,7 @@ public class UberfireDocksImpl implements UberfireDocks {
     final Map<String, List<UberfireDock>> docksPerPerspective = new HashMap<>();
     final Map<String, List<Command>> delayedCommandsPerPerspective = new HashMap<>();
 
-    final Map<String, Set<UberfireDockPosition>> disableDocksPerPerspective = new HashMap<String, Set<UberfireDockPosition>>();
+    final Map<String, Set<UberfireDockPosition>> disableDocksPerPerspective = new HashMap<>();
     String currentPerspective;
     private DocksBars docksBars;
     private Event<UberfireDockReadyEvent> dockReadyEvent;
@@ -83,15 +84,13 @@ public class UberfireDocksImpl implements UberfireDocks {
     }
 
     private void fireDockReadyEvent() {
-        dockReadyEvent.fire(new UberfireDockReadyEvent(currentPerspective));
+        dockReadyEvent.fire(new UberfireDockReadyEvent());
     }
 
     private void executeDelayedCommands(String perspective) {
         List<Command> commands = delayedCommandsPerPerspective.get(perspective);
         if (commands != null) {
-            commands.forEach(c -> {
-                c.execute();
-            });
+            commands.forEach(Command::execute);
             delayedCommandsPerPerspective.remove(perspective);
         }
     }
@@ -128,7 +127,7 @@ public class UberfireDocksImpl implements UberfireDocks {
     }
 
     private boolean isCurrentPerspective(String perspective) {
-        return perspective == currentPerspective;
+        return perspective.equals(currentPerspective);
     }
 
     private void addDelayedCommand(String perspective,
@@ -226,12 +225,7 @@ public class UberfireDocksImpl implements UberfireDocks {
 
     private void addToDisableDocksList(UberfireDockPosition position,
                                        String perspectiveName) {
-        Set<UberfireDockPosition> disableDocks = disableDocksPerPerspective.get(perspectiveName);
-        if (disableDocks == null) {
-            disableDocks = new HashSet<>();
-            disableDocksPerPerspective.put(perspectiveName,
-                                           disableDocks);
-        }
+        Set<UberfireDockPosition> disableDocks = disableDocksPerPerspective.computeIfAbsent(perspectiveName, k -> new HashSet<>());
         disableDocks.add(position);
     }
 

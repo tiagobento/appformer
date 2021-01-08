@@ -40,7 +40,7 @@ public interface BeanFactory {
      * @param partType The new part type.
      * @return
      */
-    public WorkbenchPartPresenter newWorkbenchPart(final Menus menus,
+    WorkbenchPartPresenter newWorkbenchPart(final Menus menus,
                                                    final String title,
                                                    final IsWidget titleDecoration,
                                                    final PartDefinition definition,
@@ -54,7 +54,7 @@ public interface BeanFactory {
      * @return a new WorkbenchPanelPresenter configured as specified in the given panel definition. This bean must be
      * passed to {@link #destroy(Object)} when no longer in use by the application.
      */
-    public WorkbenchPanelPresenter newRootPanel(PerspectiveActivity activity,
+    WorkbenchPanelPresenter newRootPanel(PerspectiveActivity activity,
                                                 PanelDefinition root);
 
     /**
@@ -63,7 +63,7 @@ public interface BeanFactory {
      * @return a new panel presenter/view pair that is ready for use in the workbench. This bean must be passed to
      * {@link #destroy(Object)} when no longer in use by the application.
      */
-    public WorkbenchPanelPresenter newWorkbenchPanel(final PanelDefinition definition);
+    WorkbenchPanelPresenter newWorkbenchPanel(final PanelDefinition definition);
 
     /**
      * Destroys the entire graph of beans that were created and returned via a call to any of the <tt>newXXX()</tt>
@@ -72,5 +72,5 @@ public interface BeanFactory {
      * @param o a bean which was returned from one of the <tt>newXXX()</tt> methods in this class and which has not
      * been destroyed yet.
      */
-    public void destroy(final Object o);
+    void destroy(final Object o);
 }

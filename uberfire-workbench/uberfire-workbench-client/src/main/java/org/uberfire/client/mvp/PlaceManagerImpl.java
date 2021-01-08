@@ -58,7 +58,6 @@ import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.ConditionalPlaceRequest;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
-import org.uberfire.mvp.impl.ForcedPlaceRequest;
 import org.uberfire.mvp.impl.PathPlaceRequest;
 import org.uberfire.workbench.model.ActivityResourceType;
 import org.uberfire.workbench.model.CustomPanelDefinition;
@@ -227,10 +226,9 @@ public class PlaceManagerImpl implements PlaceManager {
         final PerspectiveActivity currentPerspective = perspectiveManager.getCurrentPerspective();
         final boolean thereIsAnOpenedPerspective = currentPerspective != null;
         final boolean isDifferentPerspective = thereIsAnOpenedPerspective && !place.equals(currentPerspective.getPlace());
-        final boolean isForcedPlaceRequest = place instanceof ForcedPlaceRequest;
 
         // Before launching the perspective, checks if there is some close chain to be executed for the current perspective
-        if (thereIsAnOpenedPerspective && (isDifferentPerspective || isForcedPlaceRequest)) {
+        if (thereIsAnOpenedPerspective && isDifferentPerspective) {
             final BiParameterizedCommand<Command, PlaceRequest> closeChain = this.perspectiveCloseChain.get(currentPerspective.getIdentifier());
             if (closeChain != null) {
                 closeChain.execute(launchPerspectiveCommand,
@@ -635,56 +633,46 @@ public class PlaceManagerImpl implements PlaceManager {
         checkNotNull("doWhenFinished",
                      doWhenFinished);
 
-        if (place instanceof ForcedPlaceRequest) {
-            switchToPerspective(place,
-                                activity,
-                                perspectiveDef -> {
-                                    openPartsRecursively(perspectiveDef.getRoot());
-                                    doWhenFinished.execute();
-                                    workbenchLayout.onResize();
-                                });
-        } else {
-            final PerspectiveActivity oldPerspectiveActivity = perspectiveManager.getCurrentPerspective();
-            if (oldPerspectiveActivity != null && place.equals(oldPerspectiveActivity.getPlace())) {
-                return;
-            }
-
-            // first try to open the new perspective, so we can avoid leaving the user on a blank screen if the onOpen() method fails
-            try {
-                activity.onOpen();
-            } catch (Exception ex) {
-                lifecycleErrorHandler.handle(activity,
-                                             LifecyclePhase.OPEN,
-                                             ex);
-                try {
-                    activity.onClose();
-                } catch (Exception ex2) {
-                    // not unexpected; probably happened because onOpen failed to complete
-                }
-                existingWorkbenchActivities.remove(place);
-                activityManager.destroyActivity(activity);
-                return;
-            }
-
-            switchToPerspective(place,
-                                activity,
-                                perspectiveDef -> {
-                                    if (oldPerspectiveActivity != null) {
-                                        try {
-                                            oldPerspectiveActivity.onClose();
-                                        } catch (Exception ex) {
-                                            lifecycleErrorHandler.handle(oldPerspectiveActivity,
-                                                                         LifecyclePhase.CLOSE,
-                                                                         ex);
-                                        }
-                                        existingWorkbenchActivities.remove(oldPerspectiveActivity.getPlace());
-                                        activityManager.destroyActivity(oldPerspectiveActivity);
-                                    }
-                                    openPartsRecursively(perspectiveDef.getRoot());
-                                    doWhenFinished.execute();
-                                    workbenchLayout.onResize();
-                                });
+        final PerspectiveActivity oldPerspectiveActivity = perspectiveManager.getCurrentPerspective();
+        if (oldPerspectiveActivity != null && place.equals(oldPerspectiveActivity.getPlace())) {
+            return;
         }
+
+        // first try to open the new perspective, so we can avoid leaving the user on a blank screen if the onOpen() method fails
+        try {
+            activity.onOpen();
+        } catch (Exception ex) {
+            lifecycleErrorHandler.handle(activity,
+                                         LifecyclePhase.OPEN,
+                                         ex);
+            try {
+                activity.onClose();
+            } catch (Exception ex2) {
+                // not unexpected; probably happened because onOpen failed to complete
+            }
+            existingWorkbenchActivities.remove(place);
+            activityManager.destroyActivity(activity);
+            return;
+        }
+
+        switchToPerspective(place,
+                            activity,
+                            perspectiveDef -> {
+                                if (oldPerspectiveActivity != null) {
+                                    try {
+                                        oldPerspectiveActivity.onClose();
+                                    } catch (Exception ex) {
+                                        lifecycleErrorHandler.handle(oldPerspectiveActivity,
+                                                                     LifecyclePhase.CLOSE,
+                                                                     ex);
+                                    }
+                                    existingWorkbenchActivities.remove(oldPerspectiveActivity.getPlace());
+                                    activityManager.destroyActivity(oldPerspectiveActivity);
+                                }
+                                openPartsRecursively(perspectiveDef.getRoot());
+                                doWhenFinished.execute();
+                                workbenchLayout.onResize();
+                            });
     }
 
     private void switchToPerspective(final PlaceRequest place,

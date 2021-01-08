@@ -29,6 +29,4 @@ public interface WorkbenchResources
 
     @Source("css/workbench.css")
     WorkbenchCss CSS();
-
-    WorkbenchImages images();
 }

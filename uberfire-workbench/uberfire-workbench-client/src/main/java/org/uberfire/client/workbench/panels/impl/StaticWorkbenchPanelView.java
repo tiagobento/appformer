@@ -54,12 +54,7 @@ public class StaticWorkbenchPanelView
     @PostConstruct
     void postConstruct() {
 
-        panel.addFocusHandler(new FocusHandler() {
-            @Override
-            public void onFocus(final FocusEvent event) {
-                panelManager.onPanelFocus(presenter.getDefinition());
-            }
-        });
+        panel.addFocusHandler(event -> panelManager.onPanelFocus(presenter.getDefinition()));
 
         //When a tab is selected ensure content is resized and set focus
         panel.addSelectionHandler(getPanelSelectionHandler());
