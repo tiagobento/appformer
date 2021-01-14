@@ -136,12 +136,6 @@ public interface PlaceManager {
     void tryClosePlace(final PlaceRequest placeToClose,
                        final Command onAfterClose);
 
-    @JsMethod(name = "forceCloseById")
-    void forceClosePlace(final String id);
-
-    @JsMethod(name = "forceCloseByPlaceRequest")
-    void forceClosePlace(final PlaceRequest place);
-
     void registerOnOpenCallback(PlaceRequest place,
                                 Command callback);
 

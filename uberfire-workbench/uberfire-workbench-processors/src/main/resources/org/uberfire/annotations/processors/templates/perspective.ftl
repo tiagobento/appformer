@@ -31,33 +31,18 @@ import org.uberfire.client.mvp.PlaceManager;
 
 import org.uberfire.mvp.PlaceRequest;
 
-<#if beanActivatorClass??>
-import org.jboss.errai.ioc.client.api.ActivatedBy;
-
-</#if>
-
 @Dependent
 @Generated("org.uberfire.annotations.processors.WorkbenchPerspectiveProcessor")
 @Named("${identifier}")
-<#if beanActivatorClass??>
-@ActivatedBy(${beanActivatorClass}.class)
-</#if>
-<#list qualifiers as qualifier>
-${qualifier}
-</#list>
 /*
  * WARNING! This class is generated. Do not modify.
  */
 public class ${className} extends AbstractWorkbenchPerspectiveActivity {
 
     @Inject
-<#list qualifiers as qualifier>
-    ${qualifier}
-</#list>
     private ${realClassName} realPresenter;
 
     @Inject
-    //Constructor injection for testing
     public ${className}(final PlaceManager placeManager) {
         super( placeManager );
     }
@@ -67,45 +52,6 @@ public class ${className} extends AbstractWorkbenchPerspectiveActivity {
         return "${identifier}";
     }
 
-<#if onStartup1ParameterMethodName??>
-    @Override
-    public void onStartup(final PlaceRequest place) {
-        super.onStartup( place );
-        realPresenter.${onStartup1ParameterMethodName}( place );
-    }
-
-<#elseif onStartup0ParameterMethodName??>
-    @Override
-    public void onStartup(final PlaceRequest place) {
-        super.onStartup( place );
-        realPresenter.${onStartup0ParameterMethodName}();
-    }
-
-</#if>
-<#if onCloseMethodName??>
-    @Override
-    public void onClose() {
-        super.onClose();
-        realPresenter.${onCloseMethodName}();
-    }
-
-</#if>
-<#if onShutdownMethodName??>
-    @Override
-    public void onShutdown() {
-        super.onShutdown();
-        realPresenter.${onShutdownMethodName}();
-    }
-
-</#if>
-<#if onOpenMethodName??>
-    @Override
-    public void onOpen() {
-        super.onOpen();
-        realPresenter.${onOpenMethodName}();
-    }
-
-</#if>
 <#if getPerspectiveMethodName??>
     @Override
     public PerspectiveDefinition getDefaultPerspectiveLayout() {

@@ -108,8 +108,6 @@ public class EditorActivityGenerator extends AbstractGenerator {
             onStartup2ParameterMethodName = onStartupMethod.getSimpleName().toString();
         }
 
-        final String onMayCloseMethodName = GeneratorUtils.getOnMayCloseMethodName(classElement,
-                                                                                   processingEnvironment);
         final String onCloseMethodName = GeneratorUtils.getOnCloseMethodName(classElement,
                                                                              processingEnvironment);
         final String onShutdownMethodName = GeneratorUtils.getOnShutdownMethodName(classElement,
@@ -144,8 +142,6 @@ public class EditorActivityGenerator extends AbstractGenerator {
                                   "onStartup1ParameterMethodName: " + onStartup1ParameterMethodName);
             messager.printMessage(Kind.NOTE,
                                   "onStartup2ParameterMethodName: " + onStartup2ParameterMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "onMayCloseMethodName: " + onMayCloseMethodName);
             messager.printMessage(Kind.NOTE,
                                   "onCloseMethodName: " + onCloseMethodName);
             messager.printMessage(Kind.NOTE,
@@ -199,8 +195,6 @@ public class EditorActivityGenerator extends AbstractGenerator {
                  onStartup1ParameterMethodName);
         root.put("onStartup2ParameterMethodName",
                  onStartup2ParameterMethodName);
-        root.put("onMayCloseMethodName",
-                 onMayCloseMethodName);
         root.put("onCloseMethodName",
                  onCloseMethodName);
         root.put("onShutdownMethodName",

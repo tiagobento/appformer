@@ -49,7 +49,6 @@ import org.uberfire.client.workbench.type.ClientResourceType;
  * <li>{@code @OnOpen}</li>
  * <li>{@code @OnFocus}</li>
  * <li>{@code @OnLostFocus}</li>
- * <li>{@code @OnMayClose}</li>
  * <li>{@code @OnClose}</li>
  * </p>
  */

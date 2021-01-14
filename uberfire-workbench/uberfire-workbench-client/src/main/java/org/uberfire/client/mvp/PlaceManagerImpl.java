@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -34,7 +33,6 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import com.google.gwt.user.client.ui.HasWidgets;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import jsinterop.annotations.JsMethod;
@@ -95,7 +93,6 @@ public class PlaceManagerImpl implements PlaceManager {
     private final Map<PlaceRequest, List<Command>> onOpenCallbacks = new HashMap<>();
     private final Map<PlaceRequest, List<Command>> onCloseCallbacks = new HashMap<>();
     private final Map<String, BiParameterizedCommand<Command, PlaceRequest>> perspectiveCloseChain = new HashMap<>();
-    private final Map<PlaceRequest, Activity> onMayCloseList = new HashMap<>();
     private EventBus tempBus = null;
     @Inject
     private Event<ClosePlaceEvent> workbenchPartCloseEvent;
@@ -242,29 +239,11 @@ public class PlaceManagerImpl implements PlaceManager {
     }
 
     private boolean closePlaces(final Collection<PlaceRequest> placeRequests) {
-        boolean result = true;
         for (final PlaceRequest placeRequest : placeRequests) {
-            final Activity activity = existingWorkbenchActivities.get(placeRequest);
-            if (activity != null && (activity.isType(ActivityResourceType.SCREEN.name()) || activity.isType(ActivityResourceType.EDITOR.name()))) {
-                if (((WorkbenchActivity) activity).onMayClose()) {
-                    onMayCloseList.put(placeRequest,
-                                       activity);
-                } else {
-                    result = false;
-                    break;
-                }
-            }
+            closePlace(placeRequest);
         }
 
-        if (!result) {
-            onMayCloseList.clear();
-        } else {
-            for (final PlaceRequest placeRequest : placeRequests) {
-                closePlace(placeRequest);
-            }
-        }
-
-        return result;
+        return true;
     }
 
     /**
@@ -432,7 +411,7 @@ public class PlaceManagerImpl implements PlaceManager {
             return;
         }
         closePlace(placeToClose,
-                   false);
+                   null);
     }
 
     @Override
@@ -448,20 +427,6 @@ public class PlaceManagerImpl implements PlaceManager {
         if (execute) {
             onAfterClose.execute();
         }
-    }
-
-    @Override
-    public void forceClosePlace(final String id) {
-        forceClosePlace(new DefaultPlaceRequest(id));
-    }
-
-    @Override
-    public void forceClosePlace(final PlaceRequest placeToClose) {
-        if (placeToClose == null) {
-            return;
-        }
-        closePlace(placeToClose,
-                   true);
     }
 
     private boolean closeAllCurrentPanels() {
@@ -699,14 +664,6 @@ public class PlaceManagerImpl implements PlaceManager {
     }
 
     private void closePlace(final PlaceRequest place,
-                            final boolean force) {
-        closePlace(place,
-                   force,
-                   null);
-    }
-
-    private void closePlace(final PlaceRequest place,
-                            final boolean force,
                             final Command onAfterClose) {
 
         final Activity existingActivity = existingWorkbenchActivities.get(place);
@@ -715,22 +672,16 @@ public class PlaceManagerImpl implements PlaceManager {
         }
 
         final Command closeCommand = getCloseCommand(place,
-                                                     force,
                                                      onAfterClose);
 
-        if (force) {
-            closeCommand.execute();
-        } else {
-            final PerspectiveActivity currentPerspective = perspectiveManager.getCurrentPerspective();
-            final BiParameterizedCommand<Command, PlaceRequest> closeChain = this.perspectiveCloseChain.getOrDefault(currentPerspective.getIdentifier(),
-                                                                                                                     (chain, placeRequest) -> chain.execute());
-            closeChain.execute(closeCommand,
-                               place);
-        }
+        final PerspectiveActivity currentPerspective = perspectiveManager.getCurrentPerspective();
+        final BiParameterizedCommand<Command, PlaceRequest> closeChain = this.perspectiveCloseChain.getOrDefault(currentPerspective.getIdentifier(),
+                                                                                                                 (chain, placeRequest) -> chain.execute());
+        closeChain.execute(closeCommand,
+                           place);
     }
 
     private Command getCloseCommand(final PlaceRequest place,
-                                    final boolean force,
                                     final Command onAfterClose) {
         return () -> {
 
@@ -741,17 +692,12 @@ public class PlaceManagerImpl implements PlaceManager {
 
             if (activity.isType(ActivityResourceType.SCREEN.name()) || activity.isType(ActivityResourceType.EDITOR.name())) {
                 WorkbenchActivity activity1 = (WorkbenchActivity) activity;
-                if (force || onMayCloseList.containsKey(place) || activity1.onMayClose()) {
-                    onMayCloseList.remove(place);
-                    try {
-                        activity1.onClose();
-                    } catch (Exception ex) {
-                        lifecycleErrorHandler.handle(activity1,
-                                                     LifecyclePhase.CLOSE,
-                                                     ex);
-                    }
-                } else {
-                    return;
+                try {
+                    activity1.onClose();
+                } catch (Exception ex) {
+                    lifecycleErrorHandler.handle(activity1,
+                                                 LifecyclePhase.CLOSE,
+                                                 ex);
                 }
             } else {
                 activity.onClose();

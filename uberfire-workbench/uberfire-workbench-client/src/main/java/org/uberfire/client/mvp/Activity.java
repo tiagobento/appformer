@@ -91,12 +91,4 @@ public interface Activity extends RuntimeFeatureResource {
      * state.
      */
     PlaceRequest getPlace();
-
-    /**
-     * Returns the name of this activity, defaulting to {@link #getIdentifier()}.
-     * @return the activity's name
-     */
-    default String getName() {
-        return getIdentifier();
-    }
 }

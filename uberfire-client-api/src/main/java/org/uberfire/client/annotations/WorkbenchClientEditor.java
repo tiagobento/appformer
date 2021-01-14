@@ -50,7 +50,6 @@ import java.lang.annotation.Target;
  * <li>{@code @OnOpen}</li>
  * <li>{@code @OnFocus}</li>
  * <li>{@code @OnLostFocus}</li>
- * <li>{@code @OnMayClose}</li>
  * <li>{@code @OnClose}</li>
  * </p>
  */

@@ -18,7 +18,6 @@ package org.uberfire.annotations.processors;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +40,6 @@ import javax.tools.Diagnostic.Kind;
 
 import org.uberfire.annotations.processors.exceptions.GenerationException;
 import org.uberfire.annotations.processors.facades.APIModule;
-import org.uberfire.annotations.processors.facades.BackendModule;
 import org.uberfire.annotations.processors.facades.ClientAPIModule;
 
 import static java.util.Collections.singletonList;
@@ -178,20 +176,15 @@ public class GeneratorUtils {
         ExecutableElement twoArgMethod = null;
         for (ExecutableElement m : onStartupMethods) {
             if (doParametersMatch(typeUtils,
-                                  elementUtils,
-                                  m,
-                                  new String[]{BackendModule.getPathClass()})) {
-                oneArgMethod = m;
-            } else if (doParametersMatch(typeUtils,
                                          elementUtils,
                                          m,
-                                         new String[]{BackendModule.getPathClass(), APIModule.getPlaceRequestClass()})) {
+                                         new String[]{APIModule.getPlaceRequestClass()})) {
                 twoArgMethod = m;
             } else {
                 processingEnvironment.getMessager().printMessage(
                         Kind.ERROR,
                         formatProblemsList(APIModule.getOnStartupClass(),
-                                           singletonList("take one argument of type " + BackendModule.getPathClass() + " and an optional second argument of type " + APIModule.getPlaceRequestClass())));
+                                           singletonList("take one optional argument of type " + APIModule.getPlaceRequestClass())));
             }
         }
 
@@ -208,30 +201,6 @@ public class GeneratorUtils {
         }
 
         return oneArgMethod;
-    }
-
-    public static String getOnContextAttachPanelDefinitionMethodName(final TypeElement classElement,
-                                                                     final ProcessingEnvironment processingEnvironment) throws GenerationException {
-        return getVoidMethodName(classElement,
-                                 processingEnvironment,
-                                 new String[]{APIModule.getPanelDefinitionClass()},
-                                 APIModule.getOnContextAttachClass());
-    }
-
-    /**
-     * Get the method name annotated with {@code @OnMayClose}. The method must
-     * be public, non-static, have a return-type of void and take zero
-     * parameters.
-     * @param classElement
-     * @param processingEnvironment
-     * @return null if none found
-     * @throws GenerationException
-     */
-    public static String getOnMayCloseMethodName(final TypeElement classElement,
-                                                 final ProcessingEnvironment processingEnvironment) throws GenerationException {
-        return getBooleanMethodName(classElement,
-                                    processingEnvironment,
-                                    APIModule.getOnMayCloseClass());
     }
 
     /**
@@ -261,7 +230,7 @@ public class GeneratorUtils {
                                                  final ProcessingEnvironment processingEnvironment) throws GenerationException {
         return getVoidMethodName(classElement,
                                  processingEnvironment,
-                                 APIModule.getOnShutdownlass());
+                                 APIModule.getOnShutdownClass());
     }
 
     /**
@@ -449,57 +418,6 @@ public class GeneratorUtils {
         return match.getSimpleName().toString();
     }
 
-    // Lookup a public method name with the given annotation. The method must be
-    // public, non-static, have a return-type of void and take parameters matching
-    // those provided.
-    private static String getVoidMethodName(final TypeElement classElement,
-                                            final ProcessingEnvironment processingEnvironment,
-                                            final String[] parameterTypes,
-                                            final String annotationName) throws GenerationException {
-
-        final Types typeUtils = processingEnvironment.getTypeUtils();
-        final Elements elementUtils = processingEnvironment.getElementUtils();
-        final TypeMirror requiredReturnType = typeUtils.getNoType(TypeKind.VOID);
-        final List<ExecutableElement> methods = ElementFilter.methodsIn(classElement.getEnclosedElements());
-
-        ExecutableElement match = null;
-        for (ExecutableElement e : methods) {
-
-            final TypeMirror actualReturnType = e.getReturnType();
-
-            //Check method
-            if (getAnnotation(elementUtils,
-                              e,
-                              annotationName) == null) {
-                continue;
-            }
-            if (!typeUtils.isSameType(actualReturnType,
-                                      requiredReturnType)) {
-                continue;
-            }
-            if (!doParametersMatch(typeUtils,
-                                   elementUtils,
-                                   e,
-                                   parameterTypes)) {
-                continue;
-            }
-            if (e.getModifiers().contains(Modifier.STATIC)) {
-                continue;
-            }
-            if (!e.getModifiers().contains(Modifier.PUBLIC)) {
-                continue;
-            }
-            if (match != null) {
-                throw new GenerationException("Multiple methods with @" + fqcnToSimpleName(annotationName) + " detected.");
-            }
-            match = e;
-        }
-        if (match == null) {
-            return null;
-        }
-        return match.getSimpleName().toString();
-    }
-
     /**
      * Checks whether the ExecutableElement's parameter list matches the requiredParameterTypes (order matters).
      * @param typeUtils type utils from current processing environment.
@@ -533,64 +451,6 @@ public class GeneratorUtils {
             }
         }
         return true;
-    }
-
-    /**
-     * Finds a public, non-static, no-args method annotated with the given annotation which returns boolean.
-     * <p/>
-     * If a method with the given annotation is found but the method does not satisfy the requirements listed above, the
-     * method will be marked with an error explaining the problem.
-     * <p/>
-     * If more than one method satisfies all the criteria, all such methods are marked with an error explaining the
-     * problem.
-     * @param classElement the class to search for the annotated method.
-     * @param processingEnvironment the current annotation processing environment.
-     * @param annotationName the fully-qualified name of the annotation to search for
-     * @return null if no such method exists; otherwise, the method's name.
-     */
-    private static String getBooleanMethodName(final TypeElement classElement,
-                                               final ProcessingEnvironment processingEnvironment,
-                                               final String annotationName) throws GenerationException {
-        final Elements elementUtils = processingEnvironment.getElementUtils();
-        final TypeMirror requiredReturnType = elementUtils.getTypeElement(Boolean.class.getName()).asType();
-        ExecutableElement match = getUniqueAnnotatedMethod(
-                classElement,
-                processingEnvironment,
-                annotationName,
-                requiredReturnType,
-                NO_PARAMS);
-        if (match == null) {
-            return null;
-        }
-        return match.getSimpleName().toString();
-    }
-
-    /**
-     * Finds a public, non-static, no-args method annotated with the given annotation which returns String.
-     * <p/>
-     * If a method with the given annotation is found but the method does not satisfy the requirements listed above, the
-     * method will be marked with an error explaining the problem.
-     * <p/>
-     * If more than one method satisfies all the criteria, all such methods are marked with an error explaining the
-     * problem.
-     * @return null if no such method exists; otherwise, the method's name.
-     */
-    private static String getStringMethodName(final TypeElement classElement,
-                                              final ProcessingEnvironment processingEnvironment,
-                                              final String annotationName) throws GenerationException {
-
-        final Elements elementUtils = processingEnvironment.getElementUtils();
-
-        ExecutableElement match = getUniqueAnnotatedMethod(classElement,
-                                                           processingEnvironment,
-                                                           annotationName,
-                                                           elementUtils.getTypeElement(String.class.getName()).asType(),
-                                                           NO_PARAMS);
-
-        if (match == null) {
-            return null;
-        }
-        return match.getSimpleName().toString();
     }
 
     /**

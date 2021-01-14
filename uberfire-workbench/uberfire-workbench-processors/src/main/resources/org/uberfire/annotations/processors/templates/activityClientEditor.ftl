@@ -71,7 +71,6 @@ public class ${className} extends AbstractWorkbenchClientEditorActivity {
     private ${realClassName} realPresenter;
 
     @Inject
-    //Constructor injection for testing
     public ${className}(final PlaceManager placeManager) {
         super( placeManager );
     }
@@ -97,13 +96,6 @@ public class ${className} extends AbstractWorkbenchClientEditorActivity {
         super.onStartup( place );
         realPresenter.${onStartup0ParameterMethodName}();
     }
-    </#if>
-    <#if onMayCloseMethodName??>
-    @Override
-    public boolean onMayClose() {
-        return realPresenter.${onMayCloseMethodName}();
-    }
-
     </#if>
     <#if onCloseMethodName??>
     @Override
@@ -182,21 +174,24 @@ public class ${className} extends AbstractWorkbenchClientEditorActivity {
         return realPresenter.${getDefaultPositionMethodName}();
     }
     </#if>
+
     <#if setContentMethodName??>
     @Override
     public Promise<Void> setContent(String path, String value) {
         return realPresenter.${setContentMethodName}(path, value);
     }
     </#if>
+
     <#if getContentMethodName??>
     @Override
     public Promise<String> getContent() {
         return realPresenter.${getContentMethodName}();
     }
-    </#if>    
+    </#if>
+
     @Override
     public Promise<String> getPreview() {
-    	<#if getPreviewMethodName??>    
+        <#if getPreviewMethodName??>
         return realPresenter.${getPreviewMethodName}();
         <#else>
         return null;

@@ -73,7 +73,6 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
     private ${realClassName} realPresenter;
 
     @Inject
-    //Constructor injection for testing
     public ${className}(final PlaceManager placeManager) {
         super( placeManager );
     }
@@ -97,13 +96,6 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
     public void onStartup(final PlaceRequest place) {
         super.onStartup( place );
         realPresenter.${onStartup0ParameterMethodName}();
-    }
-    </#if>
-    <#if onMayCloseMethodName??>
-
-    @Override
-    public boolean onMayClose() {
-        return realPresenter.${onMayCloseMethodName}();
     }
     </#if>
     <#if onCloseMethodName??>

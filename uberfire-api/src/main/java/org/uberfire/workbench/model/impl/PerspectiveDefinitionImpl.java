@@ -75,16 +75,6 @@ public class PerspectiveDefinitionImpl
     }
 
     @Override
-    public ContextDisplayMode getContextDisplayMode() {
-        return contextDisplayMode;
-    }
-
-    @Override
-    public void setContextDisplayMode(final ContextDisplayMode contextDisplayMode) {
-        this.contextDisplayMode = contextDisplayMode;
-    }
-
-    @Override
     public String toString() {
         return "PerspectiveDefinitionImpl [name=" + name + ", contextDefinition=" + contextDefinition
                 + ", contextDisplayMode=" + contextDisplayMode + "]";

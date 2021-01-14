@@ -49,18 +49,6 @@ import org.uberfire.workbench.model.Position;
 public interface WorkbenchActivity extends Activity {
 
     /**
-     * Invoked by the framework before this activity is closed, unless the framework has been told to "force close" the
-     * activity.
-     * <p>
-     * The activity can cancel the close operation by returning {@code false} from this method. This is most often used
-     * for implementing a "save before closing" workflow.
-     * @return true if the activity is ready to be closed; false if it should remain open.
-     * @see PlaceManager#closePlace(PlaceRequest)
-     * @see PlaceManager#closePlace(String)
-     */
-    boolean onMayClose();
-
-    /**
      * Specifies custom positioning for this activity's view when the request to launch it comes without specific
      * positioning information of its own. For a newly launching activity, when this method returns a non-null value,
      * UberFire will attempt to create a new panel for this activity and add that new panel as a child of the current

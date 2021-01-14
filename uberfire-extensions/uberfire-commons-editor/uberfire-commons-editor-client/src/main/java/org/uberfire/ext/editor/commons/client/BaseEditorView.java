@@ -24,6 +24,4 @@ public interface BaseEditorView
                 IsWidget {
 
     void showLoading();
-
-    boolean confirmClose();
 }

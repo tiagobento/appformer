@@ -19,16 +19,13 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic.Kind;
 
 import freemarker.template.Template;
@@ -52,41 +49,12 @@ public class PerspectiveActivityGenerator extends AbstractGenerator {
         messager.printMessage(Kind.NOTE,
                               "Starting code generation for [" + className + "]");
 
-        final Elements elementUtils = processingEnvironment.getElementUtils();
-
         //Extract required information
         final TypeElement classElement = (TypeElement) element;
         String identifier = ClientAPIModule.getWbPerspectiveScreenIdentifierValueOnClass(classElement);
 
-        final String beanActivatorClass = GeneratorUtils.getBeanActivatorClassName(classElement,
-                                                                                   processingEnvironment);
-
-        final ExecutableElement onStartupMethod = GeneratorUtils.getOnStartupMethodForNonEditors(classElement,
-                                                                                                 processingEnvironment);
-
-        final String onStartup0ParameterMethodName;
-        final String onStartup1ParameterMethodName;
-        if (onStartupMethod == null) {
-            onStartup0ParameterMethodName = null;
-            onStartup1ParameterMethodName = null;
-        } else if (onStartupMethod.getParameters().isEmpty()) {
-            onStartup0ParameterMethodName = onStartupMethod.getSimpleName().toString();
-            onStartup1ParameterMethodName = null;
-        } else {
-            onStartup0ParameterMethodName = null;
-            onStartup1ParameterMethodName = onStartupMethod.getSimpleName().toString();
-        }
-
-        final String onCloseMethodName = GeneratorUtils.getOnCloseMethodName(classElement,
-                                                                             processingEnvironment);
-        final String onShutdownMethodName = GeneratorUtils.getOnShutdownMethodName(classElement,
-                                                                                   processingEnvironment);
-        final String onOpenMethodName = GeneratorUtils.getOnOpenMethodName(classElement,
-                                                                           processingEnvironment);
         final String getPerspectiveMethodName = GeneratorUtils.getPerspectiveMethodName(classElement,
                                                                                         processingEnvironment);
-        final List<String> qualifiers = GeneratorUtils.getAllQualifiersDeclarationFromType(classElement);
-
         if (GeneratorUtils.debugLoggingEnabled()) {
             messager.printMessage(Kind.NOTE,
                                   "Package name: " + packageName);
@@ -95,23 +63,10 @@ public class PerspectiveActivityGenerator extends AbstractGenerator {
             messager.printMessage(Kind.NOTE,
                                   "Identifier: " + identifier);
             messager.printMessage(Kind.NOTE,
-                                  "onStartup0ParameterMethodName: " + onStartup0ParameterMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "onStartup1ParameterMethodName: " + onStartup1ParameterMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "onCloseMethodName: " + onCloseMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "onShutdownMethodName: " + onShutdownMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "onOpenMethodName: " + onOpenMethodName);
-            messager.printMessage(Kind.NOTE,
                                   "getPerspectiveMethodName: " + getPerspectiveMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "Qualifiers: " + String.join(", ",
-                                                               qualifiers));
         }
 
-        Map<String, Object> root = new HashMap<String, Object>();
+        Map<String, Object> root = new HashMap<>();
 
         //Setup data for FreeMarker
         root.put("packageName",
@@ -122,22 +77,8 @@ public class PerspectiveActivityGenerator extends AbstractGenerator {
                  identifier);
         root.put("realClassName",
                  classElement.getSimpleName().toString());
-        root.put("beanActivatorClass",
-                 beanActivatorClass);
-        root.put("onStartup0ParameterMethodName",
-                 onStartup0ParameterMethodName);
-        root.put("onStartup1ParameterMethodName",
-                 onStartup1ParameterMethodName);
-        root.put("onCloseMethodName",
-                 onCloseMethodName);
-        root.put("onShutdownMethodName",
-                 onShutdownMethodName);
-        root.put("onOpenMethodName",
-                 onOpenMethodName);
         root.put("getPerspectiveMethodName",
                  getPerspectiveMethodName);
-        root.put("qualifiers",
-                 qualifiers);
 
         //Generate code
         final StringWriter sw = new StringWriter();

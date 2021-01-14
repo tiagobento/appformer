@@ -28,9 +28,4 @@ public interface PerspectiveActivity extends Activity {
      * @return the perspective layout to use when a previously saved one is not available.
      */
     PerspectiveDefinition getDefaultPerspectiveLayout();
-
-    @Override
-    default String getName() {
-        return getDefaultPerspectiveLayout().getName();
-    }
 }

@@ -33,26 +33,22 @@ public interface PerspectiveDefinition {
      * Get the name of the Perspective.
      * @return The name of the Perspective.
      */
-    public String getName();
+    String getName();
 
     /**
      * Set the name of the Perspective.
      * @param name The name of the Perspective.
      */
-    public void setName(final String name);
+    void setName(final String name);
 
     /**
      * Get the root Panel for this Perspective. The root Panel contains all
      * child Panels. A Perspective is based on a single root Panel.
      * @return The root Panel.
      */
-    public PanelDefinition getRoot();
+    PanelDefinition getRoot();
 
     ContextDefinition getContextDefinition();
 
     void setContextDefinition(final ContextDefinition contextDefinition);
-
-    ContextDisplayMode getContextDisplayMode();
-
-    void setContextDisplayMode(final ContextDisplayMode contextDisplayMode);
 }

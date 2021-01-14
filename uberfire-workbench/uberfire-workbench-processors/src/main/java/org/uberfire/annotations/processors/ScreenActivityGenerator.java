@@ -90,8 +90,6 @@ public class ScreenActivityGenerator extends AbstractGenerator {
             onStartup1ParameterMethodName = onStartupMethod.getSimpleName().toString();
         }
 
-        final String onMayCloseMethodName = GeneratorUtils.getOnMayCloseMethodName(classElement,
-                                                                                   processingEnvironment);
         final String onCloseMethodName = GeneratorUtils.getOnCloseMethodName(classElement,
                                                                              processingEnvironment);
         final String onShutdownMethodName = GeneratorUtils.getOnShutdownMethodName(classElement,
@@ -128,8 +126,6 @@ public class ScreenActivityGenerator extends AbstractGenerator {
                                   "onStartup0ParameterMethodName: " + onStartup0ParameterMethodName);
             messager.printMessage(Kind.NOTE,
                                   "onStartup1ParameterMethodName: " + onStartup1ParameterMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "onMayCloseMethodName: " + onMayCloseMethodName);
             messager.printMessage(Kind.NOTE,
                                   "onCloseMethodName: " + onCloseMethodName);
             messager.printMessage(Kind.NOTE,
@@ -185,8 +181,6 @@ public class ScreenActivityGenerator extends AbstractGenerator {
                  onStartup0ParameterMethodName);
         root.put("onStartup1ParameterMethodName",
                  onStartup1ParameterMethodName);
-        root.put("onMayCloseMethodName",
-                 onMayCloseMethodName);
         root.put("onCloseMethodName",
                  onCloseMethodName);
         root.put("onShutdownMethodName",

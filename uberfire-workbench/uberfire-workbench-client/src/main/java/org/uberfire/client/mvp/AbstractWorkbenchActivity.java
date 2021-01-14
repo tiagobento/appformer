@@ -15,8 +15,6 @@
  */
 package org.uberfire.client.mvp;
 
-import com.google.gwt.user.client.ui.IsWidget;
-import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.model.CompassPosition;
 import org.uberfire.workbench.model.Position;
 
@@ -35,11 +33,6 @@ public abstract class AbstractWorkbenchActivity extends AbstractActivity impleme
     @Override
     public Position getDefaultPosition() {
         return CompassPosition.ROOT;
-    }
-
-    @Override
-    public boolean onMayClose() {
-        return true;
     }
 
     @Override

@@ -41,9 +41,4 @@ public abstract class BaseEditorViewImpl
     public void hideBusyIndicator() {
         BusyPopup.close();
     }
-
-    @Override
-    public boolean confirmClose() {
-        return Window.confirm(CommonConstants.INSTANCE.DiscardUnsavedData());
-    }
 }

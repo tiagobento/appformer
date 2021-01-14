@@ -78,7 +78,6 @@ public class ${className} extends AbstractWorkbenchEditorActivity {
     private ${realClassName} realPresenter;
 
     @Inject
-    //Constructor injection for testing
     public ${className}(final PlaceManager placeManager) {
         super( placeManager );
     }
@@ -105,13 +104,6 @@ public class ${className} extends AbstractWorkbenchEditorActivity {
                         final PlaceRequest place) {
         super.onStartup( path, place );
         realPresenter.${onStartup1ParameterMethodName}( path );
-    }
-
-    </#if>
-    <#if onMayCloseMethodName??>
-    @Override
-    public boolean onMayClose() {
-        return realPresenter.${onMayCloseMethodName}();
     }
 
     </#if>
