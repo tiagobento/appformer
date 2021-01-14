@@ -17,10 +17,10 @@
 package org.uberfire.client.workbench;
 
 import com.google.gwt.user.client.ui.HasWidgets;
+import com.google.gwt.user.client.ui.IsWidget;
 import org.jboss.errai.common.client.dom.HTMLElement;
 import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
-import org.uberfire.client.mvp.UIPart;
 import org.uberfire.client.workbench.events.SelectPlaceEvent;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
 import org.uberfire.client.workbench.panels.WorkbenchPanelView;
@@ -29,7 +29,6 @@ import org.uberfire.workbench.model.CustomPanelDefinition;
 import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
 import org.uberfire.workbench.model.Position;
-import org.uberfire.workbench.model.menu.Menus;
 
 /**
  * Internal framework component that handles the creation, destruction, layout, and composition (parent-child nesting)
@@ -55,9 +54,7 @@ public interface PanelManager {
      * @param part The description of the part to add. Not null.
      * @param panel definition of the panel to add the part to (must describe a panel that is already present in the
      * layout). Not null.
-     * @param menus The menus to display for the given part. Null means no menus.
-     * @param uiPart The part's title and physical view. Not null.
-     * @param contextId part of a removed framework feature (TODO: remove this?)
+     * @param widget The widget.
      * @param minInitialWidth minimum pixel width of the part's activity, or null if there is no known minimum width. The target
      * panel will expand to the this width if the panel is not already at least as wide, and only if it
      * supports resizing on the horizontal axis.
@@ -68,9 +65,7 @@ public interface PanelManager {
     void addWorkbenchPart(final PlaceRequest place,
                           final PartDefinition part,
                           final PanelDefinition panel,
-                          final Menus menus,
-                          final UIPart uiPart,
-                          final String contextId,
+                          final IsWidget widget,
                           final Integer minInitialWidth,
                           final Integer minInitialHeight);
 

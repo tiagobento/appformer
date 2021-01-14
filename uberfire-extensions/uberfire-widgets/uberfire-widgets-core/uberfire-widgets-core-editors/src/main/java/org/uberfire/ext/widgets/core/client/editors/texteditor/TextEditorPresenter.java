@@ -26,7 +26,6 @@ import org.uberfire.backend.vfs.Path;
 import org.uberfire.backend.vfs.VFSService;
 import org.uberfire.ext.widgets.common.client.ace.AceEditorMode;
 import org.uberfire.ext.widgets.core.client.resources.i18n.EditorsConstants;
-import org.uberfire.lifecycle.IsDirty;
 import org.uberfire.lifecycle.OnStartup;
 
 public abstract class TextEditorPresenter {
@@ -40,18 +39,15 @@ public abstract class TextEditorPresenter {
     @OnStartup
     public void onStartup(final ObservablePath path) {
         this.path = path;
-        vfsServices.call(new RemoteCallback<String>() {
-            @Override
-            public void callback(String response) {
-                if (response == null) {
-                    view.setContent(EditorsConstants.INSTANCE.EmptyEntry(),
-                                    getAceEditorMode());
-                } else {
-                    view.setContent(response,
-                                    getAceEditorMode());
-                }
-                onAfterViewLoaded();
+        vfsServices.call((RemoteCallback<String>) response -> {
+            if (response == null) {
+                view.setContent(EditorsConstants.INSTANCE.EmptyEntry(),
+                                getAceEditorMode());
+            } else {
+                view.setContent(response,
+                                getAceEditorMode());
             }
+            onAfterViewLoaded();
         }).readAllString(path);
     }
 
@@ -72,11 +68,6 @@ public abstract class TextEditorPresenter {
         return AceEditorMode.TEXT;
     }
 
-    @IsDirty
-    public boolean isDirty() {
-        return view.isDirty();
-    }
-
     public void onOpen() {
         view.setFocus();
     }
@@ -95,10 +86,6 @@ public abstract class TextEditorPresenter {
         String getContent();
 
         void setFocus();
-
-        boolean isDirty();
-
-        void setDirty(final boolean dirty);
 
         void setReadOnly(final boolean isReadOnly);
     }

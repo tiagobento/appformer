@@ -65,19 +65,6 @@ public class StaticWorkbenchPanelPresenter extends AbstractWorkbenchPanelPresent
         }
     }
 
-    @Override
-    public void addPart(WorkbenchPartPresenter part,
-                        String contextId) {
-        SinglePartPanelHelper h = createSinglePartPanelHelper();
-        if (h.hasNoParts()) {
-            super.addPart(part,
-                          contextId);
-        } else {
-            h.closeFirstPartAndAddNewOne(() -> super.addPart(part,
-                                                             contextId));
-        }
-    }
-
     SinglePartPanelHelper createSinglePartPanelHelper() {
         return new SinglePartPanelHelper(getPanelView().getParts(),
                                          placeManager);

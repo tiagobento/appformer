@@ -27,7 +27,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.Widget;
 import org.uberfire.client.docks.view.bars.DocksCollapsedBar;
 import org.uberfire.client.docks.view.bars.DocksExpandedBar;
-import org.uberfire.client.docks.view.menu.MenuBuilder;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.workbench.docks.UberfireDock;
 import org.uberfire.client.workbench.docks.UberfireDockPosition;
@@ -41,19 +40,15 @@ public class DocksBars {
 
     private PlaceManager placeManager;
 
-    private MenuBuilder menuBuilder;
-
     private Event<UberfireDocksInteractionEvent> dockInteractionEvent;
     private UberfireDocksContainer uberfireDocksContainer;
     private List<DocksBar> docks = new ArrayList<>();
 
     @Inject
     public DocksBars(PlaceManager placeManager,
-                     MenuBuilder menuBuilder,
                      Event<UberfireDocksInteractionEvent> dockInteractionEvent,
                      UberfireDocksContainer uberfireDocksContainer) {
         this.placeManager = placeManager;
-        this.menuBuilder = menuBuilder;
         this.dockInteractionEvent = dockInteractionEvent;
         this.uberfireDocksContainer = uberfireDocksContainer;
     }

@@ -25,13 +25,5 @@ public interface BaseEditorView
 
     void showLoading();
 
-    void showSaving();
-
-    void alertReadOnly();
-
-    EditorTitle getTitleWidget();
-
-    void refreshTitle(final String value);
-
     boolean confirmClose();
 }

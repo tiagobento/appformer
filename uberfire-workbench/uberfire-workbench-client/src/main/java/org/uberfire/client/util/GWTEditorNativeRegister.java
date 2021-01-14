@@ -40,10 +40,6 @@ public class GWTEditorNativeRegister {
             this.instance = instance;
         };
 
-        $wnd.GWTEditor.prototype.isDirty = function () {
-            return this.instance.@org.uberfire.client.mvp.WorkbenchClientEditorActivity::isDirty();
-        };
-
         $wnd.GWTEditor.prototype.onOpen = function () {
             this.instance.@org.uberfire.client.mvp.WorkbenchClientEditorActivity::onOpen()();
         };

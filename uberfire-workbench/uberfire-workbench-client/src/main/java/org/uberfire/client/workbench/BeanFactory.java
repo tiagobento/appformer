@@ -15,13 +15,11 @@
  */
 package org.uberfire.client.workbench;
 
-import com.google.gwt.user.client.ui.IsWidget;
 import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
-import org.uberfire.workbench.model.menu.Menus;
 
 /**
  * A Factory definition to create new instances of managed beans.
@@ -30,21 +28,12 @@ public interface BeanFactory {
 
     /**
      * Creates a new part presenter/view pair with the given properties.
-     * @param menus The menus to associate with the new part. Null means no menus.
-     * @param title The title to associate with the new part that the containing panel may display.
-     * @param titleDecoration The title decoration that a panel may choose to display beside the part's title. Null is permitted,
-     * and means no title decoration.
-     * <p>
-     * NOTE: presently, none of the built-in panel types display a part's title decoration.
      * @param definition Defines all other aspects of the part to create. Must not be null.
      * @param partType The new part type.
      * @return
      */
-    WorkbenchPartPresenter newWorkbenchPart(final Menus menus,
-                                                   final String title,
-                                                   final IsWidget titleDecoration,
-                                                   final PartDefinition definition,
-                                                   final Class<? extends WorkbenchPartPresenter> partType);
+    WorkbenchPartPresenter newWorkbenchPart(final PartDefinition definition,
+                                            final Class<? extends WorkbenchPartPresenter> partType);
 
     /**
      * Creates a new perspective root panel for the given Perspective Activity and Root Panel Definition. The returned
@@ -55,7 +44,7 @@ public interface BeanFactory {
      * passed to {@link #destroy(Object)} when no longer in use by the application.
      */
     WorkbenchPanelPresenter newRootPanel(PerspectiveActivity activity,
-                                                PanelDefinition root);
+                                         PanelDefinition root);
 
     /**
      * Creates a new panel with the properties specified in the given definition.

@@ -51,8 +51,6 @@ public interface WorkbenchClientEditorActivity extends WorkbenchActivity {
      */
     Promise<String> getPreview();
 
-    boolean isDirty();
-
     @Override
     default ResourceType getResourceType() {
         return ActivityResourceType.CLIENT_EDITOR;

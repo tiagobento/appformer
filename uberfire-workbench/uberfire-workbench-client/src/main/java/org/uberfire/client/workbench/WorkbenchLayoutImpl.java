@@ -46,8 +46,6 @@ import org.uberfire.mvp.Command;
 @ApplicationScoped
 public class WorkbenchLayoutImpl implements WorkbenchLayout {
 
-    public static final String UF_MAXIMIZED_PANEL = "uf-maximized-panel";
-
     public static final String UF_ROOT_CSS_CLASS = "uf-workbench-layout";
     /**
      * Holder for style information that was modified in order to maximize a panel.
@@ -289,7 +287,7 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
         @Override
         protected void onComplete() {
             super.onComplete();
-            onResize();
+            super.onResize();
         }
     }
 
@@ -329,7 +327,7 @@ public class WorkbenchLayoutImpl implements WorkbenchLayout {
         @Override
         protected void onComplete() {
             originalStyleInfo.restore(w);
-            onResize();
+            super.onResize();
             if (onCompleteCallback != null) {
                 onCompleteCallback.execute();
             }

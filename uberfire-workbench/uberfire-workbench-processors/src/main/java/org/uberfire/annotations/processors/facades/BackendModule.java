@@ -25,8 +25,6 @@ public class BackendModule {
 
     public static final String path = "org.uberfire.backend.vfs.Path";
 
-    ;
-
     private BackendModule() {
     }
 

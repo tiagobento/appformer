@@ -182,12 +182,6 @@ public class ${className} extends AbstractWorkbenchClientEditorActivity {
         return realPresenter.${getDefaultPositionMethodName}();
     }
     </#if>
-    <#if isDirtyMethodName??>
-    @Override
-    public boolean isDirty() {
-        return realPresenter.${isDirtyMethodName}();
-    }
-    </#if>
     <#if setContentMethodName??>
     @Override
     public Promise<Void> setContent(String path, String value) {
@@ -208,13 +202,7 @@ public class ${className} extends AbstractWorkbenchClientEditorActivity {
         return null;
         </#if>
     }
-    <#if getContextIdMethodName??>
-    @Override
-    public String contextId() {
-        return realPresenter.${getContextIdMethodName}();
-    }
 
-    </#if>
     @Override
     public String getIdentifier() {
         return "${identifier}";

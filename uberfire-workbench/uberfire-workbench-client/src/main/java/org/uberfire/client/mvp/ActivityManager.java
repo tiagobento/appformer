@@ -44,8 +44,7 @@ public interface ActivityManager {
 
     /**
      * Returns an active, accessible activity that can handle the given PlaceRequest. In case there are multiple
-     * activities that can handle the given place request, one of them is chosen at random. TODO (UF-92) : make this
-     * deterministic.
+     * activities that can handle the given place request, one of them is chosen at random.
      * @param placeRequest
      * @return an activity that handles the given PlaceRequest, or null if no available activity can handle. <b>No
      * actual type checking is performed! If you guess the type wrong, you will have an instance of the
@@ -63,7 +62,6 @@ public interface ActivityManager {
      * Destroys the given Activity bean instance, making it eligible for garbage collection.
      * @param activity the activity instance to destroy. <b>Warning: do not use with instances of SplashScreenActivity. These
      * are ApplicationScoped and cannot be destroyed.</b>
-     * @throws IllegalArgumentException if {@code activity} is a SplashScreenActivity. TODO (UF-91) : fix this.
      */
     void destroyActivity(final Activity activity);
 }

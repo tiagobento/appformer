@@ -93,16 +93,6 @@ public interface WorkbenchActivity extends Activity {
      */
     void onLostFocus();
 
-    String getTitle();
-
-    @JsIgnore
-    IsWidget getTitleDecoration();
-
-    default Element getTitleDecorationElement() {
-        IsWidget titleDecoration = getTitleDecoration();
-        return (titleDecoration == null) ? null : titleDecoration.asWidget().getElement();
-    }
-
     @JsIgnore
     IsWidget getWidget();
 
@@ -110,6 +100,4 @@ public interface WorkbenchActivity extends Activity {
         IsWidget widget = getWidget();
         return (widget == null) ? null : widget.asWidget().getElement();
     }
-
-    String contextId();
 }

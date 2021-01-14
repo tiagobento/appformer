@@ -18,31 +18,17 @@
 package org.uberfire.client.mvp;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
-
-import org.uberfire.client.workbench.type.ClientResourceType;
-import org.uberfire.workbench.category.Category;
-import org.uberfire.workbench.type.ResourceTypeDefinition;
 
 @ApplicationScoped
 public class ResourceTypeManagerCache {
 
-    private List<ActivityAndMetaInfo> resourceActivities = new ArrayList<>();
+    private final List<ActivityAndMetaInfo> resourceActivities = new ArrayList<>();
 
     public ResourceTypeManagerCache() {
-    }
-
-    public Set<ResourceTypeDefinition> getResourceTypeDefinitions() {
-        return this.resourceActivities.stream()
-                .map(this::getResourceTypes)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toSet());
+        // Empty
     }
 
     public List<ActivityAndMetaInfo> getResourceActivities() {
@@ -50,24 +36,7 @@ public class ResourceTypeManagerCache {
     }
 
     public void addResourceActivity(ActivityAndMetaInfo activityAndMetaInfo) {
-        getResourceActivities().add(activityAndMetaInfo);
-    }
-
-    private List<ClientResourceType> getResourceTypes(ActivityAndMetaInfo activityAndMetaInfo) {
-        return Arrays.stream(activityAndMetaInfo.getResourceTypes()).collect(Collectors.toList());
-    }
-
-    public List<ResourceTypeDefinition> getResourceTypeDefinitionsByCategory(Category category) {
-        return this.getResourceTypeDefinitions()
-                .stream()
-                .filter(resourceTypeDefinition -> {
-                    if (category != null) {
-                        return category.equals(resourceTypeDefinition.getCategory());
-                    } else {
-                        return true;
-                    }
-                })
-                .collect(Collectors.toList());
+        resourceActivities.add(activityAndMetaInfo);
     }
 
     public void sortResourceActivitiesByPriority() {

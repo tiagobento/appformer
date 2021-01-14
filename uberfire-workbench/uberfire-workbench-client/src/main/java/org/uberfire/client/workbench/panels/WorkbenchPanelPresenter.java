@@ -75,17 +75,6 @@ public interface WorkbenchPanelPresenter {
     void addPart(final WorkbenchPartPresenter part);
 
     /**
-     * Adds the given part to this panel with the given context ID, updating this panel's definition and the part's
-     * definition to reflect the new part ownership.
-     *
-     * @param part the part to add. Must not be null, and must not currently belong to any panel.
-     * @throws UnsupportedOperationException if this panel does not support parts
-     * @see #addPart(WorkbenchPartPresenter)
-     */
-    void addPart(final WorkbenchPartPresenter part,
-                 final String contextId);
-
-    /**
      * Removes the given part from this panel, updating this panel's definition and the part's definition to reflect
      * that the part no longer belongs to this panel.
      *

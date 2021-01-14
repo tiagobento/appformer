@@ -31,24 +31,17 @@ import javax.lang.model.element.TypeElement;
 public class ClientAPIModule {
 
     public static final String IDENTIFIER = "identifier";
-    public static final String SIZE = "size";
     public static final String VALUE = "value";
     public static final String workbenchPerspective = "org.uberfire.client.annotations.WorkbenchPerspective";
-    public static final String workbenchPopup = "org.uberfire.client.annotations.WorkbenchPopup";
     public static final String workbenchScreen = "org.uberfire.client.annotations.WorkbenchScreen";
-    public static final String workbenchContext = "org.uberfire.client.annotations.WorkbenchContext";
     public static final String workbenchEditor = "org.uberfire.client.annotations.WorkbenchEditor";
     public static final String workbenchClientEditor = "org.uberfire.client.annotations.WorkbenchClientEditor";
     public static final String defaultPosition = "org.uberfire.client.annotations.DefaultPosition";
     public static final String workbenchPartTitle = "org.uberfire.client.annotations.WorkbenchPartTitle";
-    public static final String workbenchContextId = "org.uberfire.client.annotations.WorkbenchContextId";
     public static final String workbenchPartTitleDecoration = "org.uberfire.client.annotations.WorkbenchPartTitleDecoration";
     public static final String workbenchPartView = "org.uberfire.client.annotations.WorkbenchPartView";
-    public static final String workbenchMenu = "org.uberfire.client.annotations.WorkbenchMenu";
-    public static final String workbenchToolBar = "org.uberfire.client.annotations.WorkbenchToolBar";
     public static final String perspective = "org.uberfire.client.annotations.Perspective";
     public static final String intercept = "org.uberfire.client.annotations.Intercept";
-    public static final String workbenchPanel = "org.uberfire.client.annotations.WorkbenchPanel";
     public static final String jsType = "jsinterop.annotations.JsType";
 
     private ClientAPIModule() {
@@ -62,24 +55,12 @@ public class ClientAPIModule {
         return perspective;
     }
 
-    public static String getWorkbenchToolBarClass() {
-        return workbenchToolBar;
-    }
-
-    public static String getWorkbenchMenuClass() {
-        return workbenchMenu;
-    }
-
     public static String getWorkbenchPartViewClass() {
         return workbenchPartView;
     }
 
     public static String getWorkbenchPartTitleDecorationsClass() {
         return workbenchPartTitleDecoration;
-    }
-
-    public static String getWorkbenchContextIdClass() {
-        return workbenchContextId;
     }
 
     public static String getWorkbenchPartTitleClass() {
@@ -90,10 +71,6 @@ public class ClientAPIModule {
         return defaultPosition;
     }
 
-    public static String getWorkbenchContextClass() {
-        return workbenchContext;
-    }
-
     public static String getWorkbenchEditorClass() {
         return workbenchEditor;
     }
@@ -102,16 +79,8 @@ public class ClientAPIModule {
         return workbenchClientEditor;
     }
 
-    public static String getWorkbenchPopupClass() {
-        return workbenchPopup;
-    }
-
     public static String getWorkbenchPerspectiveClass() {
         return workbenchPerspective;
-    }
-
-    public static String getWorkbenchPanel() {
-        return workbenchPanel;
     }
 
     /**
@@ -154,24 +123,6 @@ public class ClientAPIModule {
     public static String getWbPerspectiveScreenIdentifierValueOnClass(TypeElement classElement) {
         return getAnnotationStringParam(classElement,
                                         workbenchPerspective,
-                                        IDENTIFIER);
-    }
-
-    public static String getWbPopupScreenIdentifierValueOnClass(TypeElement classElement) {
-        return getAnnotationStringParam(classElement,
-                                        workbenchPopup,
-                                        IDENTIFIER);
-    }
-
-    public static String getWbPopupScreenSizeValueOnClass(TypeElement classElement) {
-        return getAnnotationStringParam(classElement,
-                                        workbenchPopup,
-                                        SIZE);
-    }
-
-    public static String getWbContextIdentifierValueOnClass(TypeElement classElement) {
-        return getAnnotationStringParam(classElement,
-                                        workbenchContext,
                                         IDENTIFIER);
     }
 }

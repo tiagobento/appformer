@@ -31,11 +31,6 @@ import org.uberfire.client.mvp.PlaceManager;
 
 import org.uberfire.mvp.PlaceRequest;
 
-<#if getMenuBarMethodName??>
-import org.uberfire.workbench.model.menu.Menus;
-
-</#if>
-
 <#if beanActivatorClass??>
 import org.jboss.errai.ioc.client.api.ActivatedBy;
 

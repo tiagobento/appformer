@@ -63,14 +63,4 @@ public abstract class AbstractWorkbenchEditorActivity extends AbstractWorkbenchA
         super.onStartup(place);
         this.path = path;
     }
-
-    @Override
-    public void onSave() {
-        //Do nothing.
-    }
-
-    @Override
-    public boolean isDirty() {
-        return false;
-    }
 }

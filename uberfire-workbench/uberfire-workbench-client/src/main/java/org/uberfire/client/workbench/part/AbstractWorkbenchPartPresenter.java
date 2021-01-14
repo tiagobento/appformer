@@ -31,10 +31,6 @@ public abstract class AbstractWorkbenchPartPresenter implements WorkbenchPartPre
 
     private String title;
 
-    private String contextId;
-
-    private IsWidget titleDecoration;
-
     private PartDefinition definition;
 
     @Inject
@@ -75,25 +71,5 @@ public abstract class AbstractWorkbenchPartPresenter implements WorkbenchPartPre
     @Override
     public void setTitle(final String title) {
         this.title = title;
-    }
-
-    @Override
-    public IsWidget getTitleDecoration() {
-        return titleDecoration;
-    }
-
-    @Override
-    public void setTitleDecoration(final IsWidget titleDecoration) {
-        this.titleDecoration = titleDecoration;
-    }
-
-    @Override
-    public String getContextId() {
-        return contextId;
-    }
-
-    @Override
-    public void setContextId(String contextId) {
-        this.contextId = contextId;
     }
 }

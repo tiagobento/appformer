@@ -43,7 +43,6 @@ import org.jboss.errai.common.client.dom.elemental2.Elemental2DomUtil;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
-import org.uberfire.client.mvp.UIPart;
 import org.uberfire.client.workbench.events.ChangeTitleWidgetEvent;
 import org.uberfire.client.workbench.events.PlaceGainFocusEvent;
 import org.uberfire.client.workbench.events.PlaceLostFocusEvent;
@@ -59,7 +58,6 @@ import org.uberfire.workbench.model.PartDefinition;
 import org.uberfire.workbench.model.Position;
 import org.uberfire.workbench.model.impl.CustomPanelDefinitionImpl;
 import org.uberfire.workbench.model.impl.PanelDefinitionImpl;
-import org.uberfire.workbench.model.menu.Menus;
 
 import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull;
 import static org.uberfire.plugin.PluginUtil.ensureIterable;
@@ -70,8 +68,8 @@ import static org.uberfire.plugin.PluginUtil.ensureIterable;
 @ApplicationScoped
 public class PanelManagerImpl implements PanelManager {
 
-    protected final Map<PartDefinition, WorkbenchPartPresenter> mapPartDefinitionToPresenter = new HashMap<PartDefinition, WorkbenchPartPresenter>();
-    protected final Map<PanelDefinition, WorkbenchPanelPresenter> mapPanelDefinitionToPresenter = new HashMap<PanelDefinition, WorkbenchPanelPresenter>();
+    protected final Map<PartDefinition, WorkbenchPartPresenter> mapPartDefinitionToPresenter = new HashMap<>();
+    protected final Map<PanelDefinition, WorkbenchPanelPresenter> mapPanelDefinitionToPresenter = new HashMap<>();
     /**
      * Remembers which HasWidgets contains each existing custom panel. Items are removed from this map when the panels
      * are closed/removed.
@@ -188,9 +186,7 @@ public class PanelManagerImpl implements PanelManager {
     public void addWorkbenchPart(final PlaceRequest place,
                                  final PartDefinition partDef,
                                  final PanelDefinition panelDef,
-                                 final Menus menus,
-                                 final UIPart uiPart,
-                                 final String contextId,
+                                 final IsWidget widget,
                                  final Integer preferredWidth,
                                  final Integer preferredHeight) {
         checkNotNull("panel",
@@ -203,19 +199,14 @@ public class PanelManagerImpl implements PanelManager {
 
         WorkbenchPartPresenter partPresenter = mapPartDefinitionToPresenter.get(partDef);
         if (partPresenter == null) {
-            partPresenter = getBeanFactory().newWorkbenchPart(menus,
-                                                              uiPart.getTitle(),
-                                                              uiPart.getTitleDecoration(),
-                                                              partDef,
+            partPresenter = getBeanFactory().newWorkbenchPart(partDef,
                                                               panelPresenter.getPartType());
-            partPresenter.setWrappedWidget(uiPart.getWidget()); //FIXME: TIAGO: AQUI O ATTACH NO DOM ACONTECE
-            partPresenter.setContextId(contextId);
+            partPresenter.setWrappedWidget(widget); //FIXME: TIAGO: AQUI O ATTACH NO DOM ACONTECE
             mapPartDefinitionToPresenter.put(partDef,
                                              partPresenter);
         }
 
-        panelPresenter.addPart(partPresenter,
-                               contextId);
+        panelPresenter.addPart(partPresenter);
 
         //Select newly inserted part
         selectPlaceEvent.fire(new SelectPlaceEvent(place));

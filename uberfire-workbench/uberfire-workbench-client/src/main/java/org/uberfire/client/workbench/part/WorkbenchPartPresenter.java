@@ -20,7 +20,6 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
 import org.uberfire.client.mvp.UberView;
 import org.uberfire.workbench.model.PartDefinition;
-import org.uberfire.workbench.model.menu.Menus;
 
 public interface WorkbenchPartPresenter {
 
@@ -43,24 +42,6 @@ public interface WorkbenchPartPresenter {
      * @param title The title of this part. Null is not permitted.
      */
     void setTitle(String title);
-
-    /**
-     * Returns the widget that a panel may choose to display beside this part's title.
-     * @return The title decoration widget to use. Null means no title decoration.
-     */
-    IsWidget getTitleDecoration();
-
-    /**
-     * Sets the widget that a panel may choose to display beside this part's title.
-     * <p>
-     * NOTE: presently, none of the built-in panel types display a part's title decoration.
-     * @param titleDecoration The title decoration widget to use. Null is permitted, and means no title decoration.
-     */
-    void setTitleDecoration(IsWidget titleDecoration);
-
-    String getContextId();
-
-    void setContextId(String contextId);
 
     interface View
             extends

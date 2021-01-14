@@ -94,24 +94,8 @@ public abstract class AbstractWorkbenchPanelPresenter<P extends AbstractWorkbenc
         return getClass().getName();
     }
 
-    /**
-     * Calls {@link #addPart(org.uberfire.client.workbench.part.WorkbenchPartPresenter, String)}. Subclasses can
-     * take advantage of this by only overriding the 2-arg version.
-     */
     @Override
     public void addPart(final WorkbenchPartPresenter part) {
-        addPart(part,
-                null);
-    }
-
-    /**
-     * Adds the given part to the view returned by {@link #getPanelView()}, ignoring the given {@code contextId}.
-     * Subclasses that care about context id's will override this method.
-     */
-    @Override
-    public void addPart(final WorkbenchPartPresenter part,
-                        final String contextId) {
-
         // special case: when new perspectives are being built up based on definitions,
         // our definition will already say it contains the given part! We should not try to add it again.
         Optional<PartDefinition> optional = definition.getParts().stream()

@@ -587,21 +587,10 @@ public class PlaceManagerImpl implements PlaceManager {
         visibleWorkbenchParts.put(place,
                                   part);
 
-        final IsWidget titleDecoration = maybeWrapExternalWidget(activity::getTitleDecoration);
-
-        //FIXME: TIAGO: Pega o conteúdo do Editor e cria um Widget que vai ser adicionado ao panel.
-        final IsWidget widget = maybeWrapExternalWidget(activity::getWidget);
-
-        final UIPart uiPart = new UIPart(activity.getTitle(),
-                                         titleDecoration,
-                                         widget);
-
         panelManager.addWorkbenchPart(place,
                                       part,
                                       panel,
-                                      null,
-                                      uiPart,
-                                      activity.contextId(),
+                                      activity.getWidget(),
                                       toInteger(panel.getWidthAsInt()),
                                       toInteger(panel.getHeightAsInt()));
 
@@ -613,10 +602,6 @@ public class PlaceManagerImpl implements PlaceManager {
                                          ex);
             closePlace(place);
         }
-    }
-
-    private IsWidget maybeWrapExternalWidget(Supplier<IsWidget> widget) {
-        return widget.get();
     }
 
     /**

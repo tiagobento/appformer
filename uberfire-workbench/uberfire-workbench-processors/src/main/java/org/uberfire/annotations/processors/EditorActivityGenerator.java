@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.enterprise.context.ApplicationScoped;
@@ -121,13 +122,6 @@ public class EditorActivityGenerator extends AbstractGenerator {
                                                                              processingEnvironment);
         final String getDefaultPositionMethodName = GeneratorUtils.getDefaultPositionMethodName(classElement,
                                                                                                 processingEnvironment);
-        final String getTitleMethodName = GeneratorUtils.getTitleMethodName(classElement,
-                                                                            processingEnvironment);
-        final String getContextIdMethodName = GeneratorUtils.getContextIdMethodName(classElement,
-                                                                                    processingEnvironment);
-        final ExecutableElement getTitleWidgetMethod = GeneratorUtils.getTitleWidgetMethodName(classElement,
-                                                                                               processingEnvironment);
-        final String getTitleWidgetMethodName = getTitleWidgetMethod == null ? null : getTitleWidgetMethod.getSimpleName().toString();
         final ExecutableElement getWidgetMethod = GeneratorUtils.getWidgetMethodName(classElement,
                                                                                      processingEnvironment);
         final String getWidgetMethodName = getWidgetMethod == null ? null : getWidgetMethod.getSimpleName().toString();
@@ -135,14 +129,6 @@ public class EditorActivityGenerator extends AbstractGenerator {
 
         final boolean isWidget = GeneratorUtils.getIsWidget(classElement,
                                                             processingEnvironment);
-        final String isDirtyMethodName = GeneratorUtils.getIsDirtyMethodName(classElement,
-                                                                             processingEnvironment);
-        final String onSaveMethodName = GeneratorUtils.getOnSaveMethodName(classElement,
-                                                                           processingEnvironment);
-        final String getMenuBarMethodName = GeneratorUtils.getMenuBarMethodName(classElement,
-                                                                                processingEnvironment);
-        final String getToolBarMethodName = GeneratorUtils.getToolBarMethodName(classElement,
-                                                                                processingEnvironment);
         final List<String> qualifiers = GeneratorUtils.getAllQualifiersDeclarationFromType(classElement);
 
         if (GeneratorUtils.debugLoggingEnabled()) {
@@ -152,8 +138,6 @@ public class EditorActivityGenerator extends AbstractGenerator {
                                   "Class name: " + className);
             messager.printMessage(Kind.NOTE,
                                   "Identifier: " + identifier);
-            messager.printMessage(Kind.NOTE,
-                                  "getContextIdMethodName: " + getContextIdMethodName);
             messager.printMessage(Kind.NOTE,
                                   "Resource types: " + associatedResources);
             messager.printMessage(Kind.NOTE,
@@ -175,23 +159,11 @@ public class EditorActivityGenerator extends AbstractGenerator {
             messager.printMessage(Kind.NOTE,
                                   "getDefaultPositionMethodName: " + getDefaultPositionMethodName);
             messager.printMessage(Kind.NOTE,
-                                  "getTitleMethodName: " + getTitleMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "getTitleWidgetMethodName: " + getTitleWidgetMethodName);
-            messager.printMessage(Kind.NOTE,
                                   "getWidgetMethodName: " + getWidgetMethodName);
             messager.printMessage(Kind.NOTE,
-                                  "isWidget: " + Boolean.toString(isWidget));
+                                  "isWidget: " + isWidget);
             messager.printMessage(Kind.NOTE,
-                                  "hasUberView: " + Boolean.toString(hasUberView));
-            messager.printMessage(Kind.NOTE,
-                                  "isDirtyMethodName: " + isDirtyMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "onSaveMethodName: " + onSaveMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "getMenuBarMethodName: " + getMenuBarMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "getToolBarMethodName: " + getToolBarMethodName);
+                                  "hasUberView: " + hasUberView);
             messager.printMessage(Kind.NOTE,
                                   "Qualifiers: " + String.join(", ",
                                                                qualifiers));
@@ -209,12 +181,6 @@ public class EditorActivityGenerator extends AbstractGenerator {
                                   classElement);
         }
 
-        //Validate getTitleMethodName
-        if (getTitleMethodName == null) {
-            throw new GenerationException("The WorkbenchEditor must provide a @WorkbenchPartTitle annotated method to return a java.lang.String.",
-                                          packageName + "." + className);
-        }
-
         //Setup data for template sub-system
         Map<String, Object> root = new HashMap<String, Object>();
         root.put("packageName",
@@ -223,8 +189,6 @@ public class EditorActivityGenerator extends AbstractGenerator {
                  className);
         root.put("identifier",
                  identifier);
-        root.put("getContextIdMethodName",
-                 getContextIdMethodName);
         root.put("associatedResources",
                  GeneratorUtils.formatAssociatedResources(associatedResources));
         root.put("realClassName",
@@ -249,24 +213,12 @@ public class EditorActivityGenerator extends AbstractGenerator {
                  onFocusMethodName);
         root.put("getDefaultPositionMethodName",
                  getDefaultPositionMethodName);
-        root.put("getTitleMethodName",
-                 getTitleMethodName);
-        root.put("getTitleWidgetMethodName",
-                 getTitleWidgetMethodName);
         root.put("getWidgetMethodName",
                  getWidgetMethodName);
         root.put("isWidget",
                  isWidget);
         root.put("hasUberView",
                  hasUberView);
-        root.put("isDirtyMethodName",
-                 isDirtyMethodName);
-        root.put("onSaveMethodName",
-                 onSaveMethodName);
-        root.put("getMenuBarMethodName",
-                 getMenuBarMethodName);
-        root.put("getToolBarMethodName",
-                 getToolBarMethodName);
         root.put("qualifiers",
                  qualifiers);
 

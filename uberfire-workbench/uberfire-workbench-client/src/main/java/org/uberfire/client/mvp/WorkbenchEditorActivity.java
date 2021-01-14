@@ -29,10 +29,6 @@ public interface WorkbenchEditorActivity extends WorkbenchActivity {
     void onStartup(final ObservablePath path,
                           final PlaceRequest place);
 
-    void onSave();
-
-    boolean isDirty();
-
     @Override
     default ResourceType getResourceType() {
         return ActivityResourceType.EDITOR;

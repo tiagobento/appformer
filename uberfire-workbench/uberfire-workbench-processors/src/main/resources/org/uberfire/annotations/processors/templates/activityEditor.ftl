@@ -45,11 +45,6 @@ import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
 </#if>
 
-<#if getMenuBarMethodName??>
-import org.uberfire.workbench.model.menu.Menus;
-
-</#if>
-
 import org.uberfire.backend.vfs.ObservablePath;
 
 import com.google.gwt.user.client.ui.IsWidget;
@@ -192,27 +187,6 @@ public class ${className} extends AbstractWorkbenchEditorActivity {
     public Position getDefaultPosition() {
         return realPresenter.${getDefaultPositionMethodName}();
     }
-    </#if>
-    <#if isDirtyMethodName??>
-    @Override
-    public boolean isDirty() {
-        return realPresenter.${isDirtyMethodName}();
-    }
-    </#if>
-    <#if onSaveMethodName??>
-    @Override
-    public void onSave() {
-        super.onSave();
-        realPresenter.${onSaveMethodName}();
-    }
-    </#if>
-
-    <#if getContextIdMethodName??>
-    @Override
-    public String contextId() {
-        return realPresenter.${getContextIdMethodName}();
-    }
-
     </#if>
 
     @Override

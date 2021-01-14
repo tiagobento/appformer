@@ -46,11 +46,6 @@ import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
 </#if>
 
-<#if getMenuBarMethodName??>
-import org.uberfire.workbench.model.menu.Menus;
-
-</#if>
-
 import com.google.gwt.user.client.ui.IsWidget;
 
 <#if beanActivatorClass??>
@@ -195,13 +190,6 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
     }
     </#if>
 
-    <#if getContextIdMethodName??>
-
-    @Override
-    public String contextId() {
-        return realPresenter.${getContextIdMethodName}();
-    }
-    </#if>
     @Override
     public String getIdentifier() {
         return "${identifier}";

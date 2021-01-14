@@ -46,8 +46,6 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
     private PerspectiveActivity currentPerspective;
 
-    private PerspectiveDefinition livePerspectiveDef;
-
     @Override
     public void switchToPerspective(final PlaceRequest placeRequest,
                                     final PerspectiveActivity activity,
@@ -142,21 +140,10 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
         @Override
         public void execute(PerspectiveDefinition perspectiveDef) {
-            if (livePerspectiveDef != null) {
-                tearDownChildPanelsRecursively(livePerspectiveDef.getRoot());
-            }
-            livePerspectiveDef = perspectiveDef;
             panelManager.setRoot(activity,
                                  perspectiveDef.getRoot());
             setupPanelRecursively(perspectiveDef.getRoot());
             doWhenFinished.execute(perspectiveDef);
-        }
-
-        private void tearDownChildPanelsRecursively(final PanelDefinition panel) {
-            for (PanelDefinition child : ensureIterable(panel.getChildren())) {
-                tearDownChildPanelsRecursively(child);
-                panelManager.removeWorkbenchPanel(child);
-            }
         }
 
         private void setupPanelRecursively(final PanelDefinition panel) {
