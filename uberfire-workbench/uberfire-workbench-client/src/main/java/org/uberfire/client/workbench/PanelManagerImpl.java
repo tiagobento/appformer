@@ -382,7 +382,6 @@ public class PanelManagerImpl implements PanelManager {
             final WorkbenchPanelPresenter presenter = e.getValue();
             for (PartDefinition part : ensureIterable(panel.getParts())) {
                 if (place.equals(part.getPlace())) {
-                    mapPartDefinitionToPresenter.get(part).setTitle(title);
                     presenter.changeTitle(part,
                                           title,
                                           titleDecoration);
@@ -420,7 +419,7 @@ public class PanelManagerImpl implements PanelManager {
         WorkbenchPanelPresenter targetPanelPresenter = mapPanelDefinitionToPresenter.get(targetPanel);
 
         if (targetPanelPresenter == null) {
-            targetPanelPresenter = beanFactory.newWorkbenchPanel(targetPanel); //FIXME: TIAGO -> Aqui só vai precisar do StaticWorkbenchPanelPresenter
+            targetPanelPresenter = beanFactory.newWorkbenchPanel(targetPanel);
             mapPanelDefinitionToPresenter.put(targetPanel,
                                               targetPanelPresenter);
         }

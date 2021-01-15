@@ -29,27 +29,20 @@ public class ActivityAndMetaInfo {
     private SyncBeanManager iocManager;
     private final SyncBeanDef<Activity> activityBean;
 
-    private final int priority;
     final List<String> resourceTypesNames;
     ClientResourceType[] resourceTypes;
 
     @SuppressWarnings("rawtypes")
     ActivityAndMetaInfo(final SyncBeanManager iocManager,
                         final SyncBeanDef<Activity> activityBean,
-                        final int priority,
                         final List<String> resourceTypesNames) {
         this.iocManager = iocManager;
         this.activityBean = activityBean;
-        this.priority = priority;
         this.resourceTypesNames = resourceTypesNames;
     }
 
     public SyncBeanDef<Activity> getActivityBean() {
         return activityBean;
-    }
-
-    public int getPriority() {
-        return priority;
     }
 
     public ClientResourceType[] getResourceTypes() {

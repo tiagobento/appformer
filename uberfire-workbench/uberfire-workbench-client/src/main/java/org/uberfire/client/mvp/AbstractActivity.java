@@ -59,7 +59,6 @@ public abstract class AbstractActivity implements Activity {
             throw new IllegalStateException("Activity " + this + " already open");
         }
         open = true;
-        placeManager.executeOnOpenCallbacks(this.place);
     }
 
     /**
@@ -75,7 +74,6 @@ public abstract class AbstractActivity implements Activity {
             throw new IllegalStateException("Activity " + this + " not open");
         }
         open = false;
-        placeManager.executeOnCloseCallbacks(this.place);
     }
 
     /**

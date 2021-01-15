@@ -18,6 +18,7 @@ package org.uberfire.client.workbench.panels.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 
 import javax.annotation.PostConstruct;
@@ -113,10 +114,7 @@ public class StaticWorkbenchPanelView
     @Override
     public boolean selectPart(final PartDefinition part) {
         PartDefinition currentPartDefinition = getCurrentPartDefinition();
-        if (currentPartDefinition != null && currentPartDefinition.equals(part)) {
-            return true;
-        }
-        return false;
+        return currentPartDefinition != null && currentPartDefinition.equals(part);
     }
 
     @Override
@@ -161,6 +159,6 @@ public class StaticWorkbenchPanelView
         if (currentPartDefinition == null) {
             return new ArrayList<>();
         }
-        return Arrays.asList(currentPartDefinition);
+        return Collections.singletonList(currentPartDefinition);
     }
 }

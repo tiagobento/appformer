@@ -38,8 +38,8 @@ public class SinglePartPanelHelper {
     }
 
     public void closeFirstPartAndAddNewOne(Command command) {
-        placeManager.tryClosePlace(getPlaceFromFirstPart(),
-                                   command);
+        placeManager.closePlace(getPlaceFromFirstPart(),
+                                command);
     }
 
     PlaceRequest getPlaceFromFirstPart() {

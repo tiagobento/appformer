@@ -21,14 +21,12 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Widget;
-import org.uberfire.workbench.model.CompassPosition;
-import org.uberfire.workbench.model.PanelDefinition;
-
-import static org.uberfire.plugin.PluginUtil.toInteger;
 
 public class Layouts {
 
-    public static final int DEFAULT_CHILD_SIZE = 100;
+    private Layouts() {
+        // Empty
+    }
 
     /**
      * Sets the CSS on the given widget so it automatically fills the available space, rather than being sized based on
@@ -54,35 +52,5 @@ public class Layouts {
         s.setHeight(100.0,
                     Unit.PCT);
         s.setOutlineStyle(Style.OutlineStyle.NONE);
-    }
-
-    /**
-     * Returns the current width or height of the given panel definition.
-     * @param position determines which dimension (width or height) to return.
-     * @param definition the definition to get the size information from.
-     * @return the with if position is EAST or WEST; the height if position is NORTH or SOUTH. If no size is provided by the PanelDefinition the DEFAULT_CHILD_SIZE is used.
-     */
-    public static int widthOrHeight(CompassPosition position,
-                                    PanelDefinition definition) {
-        switch (position) {
-            case NORTH:
-            case SOUTH:
-                return heightOrDefault(definition);
-            case EAST:
-            case WEST:
-                return widthOrDefault(definition);
-            default:
-                throw new IllegalArgumentException("Position " + position + " has no horizontal or vertial aspect.");
-        }
-    }
-
-    public static int heightOrDefault(PanelDefinition def) {
-        Integer height = toInteger(def.getHeightAsInt());
-        return height == null ? DEFAULT_CHILD_SIZE : height;
-    }
-
-    public static int widthOrDefault(PanelDefinition def) {
-        Integer width = toInteger(def.getWidthAsInt());
-        return width == null ? DEFAULT_CHILD_SIZE : width;
     }
 }

@@ -53,11 +53,6 @@ public class WorkbenchPartView
     }
 
     @Override
-    public IsWidget getWrappedWidget() {
-        return sp.getWidget();
-    }
-
-    @Override
     public void setWrappedWidget(final IsWidget widget) {
         sp.setWidget(widget);
     }

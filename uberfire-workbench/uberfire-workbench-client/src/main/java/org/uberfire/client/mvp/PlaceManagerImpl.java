@@ -17,11 +17,10 @@ package org.uberfire.client.mvp;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -48,7 +47,7 @@ import org.uberfire.client.workbench.events.ClosePlaceEvent;
 import org.uberfire.client.workbench.events.PlaceGainFocusEvent;
 import org.uberfire.client.workbench.events.PlaceLostFocusEvent;
 import org.uberfire.client.workbench.events.SelectPlaceEvent;
-import org.uberfire.client.workbench.panels.impl.UnanchoredStaticWorkbenchPanelPresenter;
+import org.uberfire.client.workbench.panels.impl.StaticWorkbenchPanelPresenter;
 import org.uberfire.mvp.BiParameterizedCommand;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.Commands;
@@ -64,7 +63,6 @@ import org.uberfire.workbench.model.PartDefinition;
 import org.uberfire.workbench.model.PerspectiveDefinition;
 import org.uberfire.workbench.model.Position;
 import org.uberfire.workbench.model.impl.PartDefinitionImpl;
-import org.uberfire.workbench.type.ResourceTypeDefinition;
 
 import static java.util.Collections.unmodifiableCollection;
 import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull;
@@ -90,9 +88,6 @@ public class PlaceManagerImpl implements PlaceManager {
      */
     private final Map<PlaceRequest, CustomPanelDefinition> customPanels = new HashMap<>();
 
-    private final Map<PlaceRequest, List<Command>> onOpenCallbacks = new HashMap<>();
-    private final Map<PlaceRequest, List<Command>> onCloseCallbacks = new HashMap<>();
-    private final Map<String, BiParameterizedCommand<Command, PlaceRequest>> perspectiveCloseChain = new HashMap<>();
     private EventBus tempBus = null;
     @Inject
     private Event<ClosePlaceEvent> workbenchPartCloseEvent;
@@ -113,13 +108,6 @@ public class PlaceManagerImpl implements PlaceManager {
     @PostConstruct
     public void init() {
         workbenchLayout = iocManager.lookupBean(WorkbenchLayout.class).getInstance();
-    }
-
-    @Override
-    public void goTo(final String identifier) {
-        final DefaultPlaceRequest place = new DefaultPlaceRequest(identifier);
-        goTo(place,
-             (PanelDefinition) null);
     }
 
     @Override
@@ -149,7 +137,7 @@ public class PlaceManagerImpl implements PlaceManager {
         closeOpenPlacesAt(panelsOfThisHasWidgets(addTo));
         goToTargetPanel(place,
                         panelManager.addCustomPanel(addTo,
-                                                    UnanchoredStaticWorkbenchPanelPresenter.class.getName()));
+                                                    StaticWorkbenchPanelPresenter.class.getName()));
     }
 
     private void closeOpenPlacesAt(Predicate<CustomPanelDefinition> filterPanels) {
@@ -190,7 +178,6 @@ public class PlaceManagerImpl implements PlaceManager {
 
         if (resolved.getActivity() != null) {
             final Activity activity = resolved.getActivity();
-            //FIXME: TIAGO: ARE DOCKS SCREENS?
             if (activity.isType(ActivityResourceType.SCREEN.name()) || activity.isType(ActivityResourceType.EDITOR.name())) {
                 final WorkbenchActivity workbenchActivity = (WorkbenchActivity) activity;
 
@@ -201,49 +188,14 @@ public class PlaceManagerImpl implements PlaceManager {
                 doWhenFinished.execute();
             } else if (activity.isType(ActivityResourceType.PERSPECTIVE.name())) {
                 launchPerspectiveActivity(place,
-                                          doWhenFinished,
-                                          (PerspectiveActivity) activity);
+                                          (PerspectiveActivity) activity,
+                                          doWhenFinished);
             }
         } else {
             goTo(resolved.getPlaceRequest(),
                  panel,
                  doWhenFinished);
         }
-    }
-
-    private void launchPerspectiveActivity(final PlaceRequest place,
-                                           final Command doWhenFinished,
-                                           final PerspectiveActivity activity) {
-        final Command launchPerspectiveCommand = () -> {
-            launchPerspectiveActivity(place,
-                                      activity,
-                                      doWhenFinished);
-        };
-
-        final PerspectiveActivity currentPerspective = perspectiveManager.getCurrentPerspective();
-        final boolean thereIsAnOpenedPerspective = currentPerspective != null;
-        final boolean isDifferentPerspective = thereIsAnOpenedPerspective && !place.equals(currentPerspective.getPlace());
-
-        // Before launching the perspective, checks if there is some close chain to be executed for the current perspective
-        if (thereIsAnOpenedPerspective && isDifferentPerspective) {
-            final BiParameterizedCommand<Command, PlaceRequest> closeChain = this.perspectiveCloseChain.get(currentPerspective.getIdentifier());
-            if (closeChain != null) {
-                closeChain.execute(launchPerspectiveCommand,
-                                   currentPerspective.getPlace());
-            } else {
-                launchPerspectiveCommand.execute();
-            }
-        } else {
-            launchPerspectiveCommand.execute();
-        }
-    }
-
-    private boolean closePlaces(final Collection<PlaceRequest> placeRequests) {
-        for (final PlaceRequest placeRequest : placeRequests) {
-            closePlace(placeRequest);
-        }
-
-        return true;
     }
 
     /**
@@ -384,26 +336,6 @@ public class PlaceManagerImpl implements PlaceManager {
         return existingWorkbenchActivities.get(place);
     }
 
-    @Override
-    public PlaceStatus getStatus(String id) {
-        return getStatus(new DefaultPlaceRequest(id));
-    }
-
-    @Override
-    public PlaceStatus getStatus(final PlaceRequest place) {
-        PerspectiveActivity currentPerspective = perspectiveManager.getCurrentPerspective();
-        if (currentPerspective != null && currentPerspective.getPlace().equals(place)) {
-            return PlaceStatus.OPEN;
-        }
-        return resolveExistingParts(place) != null ? PlaceStatus.OPEN : PlaceStatus.CLOSE;
-    }
-
-    @JsMethod
-    @Override
-    public void closePlace(final String id) {
-        closePlace(new DefaultPlaceRequest(id));
-    }
-
     @JsMethod
     @Override
     public void closePlace(final PlaceRequest placeToClose) {
@@ -412,75 +344,6 @@ public class PlaceManagerImpl implements PlaceManager {
         }
         closePlace(placeToClose,
                    null);
-    }
-
-    @Override
-    public void tryClosePlace(final PlaceRequest placeToClose,
-                              final Command onAfterClose) {
-        boolean execute;
-        if (placeToClose == null) {
-            execute = true;
-        } else {
-            execute = closePlaces(Collections.singletonList(placeToClose));
-        }
-
-        if (execute) {
-            onAfterClose.execute();
-        }
-    }
-
-    private boolean closeAllCurrentPanels() {
-        return closePlaces(new ArrayList<>(visibleWorkbenchParts.keySet()));
-    }
-
-    @Override
-    public void registerOnOpenCallback(final PlaceRequest place,
-                                       final Command callback) {
-        checkNotNull("place",
-                     place);
-        checkNotNull("callback",
-                     callback);
-
-        List<Command> callbacks = getOnOpenCallbacks(place);
-        if (callbacks == null) {
-            callbacks = new ArrayList<>();
-            this.onOpenCallbacks.put(place,
-                                     callbacks);
-        }
-
-        callbacks.add(callback);
-    }
-
-    @Override
-    public void registerOnCloseCallback(final PlaceRequest place,
-                                        final Command callback) {
-        checkNotNull("place",
-                     place);
-        checkNotNull("callback",
-                     callback);
-
-        List<Command> callbacks = getOnCloseCallbacks(place);
-        if (callbacks == null) {
-            callbacks = new ArrayList<>();
-            this.onCloseCallbacks.put(place,
-                                      callbacks);
-        }
-
-        callbacks.add(callback);
-    }
-
-    @Override
-    public Collection<PathPlaceRequest> getActivitiesForResourceType(final ResourceTypeDefinition type) {
-        final ArrayList<PathPlaceRequest> activities = new ArrayList<>();
-        for (final PlaceRequest placeRequest : existingWorkbenchActivities.keySet()) {
-            if (placeRequest instanceof PathPlaceRequest) {
-                final PathPlaceRequest ppr = (PathPlaceRequest) placeRequest;
-                if (type.accept(ppr.getPath())) {
-                    activities.add(ppr);
-                }
-            }
-        }
-        return unmodifiableCollection(activities);
     }
 
     /**
@@ -492,23 +355,6 @@ public class PlaceManagerImpl implements PlaceManager {
      */
     public Collection<PlaceRequest> getActivePlaceRequests() {
         return unmodifiableCollection(existingWorkbenchActivities.keySet());
-    }
-
-    /**
-     * Returns all the PathPlaceRequests that map to activies that are currently in the open state and accessible
-     * somewhere in the current perspective.
-     * @return an unmodifiable view of the current active place requests. This view may or may not update after
-     * further calls into PlaceManager that modify the workbench state. It's best not to hold on to the returned
-     * set; instead, call this method again for current information.
-     */
-    public Collection<PathPlaceRequest> getActivePlaceRequestsWithPath() {
-        ArrayList<PathPlaceRequest> pprs = new ArrayList<PathPlaceRequest>();
-        for (final PlaceRequest placeRequest : existingWorkbenchActivities.keySet()) {
-            if (placeRequest instanceof PathPlaceRequest) {
-                pprs.add((PathPlaceRequest) placeRequest);
-            }
-        }
-        return pprs;
     }
 
     private void launchWorkbenchActivityAtPosition(final PlaceRequest place,
@@ -628,23 +474,13 @@ public class PlaceManagerImpl implements PlaceManager {
     private void switchToPerspective(final PlaceRequest place,
                                      final PerspectiveActivity newPerspectiveActivity,
                                      final ParameterizedCommand<PerspectiveDefinition> closeOldPerspectiveOpenPartsAndExecuteChainedCallback) {
-        if (closeAllCurrentPanels()) {
-            perspectiveManager.switchToPerspective(place,
-                                                   newPerspectiveActivity,
-                                                   closeOldPerspectiveOpenPartsAndExecuteChainedCallback);
-        } else {
-
-            // some panels didn't want to close, so not going to launch new perspective. clean up its activity.
-            try {
-                newPerspectiveActivity.onClose();
-            } catch (Exception ex) {
-                lifecycleErrorHandler.handle(newPerspectiveActivity,
-                                             LifecyclePhase.OPEN,
-                                             ex);
-            }
-            existingWorkbenchActivities.remove(newPerspectiveActivity.getPlace());
-            activityManager.destroyActivity(newPerspectiveActivity);
+        for (final PlaceRequest placeRequest : new ArrayList<>(visibleWorkbenchParts.keySet())) {
+            closePlace(placeRequest);
         }
+
+        perspectiveManager.switchToPerspective(place,
+                                               newPerspectiveActivity,
+                                               closeOldPerspectiveOpenPartsAndExecuteChainedCallback);
     }
 
     /**
@@ -663,8 +499,9 @@ public class PlaceManagerImpl implements PlaceManager {
         }
     }
 
-    private void closePlace(final PlaceRequest place,
-                            final Command onAfterClose) {
+    @Override
+    public void closePlace(final PlaceRequest place,
+                           final Command onAfterClose) {
 
         final Activity existingActivity = existingWorkbenchActivities.get(place);
         if (existingActivity == null) {
@@ -674,9 +511,7 @@ public class PlaceManagerImpl implements PlaceManager {
         final Command closeCommand = getCloseCommand(place,
                                                      onAfterClose);
 
-        final PerspectiveActivity currentPerspective = perspectiveManager.getCurrentPerspective();
-        final BiParameterizedCommand<Command, PlaceRequest> closeChain = this.perspectiveCloseChain.getOrDefault(currentPerspective.getIdentifier(),
-                                                                                                                 (chain, placeRequest) -> chain.execute());
+        final BiParameterizedCommand<Command, PlaceRequest> closeChain = (chain, placeRequest) -> chain.execute();
         closeChain.execute(closeCommand,
                            place);
     }
@@ -759,16 +594,6 @@ public class PlaceManagerImpl implements PlaceManager {
         return tempBus;
     }
 
-    @Override
-    public List<Command> getOnOpenCallbacks(final PlaceRequest place) {
-        return this.onOpenCallbacks.get(place);
-    }
-
-    @Override
-    public List<Command> getOnCloseCallbacks(final PlaceRequest place) {
-        return this.onCloseCallbacks.get(place);
-    }
-
     /**
      * The result of an attempt to resolve a PlaceRequest to an Activity.
      */
@@ -802,19 +627,16 @@ public class PlaceManagerImpl implements PlaceManager {
 
             final ResolvedRequest resolvedRequest = (ResolvedRequest) o;
 
-            if (activity != null ? !activity.equals(resolvedRequest.activity) : resolvedRequest.activity != null) {
-                return false;
-            }
-            if (placeRequest != null ? !placeRequest.equals(resolvedRequest.placeRequest) : resolvedRequest.placeRequest != null) {
+            if (!Objects.equals(activity, resolvedRequest.activity)) {
                 return false;
             }
 
-            return true;
+            return Objects.equals(placeRequest, resolvedRequest.placeRequest);
         }
 
         @Override
         public int hashCode() {
-            int result = 0;
+            int result;
             result = activity != null ? activity.hashCode() : 0;
             result = 31 * result + (placeRequest != null ? placeRequest.hashCode() : 0);
             return result;

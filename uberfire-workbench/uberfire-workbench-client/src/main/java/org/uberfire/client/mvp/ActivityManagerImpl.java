@@ -34,7 +34,6 @@ import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.mvp.ActivityLifecycleError.LifecyclePhase;
 import org.uberfire.mvp.PlaceRequest;
-import org.uberfire.mvp.impl.ExternalPathPlaceRequest;
 import org.uberfire.mvp.impl.PathPlaceRequest;
 
 import static java.util.Collections.emptyList;
@@ -51,8 +50,8 @@ public class ActivityManagerImpl implements ActivityManager {
      * shut down yet. This set tracks objects by identity, so it is possible that it could have multiple activities of
      * the same type within it (for example, multiple editors of the same type for different files.)
      */
-    private final Map<Activity, PlaceRequest> startedActivities = new IdentityHashMap<Activity, PlaceRequest>();
-    private final Map<Object, Boolean> containsCache = new HashMap<Object, Boolean>();
+    private final Map<Activity, PlaceRequest> startedActivities = new IdentityHashMap<>();
+    private final Map<Object, Boolean> containsCache = new HashMap<>();
     @Inject
     private SyncBeanManager iocManager;
     @Inject
@@ -103,7 +102,8 @@ public class ActivityManagerImpl implements ActivityManager {
             }
         }
 
-        final Activity result = getActivity(placeRequest);
+        final Activity result = getActivity(Activity.class,
+                                            placeRequest);
         containsCache.put(placeRequest.getIdentifier(),
                           result != null);
         if (path != null) {
@@ -112,11 +112,6 @@ public class ActivityManagerImpl implements ActivityManager {
         }
 
         return result != null;
-    }
-
-    private Activity getActivity(PlaceRequest placeRequest) {
-        return getActivity(Activity.class,
-                           placeRequest);
     }
 
     @Override

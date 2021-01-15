@@ -18,7 +18,6 @@ package org.uberfire.client.docks;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,8 +45,8 @@ public class UberfireDocksImpl implements UberfireDocks {
 
     final Map<String, Set<UberfireDockPosition>> disableDocksPerPerspective = new HashMap<>();
     String currentPerspective;
-    private DocksBars docksBars;
-    private Event<UberfireDockReadyEvent> dockReadyEvent;
+    private final DocksBars docksBars;
+    private final Event<UberfireDockReadyEvent> dockReadyEvent;
 
     @Inject
     public UberfireDocksImpl(DocksBars docksBars,
@@ -149,23 +148,6 @@ public class UberfireDocksImpl implements UberfireDocks {
     }
 
     @Override
-    public void toggle(UberfireDock dock) {
-        executeOnDocks(dock.getAssociatedPerspective(),
-                       dock.getDockPosition(),
-                       () -> docksBars.toggle(dock));
-    }
-
-    @Override
-    public void hide(UberfireDockPosition position,
-                     String perspectiveName) {
-        addToDisableDocksList(position,
-                              perspectiveName);
-        executeOnDocks(perspectiveName,
-                       position,
-                       () -> docksBars.clearAndHide(position));
-    }
-
-    @Override
     public void show(UberfireDockPosition position,
                      String perspectiveName) {
         removeFromDisableDocksList(position,
@@ -209,7 +191,7 @@ public class UberfireDocksImpl implements UberfireDocks {
         if (currentPerspective != null) {
             List<UberfireDock> activeDocks = docksPerPerspective.get(currentPerspective);
             if (activeDocks != null && !activeDocks.isEmpty()) {
-                activeDocks.forEach(activeDock -> docksBars.addDock(activeDock));
+                activeDocks.forEach(docksBars::addDock);
                 expandAllAvailableDocks();
             }
         }
@@ -223,12 +205,6 @@ public class UberfireDocksImpl implements UberfireDocks {
         }
     }
 
-    private void addToDisableDocksList(UberfireDockPosition position,
-                                       String perspectiveName) {
-        Set<UberfireDockPosition> disableDocks = disableDocksPerPerspective.computeIfAbsent(perspectiveName, k -> new HashSet<>());
-        disableDocks.add(position);
-    }
-
     private void removeFromDisableDocksList(UberfireDockPosition position,
                                             String perspectiveName) {
         Set<UberfireDockPosition> disableDocks = disableDocksPerPerspective.get(perspectiveName);
@@ -239,9 +215,6 @@ public class UberfireDocksImpl implements UberfireDocks {
 
     private boolean dockIsEnable(UberfireDockPosition dockPosition) {
         Set<UberfireDockPosition> uberfireDockPositions = disableDocksPerPerspective.get(currentPerspective);
-        if (uberfireDockPositions != null && uberfireDockPositions.contains(dockPosition)) {
-            return false;
-        }
-        return true;
+        return uberfireDockPositions == null || !uberfireDockPositions.contains(dockPosition);
     }
 }

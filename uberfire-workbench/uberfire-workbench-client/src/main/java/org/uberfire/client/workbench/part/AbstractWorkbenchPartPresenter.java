@@ -29,8 +29,6 @@ public abstract class AbstractWorkbenchPartPresenter implements WorkbenchPartPre
 
     private final View view;
 
-    private String title;
-
     private PartDefinition definition;
 
     @Inject
@@ -61,15 +59,5 @@ public abstract class AbstractWorkbenchPartPresenter implements WorkbenchPartPre
     @Override
     public void setWrappedWidget(final IsWidget widget) {
         this.view.setWrappedWidget(widget);
-    }
-
-    @Override
-    public String getTitle() {
-        return title;
-    }
-
-    @Override
-    public void setTitle(final String title) {
-        this.title = title;
     }
 }

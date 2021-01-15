@@ -18,7 +18,6 @@ package org.uberfire.client.mvp;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +37,6 @@ import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.util.GWTEditorNativeRegister;
 import org.uberfire.client.workbench.annotations.AssociatedResources;
-import org.uberfire.commons.data.Pair;
 
 /**
  *
@@ -56,7 +54,7 @@ public class ActivityBeansCache {
      */
 
     private SyncBeanManager iocManager;
-    protected ResourceTypeManagerCache resourceTypeManagerCache;
+    private final List<ActivityAndMetaInfo> resourceActivities = new ArrayList<>();
     private GWTEditorNativeRegister gwtEditorNativeRegister;
 
     public ActivityBeansCache() {
@@ -64,10 +62,8 @@ public class ActivityBeansCache {
 
     @Inject
     public ActivityBeansCache(SyncBeanManager iocManager,
-                              ResourceTypeManagerCache resourceTypeManagerCache,
                               GWTEditorNativeRegister gwtEditorNativeRegister) {
         this.iocManager = iocManager;
-        this.resourceTypeManagerCache = resourceTypeManagerCache;
         this.gwtEditorNativeRegister = gwtEditorNativeRegister;
     }
 
@@ -88,14 +84,12 @@ public class ActivityBeansCache {
             if (isClientEditor(activityBean.getQualifiers())) {
                 registerGwtClientBean(id, activityBean);
             }
-            final Pair<Integer, List<String>> metaInfo = generateActivityMetaInfo(activityBean);
+            final List<String> metaInfo = generateActivityMetaInfo(activityBean);
             if (metaInfo != null) {
                 addResourceActivity(activityBean,
                                     metaInfo);
             }
         }
-
-        this.resourceTypeManagerCache.sortResourceActivitiesByPriority();
     }
 
     void registerGwtEditorProvider() {
@@ -107,12 +101,11 @@ public class ActivityBeansCache {
     }
 
     private void addResourceActivity(SyncBeanDef<Activity> activityBean,
-                                     Pair<Integer, List<String>> metaInfo) {
+                                     List<String> metaInfo) {
         ActivityAndMetaInfo activityAndMetaInfo = new ActivityAndMetaInfo(iocManager,
                                                                           activityBean,
-                                                                          metaInfo.getK1(),
-                                                                          metaInfo.getK2());
-        this.resourceTypeManagerCache.addResourceActivity(activityAndMetaInfo);
+                                                                          metaInfo);
+        resourceActivities.add(activityAndMetaInfo);
     }
 
     Collection<SyncBeanDef<Activity>> getAvailableActivities() {
@@ -140,38 +133,6 @@ public class ActivityBeansCache {
         }
     }
 
-    /**
-     * Used for runtime plugins.
-     */
-    public void addNewPerspectiveActivity(final SyncBeanDef<Activity> activityBean) {
-        final String id = activityBean.getName();
-
-        validateUniqueness(id);
-
-        activitiesById.put(id,
-                           activityBean);
-    }
-
-    /**
-     * Used for runtime plugins.
-     */
-    public void addNewEditorActivity(final SyncBeanDef<Activity> activityBean,
-                                     String priority,
-                                     String resourceTypeName) {
-        final String id = activityBean.getName();
-
-        validateUniqueness(id);
-
-        activitiesById.put(id,
-                           activityBean);
-
-        this.resourceTypeManagerCache.addResourceActivity(new ActivityAndMetaInfo(iocManager,
-                                                                                  activityBean,
-                                                                                  Integer.valueOf(priority),
-                                                                                  Arrays.asList(resourceTypeName)));
-        this.resourceTypeManagerCache.sortResourceActivitiesByPriority();
-    }
-
     public boolean hasActivity(String id) {
         return activitiesById.containsKey(id);
     }
@@ -197,7 +158,7 @@ public class ActivityBeansCache {
      */
     public SyncBeanDef<Activity> getActivity(final Path path) {
 
-        Optional<ActivityAndMetaInfo> optional = resourceTypeManagerCache.getResourceActivities().stream()
+        Optional<ActivityAndMetaInfo> optional = resourceActivities.stream()
                 .filter(activityAndMetaInfo -> activitySupportsPath(activityAndMetaInfo, path))
                 .findAny();
 
@@ -205,7 +166,7 @@ public class ActivityBeansCache {
             return optional.get().getActivityBean();
         }
 
-        throw new EditorResourceTypeNotFound();
+        throw new RuntimeException();
     }
 
     private boolean activitySupportsPath(ActivityAndMetaInfo activity, Path path) {
@@ -224,15 +185,7 @@ public class ActivityBeansCache {
         return results;
     }
 
-    Pair<Integer, List<String>> generateActivityMetaInfo(SyncBeanDef<Activity> activityBean) {
+    List<String> generateActivityMetaInfo(SyncBeanDef<Activity> activityBean) {
         return ActivityMetaInfo.generate(activityBean);
-    }
-
-    public List<String> getActivitiesById() {
-        return new ArrayList<String>(activitiesById.keySet());
-    }
-
-    public class EditorResourceTypeNotFound extends RuntimeException {
-
     }
 }

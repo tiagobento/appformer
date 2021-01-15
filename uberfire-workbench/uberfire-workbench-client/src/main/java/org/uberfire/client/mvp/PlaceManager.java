@@ -16,9 +16,6 @@
 
 package org.uberfire.client.mvp;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.google.gwt.user.client.ui.HasWidgets;
 import jsinterop.annotations.JsIgnore;
 import jsinterop.annotations.JsMethod;
@@ -30,12 +27,8 @@ import org.uberfire.client.annotations.WorkbenchScreen;
 import org.uberfire.client.util.Layouts;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.PlaceRequest;
-import org.uberfire.mvp.impl.PathPlaceRequest;
 import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
-import org.uberfire.workbench.type.ResourceTypeDefinition;
-
-import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull;
 
 /**
  * A Workbench-centric abstraction over the browser's history mechanism. Allows the application to initiate navigation
@@ -45,9 +38,6 @@ import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull
  */
 @JsType
 public interface PlaceManager {
-
-    @JsMethod(name = "goToId")
-    void goTo(final String identifier);
 
     @JsMethod(name = "goToPlace")
     void goTo(final PlaceRequest place);
@@ -89,8 +79,7 @@ public interface PlaceManager {
 
     /**
      * Finds the <i>currently open</i> activity that handles the given PlaceRequest by ID. No attempt is made to match
-     * by path, but see {@link ActivityManagerImpl#resolveExistingParts(PlaceRequest)} for a variant that does.
-     * (TODO: should this method care about paths? if not, should the other method be added to the interface?)
+     * by path.
      *
      * @param place the PlaceRequest whose activity to search for
      * @return the activity that currently exists in service of the given PlaceRequest's ID. Null if no current activity
@@ -98,57 +87,9 @@ public interface PlaceManager {
      */
     Activity getActivity(final PlaceRequest place);
 
-    @JsMethod(name = "getStatusById")
-    PlaceStatus getStatus(final String id);
-
-    @JsMethod(name = "getStatusByPlaceRequest")
-    PlaceStatus getStatus(final PlaceRequest place);
-
-    default void executeOnOpenCallbacks(final PlaceRequest place) {
-        checkNotNull("place",
-                     place);
-
-        final List<Command> callbacks = getOnOpenCallbacks(place);
-        if (callbacks != null) {
-            callbacks.forEach(Command::execute);
-        }
-    }
-
-    default void executeOnCloseCallbacks(final PlaceRequest place) {
-        checkNotNull("place",
-                     place);
-
-        final List<Command> callbacks = getOnCloseCallbacks(place);
-        if (callbacks != null) {
-            callbacks.forEach(Command::execute);
-        }
-    }
-
-    List<Command> getOnOpenCallbacks(PlaceRequest place);
-
-    List<Command> getOnCloseCallbacks(PlaceRequest place);
-
-    @JsMethod(name = "closePlaceById")
-    void closePlace(final String id);
-
     void closePlace(final PlaceRequest placeToClose);
 
-    void tryClosePlace(final PlaceRequest placeToClose,
-                       final Command onAfterClose);
-
-    void registerOnOpenCallback(PlaceRequest place,
-                                Command callback);
-
-    void registerOnCloseCallback(PlaceRequest place,
-                                 Command callback);
-
-    /**
-     * Finds the <i>currently open</i> PlaceRequests for Activities that handle the given ResourceTypeDefinition.
-     *
-     * @param type the ResourceTypeDefinition whose activity to search for
-     * @return an unmodifiable collection of PlaceRequests for the <i>currently open</i> WorkbenchEditorActivities that
-     * can handle the ResourceTypeDefinition. Returns an empty collection if no match was found.
-     */
-    @JsIgnore
-    Collection<PathPlaceRequest> getActivitiesForResourceType(final ResourceTypeDefinition type);
+    @JsMethod(name = "closePlaceWithCommand")
+    void closePlace(final PlaceRequest placeToClose,
+                    final Command onAfterClose);
 }

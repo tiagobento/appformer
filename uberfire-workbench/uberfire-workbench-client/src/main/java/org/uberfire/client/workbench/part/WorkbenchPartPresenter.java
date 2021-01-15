@@ -31,26 +31,12 @@ public interface WorkbenchPartPresenter {
 
     void setWrappedWidget(IsWidget widget);
 
-    /**
-     * Returns the text that a panel may choose to display beside this part's title.
-     * @return The title of this part; never null.
-     */
-    String getTitle();
-
-    /**
-     * Sets the text that a panel may choose to display beside this part's title.
-     * @param title The title of this part. Null is not permitted.
-     */
-    void setTitle(String title);
-
     interface View
             extends
             UberView<WorkbenchPartPresenter>,
             RequiresResize {
 
         WorkbenchPartPresenter getPresenter();
-
-        IsWidget getWrappedWidget();
 
         void setWrappedWidget(IsWidget widget);
     }

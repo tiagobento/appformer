@@ -26,11 +26,10 @@ import org.jboss.errai.ioc.client.container.DynamicAnnotation;
 import org.jboss.errai.ioc.client.container.IOCBeanDef;
 import org.uberfire.client.workbench.annotations.AssociatedResources;
 import org.uberfire.client.workbench.type.ClientResourceType;
-import org.uberfire.commons.data.Pair;
 
 public class ActivityMetaInfo {
 
-    static Pair<Integer, List<String>> generate(final IOCBeanDef<?> beanDefinition) {
+    static List<String> generate(final IOCBeanDef<?> beanDefinition) {
 
         AssociatedResources associatedResources = null;
         DynamicAnnotation dynAssociatedResources = null;
@@ -63,7 +62,6 @@ public class ActivityMetaInfo {
             }
         }
 
-        return Pair.newPair(0,
-                            types);
+        return types;
     }
 }
