@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 /**
  * Classes annotated with this are considered WorkbenchParts that display some form of non-editable (but possibly still
  * interactive) content. If the content is associated with a VFS path, or otherwise represents some sort of document
- * that can be edited and saved, developers should consider using {@code @WorkbenchEditor}.
+ * that can be edited and saved, developers should consider using {@code @WorkbenchClientEditor}.
  * <p>
  * All classes annotated with {@code @WorkbenchScreen} must have a declared or inherited method annotated with
  * {@code @WorkbenchPartTitle}.

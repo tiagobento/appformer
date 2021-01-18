@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
  * they are focused.
  * <p>
  * This annotation only has meaning on methods declared in or inherited by {@code @WorkbenchScreen} or
- * {@code @WorkbenchEditor} classes.
+ * {@code @WorkbenchClientEditor} classes.
  * <p>
  * The target method must take no arguments and return void.
  */

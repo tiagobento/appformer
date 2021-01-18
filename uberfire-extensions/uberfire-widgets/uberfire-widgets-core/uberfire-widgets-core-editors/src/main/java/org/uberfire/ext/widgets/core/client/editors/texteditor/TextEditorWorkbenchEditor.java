@@ -19,14 +19,16 @@ package org.uberfire.ext.widgets.core.client.editors.texteditor;
 import javax.enterprise.context.Dependent;
 
 import com.google.gwt.user.client.ui.IsWidget;
-import org.uberfire.client.annotations.WorkbenchEditor;
+import elemental2.promise.Promise;
+import org.uberfire.client.annotations.WorkbenchClientEditor;
 import org.uberfire.client.annotations.WorkbenchPartView;
-import org.uberfire.client.workbench.type.DotResourceType;
+import org.uberfire.lifecycle.GetContent;
 import org.uberfire.lifecycle.OnClose;
 import org.uberfire.lifecycle.OnOpen;
+import org.uberfire.lifecycle.SetContent;
 
 @Dependent
-@WorkbenchEditor(identifier = "TextEditor", supportedTypes = {TextResourceType.class, DotResourceType.class})
+@WorkbenchClientEditor(identifier = "TextEditor")
 public class TextEditorWorkbenchEditor
         extends TextEditorPresenter {
 
@@ -43,5 +45,15 @@ public class TextEditorWorkbenchEditor
     @WorkbenchPartView
     public IsWidget getWidget() {
         return super.getWidget();
+    }
+
+    @SetContent
+    public Promise setContent(final String path, final String value) {
+        return Promise.resolve("");
+    }
+
+    @GetContent
+    public Promise getContent() {
+        return Promise.resolve("");
     }
 }

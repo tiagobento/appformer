@@ -15,6 +15,5 @@
 #
 
 org.uberfire.annotations.processors.WorkbenchScreenProcessor
-org.uberfire.annotations.processors.WorkbenchEditorProcessor
 org.uberfire.annotations.processors.WorkbenchClientEditorProcessor
 org.uberfire.annotations.processors.PerspectiveProcessor

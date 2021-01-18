@@ -19,11 +19,10 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.IsWidget;
 import jsinterop.annotations.JsIgnore;
 import jsinterop.annotations.JsType;
-import org.uberfire.client.annotations.WorkbenchEditor;
+import org.uberfire.client.annotations.WorkbenchClientEditor;
 import org.uberfire.client.annotations.WorkbenchPerspective;
 import org.uberfire.client.annotations.WorkbenchScreen;
 import org.uberfire.client.workbench.PanelManager;
-import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.model.Position;
 
 /**
@@ -41,7 +40,7 @@ import org.uberfire.workbench.model.Position;
  * {@link AbstractWorkbenchScreenActivity}, or annotate a class with {@link WorkbenchScreen} and follow the rules
  * associated with that annotation.
  * <p>
- * Similarly for {@link WorkbenchEditorActivity}, {@link AbstractWorkbenchEditorActivity} and {@link WorkbenchEditor};
+ * Similarly for {@link WorkbenchClientEditorActivity}, {@link AbstractWorkbenchEditorActivity} and {@link WorkbenchClientEditor};
  * {@link PerspectiveActivity}, {@link AbstractWorkbenchPerspectiveActivity}, and {@link WorkbenchPerspective}; and so
  * on.
  */

@@ -63,7 +63,7 @@ public class GeneratorUtils {
     private static final String[] ANY_PARAMS = new String[0];
 
     /**
-     * Finds the {@code @OnStartup} method suitable for workbench classes that are not {@code @WorkbenchEditor}.
+     * Finds the {@code @OnStartup} method suitable for workbench classes that are not {@code @WorkbenchClientEditor}.
      * The method must be public, non-static, have a return-type of void and either take zero parameters or one
      * parameter of type {@code PlaceRequest}.
      * <p/>

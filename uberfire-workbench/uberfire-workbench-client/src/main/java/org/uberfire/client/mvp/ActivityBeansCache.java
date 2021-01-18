@@ -153,7 +153,7 @@ public class ActivityBeansCache {
     /**
      * Returns the activated activity with the highest priority that can handle the given file. Returns null if no
      * activated activity can handle the path.
-     * @param path the file to find a path-based activity for (probably a {@link WorkbenchEditorActivity}, but this cache
+     * @param path the file to find a path-based activity for (probably a {@link WorkbenchClientEditorActivity}, but this cache
      * makes no guarantees).
      */
     public SyncBeanDef<Activity> getActivity(final Path path) {
