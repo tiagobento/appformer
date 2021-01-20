@@ -306,10 +306,6 @@ public class PanelManagerImpl implements PanelManager {
     }
 
     @Override
-    public void onPartHidden(final PartDefinition part) {
-    }
-
-    @Override
     public void onPartLostFocus() {
         if (activePart == null) {
             return;
@@ -325,11 +321,6 @@ public class PanelManagerImpl implements PanelManager {
         }
     }
 
-    @Override
-    public void closePart(final PartDefinition part) {
-        placeManager.get().closePlace(part.getPlace());
-    }
-
     void onSelectPlaceEvent(@Observes SelectPlaceEvent event) {
         final PlaceRequest place = event.getPlace();
 
@@ -343,16 +334,6 @@ public class PanelManagerImpl implements PanelManager {
                 }
             }
         }
-    }
-
-    @Override
-    public PanelDefinition getPanelForPlace(final PlaceRequest place) {
-        for (PartDefinition part : mapPartDefinitionToPresenter.keySet()) {
-            if (part.getPlace().equals(place)) {
-                return part.getParentPanel();
-            }
-        }
-        return null;
     }
 
     /**
@@ -463,24 +444,6 @@ public class PanelManagerImpl implements PanelManager {
                                          new CustomPanelDefinitionImpl(panelType,
                                                                        container),
                                          false);
-    }
-
-    @Override
-    public CustomPanelDefinition addCustomPanel(final HTMLElement container,
-                                                final String panelType) {
-        return addCustomPanelOnContainer(container,
-                                         new CustomPanelDefinitionImpl(panelType,
-                                                                       container),
-                                         false);
-    }
-
-    @Override
-    public CustomPanelDefinition addCustomPanel(final elemental2.dom.HTMLElement container,
-                                                final String panelType) {
-        return addCustomPanelOnContainer(container,
-                                         new CustomPanelDefinitionImpl(panelType,
-                                                                       container),
-                                         true);
     }
 
     private CustomPanelDefinition addCustomPanelOnContainer(final Object container,

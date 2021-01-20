@@ -18,7 +18,6 @@ package org.uberfire.client.workbench;
 
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.IsWidget;
-import org.jboss.errai.common.client.dom.HTMLElement;
 import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.workbench.events.SelectPlaceEvent;
@@ -116,38 +115,6 @@ public interface PanelManager {
                                          String panelType);
 
     /**
-     * Creates an UberFire panel and installs its view in the given html element container.
-     * <p>
-     * <h3>Custom Panel Lifecycle</h3>
-     * <p>
-     * Custom panels can be disposed like any other panel: by calling {@link #removeWorkbenchPanel(PanelDefinition)}.
-     * Additionally, custom panels are monitored for DOM detachment. When a custom panel's view is removed from the DOM
-     * (whether directly removed from its parent or some ancestor is removed,) all the panel's parts are closed and then
-     * the associated panel is disposed.
-     * @param container the html element container to install the new panel in. The new panel will fill the container.
-     * @return the definition for the newly constructed panel. Never null. The panel's type will be {@code panelType};
-     * its parent will be null; {@code isRoot()} will return false.
-     */
-    CustomPanelDefinition addCustomPanel(HTMLElement container,
-                                         String panelType);
-
-    /**
-     * Creates an UberFire panel and installs its view in the given html element container.
-     * <p>
-     * <h3>Custom Panel Lifecycle</h3>
-     * <p>
-     * Custom panels can be disposed like any other panel: by calling {@link #removeWorkbenchPanel(PanelDefinition)}.
-     * Additionally, custom panels are monitored for DOM detachment. When a custom panel's view is removed from the DOM
-     * (whether directly removed from its parent or some ancestor is removed,) all the panel's parts are closed and then
-     * the associated panel is disposed.
-     * @param container the html element container to install the new panel in. The new panel will fill the container.
-     * @return the definition for the newly constructed panel. Never null. The panel's type will be {@code panelType};
-     * its parent will be null; {@code isRoot()} will return false.
-     */
-    CustomPanelDefinition addCustomPanel(elemental2.dom.HTMLElement container,
-                                         String panelType);
-
-    /**
      * Removes the panel associated with the given definition, removing the panel's presenter and view from the
      * workbench, and freeing any resources associated with them. The panel must have no parts and no child panels.
      * @param toRemove the panel to remove from the workbench layout. Must not be null.
@@ -178,12 +145,6 @@ public interface PanelManager {
     void onPanelFocus(final PanelDefinition panel);
 
     /**
-     * Closes the given part. This is a convenience method for <tt>placeManager.closePlace(part.getPlace())</tt>.
-     * @param part the part to close (remove from the GUI). Must not be null.
-     */
-    void closePart(final PartDefinition part);
-
-    /**
      * Clears all existing panel structure from the user interface, then installs a new root panel according to the
      * specifications in the given {@link PanelDefinition}. Only installs the root panel; does not build the child
      * panel/part structure recursively.
@@ -191,17 +152,6 @@ public interface PanelManager {
      */
     void setRoot(PerspectiveActivity activity,
                  PanelDefinition root);
-
-    /**
-     * Returns the first PanelDefinition whose place matches the given one.
-     * @return the definition for the panel servicing the given place, or null if no such part can be found.
-     */
-    PanelDefinition getPanelForPlace(PlaceRequest place);
-
-    /**
-     * @param part that has been hidden
-     */
-    void onPartHidden(PartDefinition part);
 
     /**
      * @return the focused {@link PartDefinition}

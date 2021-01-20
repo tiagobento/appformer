@@ -116,14 +116,7 @@ public class PlaceManagerImpl implements PlaceManager {
              (PanelDefinition) null);
     }
 
-    @Override
-    public void goTo(final Path path) {
-        goTo(new PathPlaceRequest(path),
-             (PanelDefinition) null);
-    }
-
-    @Override
-    public void goTo(final PlaceRequest place,
+    private void goTo(final PlaceRequest place,
                      final PanelDefinition panel) {
         goTo(place,
              panel,
@@ -133,7 +126,6 @@ public class PlaceManagerImpl implements PlaceManager {
     @Override
     public void goTo(PlaceRequest place,
                      HasWidgets addTo) {
-
         closeOpenPlacesAt(panelsOfThisHasWidgets(addTo));
         goToTargetPanel(place,
                         panelManager.addCustomPanel(addTo,
@@ -299,8 +291,7 @@ public class PlaceManagerImpl implements PlaceManager {
         return null;
     }
 
-    @Override
-    public void goTo(final PartDefinition part,
+    private void goTo(final PartDefinition part,
                      final PanelDefinition panel) {
         final PlaceRequest place = part.getPlace();
         if (place == null) {

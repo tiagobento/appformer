@@ -23,7 +23,4 @@ import org.uberfire.client.annotations.WorkbenchClientEditor;
  */
 public abstract class AbstractWorkbenchClientEditorActivity extends AbstractWorkbenchActivity implements WorkbenchClientEditorActivity {
 
-    public AbstractWorkbenchClientEditorActivity(final PlaceManager placeManager) {
-        super(placeManager);
-    }
 }

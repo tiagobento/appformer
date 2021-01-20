@@ -38,16 +38,24 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
-import org.uberfire.annotations.processors.exceptions.GenerationException;
-import org.uberfire.annotations.processors.facades.APIModule;
-import org.uberfire.annotations.processors.facades.ClientAPIModule;
-
 import static java.util.Collections.singletonList;
 
 /**
  * Utilities for code generation
  */
 public class GeneratorUtils {
+
+    private static final String POSITION_CLASS = "org.uberfire.workbench.model.Position";
+    private static final String PLACE_REQUEST_CLASS = "org.uberfire.mvp.PlaceRequest";
+    private static final String SET_CONTENT_CLASS = "org.uberfire.lifecycle.SetContent";
+    private static final String GET_CONTENT_CLASS = "org.uberfire.lifecycle.GetContent";
+    private static final String GET_PREVIEW_CLASS = "org.uberfire.lifecycle.GetPreview";
+    private static final String ON_CLOSE_CLASS = "org.uberfire.lifecycle.OnClose";
+    private static final String ON_FOCUS_CLASS = "org.uberfire.lifecycle.OnFocus";
+    private static final String ON_LOST_FOCUS_CLASS = "org.uberfire.lifecycle.OnLostFocus";
+    private static final String ON_OPEN_CLASS = "org.uberfire.lifecycle.OnOpen";
+    private static final String ON_STARTUP_CLASS = "org.uberfire.lifecycle.OnStartup";
+    private static final String ACTIVATED_BY_CLASS = "org.jboss.errai.ioc.client.api.ActivatedBy";
 
     /**
      * Handy constant for an emtpy array of argument types.
@@ -78,7 +86,7 @@ public class GeneratorUtils {
         List<ExecutableElement> onStartupMethods = getAnnotatedMethods(
                 classElement,
                 processingEnvironment,
-                APIModule.getOnStartupClass(),
+                ON_STARTUP_CLASS,
                 requiredReturnType,
                 ANY_PARAMS);
         Elements elementUtils = processingEnvironment.getElementUtils();
@@ -94,13 +102,13 @@ public class GeneratorUtils {
             } else if (doParametersMatch(typeUtils,
                                          elementUtils,
                                          m,
-                                         new String[]{APIModule.getPlaceRequestClass()})) {
+                                         new String[]{PLACE_REQUEST_CLASS})) {
                 oneArgMethod = m;
             } else {
                 processingEnvironment.getMessager().printMessage(
                         Kind.ERROR,
-                        formatProblemsList(APIModule.getOnStartupClass(),
-                                           singletonList("take no arguments or one argument of type " + APIModule.getPlaceRequestClass())));
+                        formatProblemsList(ON_STARTUP_CLASS,
+                                           singletonList("take no arguments or one argument of type " + PLACE_REQUEST_CLASS)));
             }
         }
 
@@ -123,7 +131,7 @@ public class GeneratorUtils {
         return getUniqueAnnotatedMethod(
                 classElement,
                 processingEnvironment,
-                APIModule.getSetContentClass(),
+                SET_CONTENT_CLASS,
                 new TypeMirror[]{
                         processingEnvironment.getElementUtils().getTypeElement("elemental2.promise.Promise").asType()
                 },
@@ -133,7 +141,7 @@ public class GeneratorUtils {
     public static ExecutableElement getGetContentMethodName(TypeElement classElement, ProcessingEnvironment processingEnvironment) {
         return getUniqueAnnotatedMethod(classElement,
                                         processingEnvironment,
-                                        APIModule.getGetContentClass(),
+                                        GET_CONTENT_CLASS,
                                         new TypeMirror[]{
                                                 processingEnvironment.getElementUtils().getTypeElement("elemental2.promise.Promise").asType()
                                         },
@@ -144,63 +152,11 @@ public class GeneratorUtils {
     public static ExecutableElement getGetPreviewMethodName(TypeElement classElement, ProcessingEnvironment processingEnvironment) {
         return getUniqueAnnotatedMethod(classElement,
                                         processingEnvironment,
-                                        APIModule.getGetPreviewClass(),
+                                        GET_PREVIEW_CLASS,
                                         new TypeMirror[]{
                                                 processingEnvironment.getElementUtils().getTypeElement("elemental2.promise.Promise").asType()
                                         },
                                         NO_PARAMS);
-    }
-
-    /**
-     * Finds the {@code @OnStartup} method suitable for {@code @WorkbenchEditor} classes.
-     * The method must be public, non-static, have a return-type of void and either take one parameter
-     * of type {@code Path} or two parameters of type {@code (Path, PlaceRequest)}.
-     * <p/>
-     * If no such method is found, returns null. If methods annotated with {@code @OnStartup} are found but they do not
-     * satisfy all the requirements, they are marked with errors explaining the problem.
-     */
-    public static ExecutableElement getOnStartupMethodForEditors(final TypeElement classElement,
-                                                                 final ProcessingEnvironment processingEnvironment) {
-        final Types typeUtils = processingEnvironment.getTypeUtils();
-        final TypeMirror requiredReturnType = typeUtils.getNoType(TypeKind.VOID);
-
-        List<ExecutableElement> onStartupMethods = getAnnotatedMethods(
-                classElement,
-                processingEnvironment,
-                APIModule.getOnStartupClass(),
-                requiredReturnType,
-                ANY_PARAMS);
-        Elements elementUtils = processingEnvironment.getElementUtils();
-
-        ExecutableElement oneArgMethod = null;
-        ExecutableElement twoArgMethod = null;
-        for (ExecutableElement m : onStartupMethods) {
-            if (doParametersMatch(typeUtils,
-                                         elementUtils,
-                                         m,
-                                         new String[]{APIModule.getPlaceRequestClass()})) {
-                twoArgMethod = m;
-            } else {
-                processingEnvironment.getMessager().printMessage(
-                        Kind.ERROR,
-                        formatProblemsList(APIModule.getOnStartupClass(),
-                                           singletonList("take one optional argument of type " + APIModule.getPlaceRequestClass())));
-            }
-        }
-
-        if (oneArgMethod != null && twoArgMethod != null) {
-            // TODO make this an error (need to take inherited methods into account). See UF-76.
-            processingEnvironment.getMessager().printMessage(
-                    Kind.WARNING,
-                    "There is also an @OnStartup(Path, PlaceRequest) method in this class. That method takes precedence over this one.",
-                    oneArgMethod);
-        }
-
-        if (twoArgMethod != null) {
-            return twoArgMethod;
-        }
-
-        return oneArgMethod;
     }
 
     /**
@@ -215,22 +171,7 @@ public class GeneratorUtils {
                                               final ProcessingEnvironment processingEnvironment) throws GenerationException {
         return getVoidMethodName(classElement,
                                  processingEnvironment,
-                                 APIModule.getOnCloseClass());
-    }
-
-    /**
-     * Get the method name annotated with {@code @OnShutdown}. The method must be
-     * public, non-static, have a return-type of void and take zero parameters.
-     * @param classElement
-     * @param processingEnvironment
-     * @return null if none found
-     * @throws GenerationException
-     */
-    public static String getOnShutdownMethodName(final TypeElement classElement,
-                                                 final ProcessingEnvironment processingEnvironment) throws GenerationException {
-        return getVoidMethodName(classElement,
-                                 processingEnvironment,
-                                 APIModule.getOnShutdownClass());
+                                 ON_CLOSE_CLASS);
     }
 
     /**
@@ -245,7 +186,7 @@ public class GeneratorUtils {
                                              final ProcessingEnvironment processingEnvironment) throws GenerationException {
         return getVoidMethodName(classElement,
                                  processingEnvironment,
-                                 APIModule.getOnOpenClass());
+                                 ON_OPEN_CLASS);
     }
 
     /**
@@ -261,7 +202,7 @@ public class GeneratorUtils {
                                                   final ProcessingEnvironment processingEnvironment) throws GenerationException {
         return getVoidMethodName(classElement,
                                  processingEnvironment,
-                                 APIModule.getOnLostFocusClass());
+                                 ON_LOST_FOCUS_CLASS);
     }
 
     /**
@@ -276,7 +217,7 @@ public class GeneratorUtils {
                                               final ProcessingEnvironment processingEnvironment) throws GenerationException {
         return getVoidMethodName(classElement,
                                  processingEnvironment,
-                                 APIModule.getOnFocusClass());
+                                 ON_FOCUS_CLASS);
     }
 
     /**
@@ -378,7 +319,7 @@ public class GeneratorUtils {
                                                    final ProcessingEnvironment processingEnvironment) {
         AnnotationMirror activatedByAnnotation = getAnnotation(processingEnvironment.getElementUtils(),
                                                                classElement,
-                                                               APIModule.activatedBy);
+                                                               ACTIVATED_BY_CLASS);
         if (activatedByAnnotation != null) {
             return extractAnnotationStringValue(processingEnvironment.getElementUtils(),
                                                 activatedByAnnotation,
@@ -739,7 +680,7 @@ public class GeneratorUtils {
                                                        final String annotationName) throws GenerationException {
         final Types typeUtils = processingEnvironment.getTypeUtils();
         final Elements elementUtils = processingEnvironment.getElementUtils();
-        final TypeMirror requiredReturnType = elementUtils.getTypeElement(APIModule.getPositionClass()).asType();
+        final TypeMirror requiredReturnType = elementUtils.getTypeElement(POSITION_CLASS).asType();
         final List<ExecutableElement> methods = ElementFilter.methodsIn(classElement.getEnclosedElements());
 
         ExecutableElement match = null;
@@ -840,26 +781,6 @@ public class GeneratorUtils {
             return result;
         }
         return Collections.singleton(value.getValue().toString());
-    }
-
-    public static String formatAssociatedResources(final Collection<String> resourceTypes) {
-        final String newLine = System.getProperty("line.separator");
-
-        if (resourceTypes == null || resourceTypes.size() == 0) {
-            return null;
-        }
-
-        final StringBuilder sb = new StringBuilder();
-
-        sb.append("@AssociatedResources").append("({" + newLine);
-        for (final String resourceType : resourceTypes) {
-            sb.append("    ").append(resourceType).append(".class").append("," + newLine);
-        }
-        sb.delete(sb.length() - (newLine.length() + 1),
-                  sb.length());
-        sb.append(newLine + "})" + newLine);
-
-        return sb.toString();
     }
 
     private static String fqcnToSimpleName(String fqcn) {

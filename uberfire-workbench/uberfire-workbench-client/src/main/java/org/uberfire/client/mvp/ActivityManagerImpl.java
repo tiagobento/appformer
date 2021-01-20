@@ -130,15 +130,7 @@ public class ActivityManagerImpl implements ActivityManager {
     @Override
     public void destroyActivity(final Activity activity) {
         if (startedActivities.remove(activity) != null) {
-            boolean isDependentScope = getBeanScope(activity) == Dependent.class;
-            try {
-                activity.onShutdown();
-            } catch (Exception ex) {
-                lifecycleErrorHandler.handle(activity,
-                                             LifecyclePhase.SHUTDOWN,
-                                             ex);
-            }
-            if (isDependentScope) {
+            if (getBeanScope(activity) == Dependent.class) {
                 iocManager.destroyBean(activity);
             }
         } else {

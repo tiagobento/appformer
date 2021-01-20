@@ -46,7 +46,6 @@ import org.uberfire.workbench.model.PerspectiveDefinition;
  * <li>{@code @OnStartup}</li>
  * <li>{@code @OnOpen}</li>
  * <li>{@code @OnClose}</li>
- * <li>{@code @OnShutdown}</li>
  * </ul>
  */
 @Inherited

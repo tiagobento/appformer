@@ -33,7 +33,6 @@ import org.jboss.errai.common.client.ui.ElementWrapperWidget;
 </#if>
 import javax.inject.Named;
 import org.uberfire.client.mvp.AbstractWorkbenchClientEditorActivity;
-import org.uberfire.client.mvp.PlaceManager;
 import elemental2.promise.Promise;
 import org.uberfire.client.mvp.IsClientEditor;
 
@@ -70,11 +69,6 @@ public class ${className} extends AbstractWorkbenchClientEditorActivity {
 </#list>
     private ${realClassName} realPresenter;
 
-    @Inject
-    public ${className}(final PlaceManager placeManager) {
-        super( placeManager );
-    }
-
     <#if hasUberView>
     @PostConstruct
     public void init() {
@@ -102,14 +96,6 @@ public class ${className} extends AbstractWorkbenchClientEditorActivity {
     public void onClose() {
         super.onClose();
         realPresenter.${onCloseMethodName}();
-    }
-
-    </#if>
-    <#if onShutdownMethodName??>
-    @Override
-    public void onShutdown() {
-        super.onShutdown();
-        realPresenter.${onShutdownMethodName}();
     }
 
     </#if>

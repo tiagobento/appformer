@@ -25,10 +25,6 @@ import org.uberfire.workbench.model.ActivityResourceType;
  */
 public abstract class AbstractWorkbenchPerspectiveActivity extends AbstractActivity implements PerspectiveActivity {
 
-    public AbstractWorkbenchPerspectiveActivity(final PlaceManager placeManager) {
-        super(placeManager);
-    }
-
     @Override
     public ResourceType getResourceType() {
         return ActivityResourceType.PERSPECTIVE;

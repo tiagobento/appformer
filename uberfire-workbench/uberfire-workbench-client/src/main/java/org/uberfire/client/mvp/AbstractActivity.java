@@ -26,15 +26,9 @@ import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull
  */
 public abstract class AbstractActivity implements Activity {
 
-    protected PlaceManager placeManager;
-
     protected PlaceRequest place;
 
     protected boolean open = false;
-
-    public AbstractActivity(final PlaceManager placeManager) {
-        this.placeManager = placeManager;
-    }
 
     /**
      * Tracks start/shutdown lifecycle. Subclasses should always call <tt>super.onStartup()</tt> in methods that
@@ -74,21 +68,6 @@ public abstract class AbstractActivity implements Activity {
             throw new IllegalStateException("Activity " + this + " not open");
         }
         open = false;
-    }
-
-    /**
-     * Tracks start/shutdown lifecycle. Subclasses should always call <tt>super.onShutdown()</tt> in methods that
-     * override this one.
-     */
-    @Override
-    public void onShutdown() {
-        if (this.place == null) {
-            throw new IllegalStateException("Activity " + this + " has not been started");
-        }
-        if (open) {
-            throw new IllegalStateException("Activity " + this + " is open");
-        }
-        this.place = null;
     }
 
     @Override

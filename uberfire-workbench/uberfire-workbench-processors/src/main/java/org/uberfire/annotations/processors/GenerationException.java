@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.uberfire.annotations.processors.exceptions;
+package org.uberfire.annotations.processors;
 
 /**
  * THINK TWICE BEFORE USING THIS EXCEPTION! In most cases, it is more appropriate to print an error message through the

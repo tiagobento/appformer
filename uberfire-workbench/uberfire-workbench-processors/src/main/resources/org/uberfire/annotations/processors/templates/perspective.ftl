@@ -27,7 +27,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import org.uberfire.workbench.model.PerspectiveDefinition;
 import org.uberfire.client.mvp.AbstractWorkbenchPerspectiveActivity;
-import org.uberfire.client.mvp.PlaceManager;
 
 import org.uberfire.mvp.PlaceRequest;
 
@@ -41,11 +40,6 @@ public class ${className} extends AbstractWorkbenchPerspectiveActivity {
 
     @Inject
     private ${realClassName} realPresenter;
-
-    @Inject
-    public ${className}(final PlaceManager placeManager) {
-        super( placeManager );
-    }
 
     @Override
     public String getIdentifier() {

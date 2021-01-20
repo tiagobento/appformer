@@ -34,8 +34,6 @@ import javax.tools.Diagnostic.Kind;
 
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
-import org.uberfire.annotations.processors.exceptions.GenerationException;
-import org.uberfire.annotations.processors.facades.ClientAPIModule;
 
 /**
  * A source code generator for Activities
@@ -93,8 +91,6 @@ public class ClientEditorActivityGenerator extends AbstractGenerator {
 
         final String onCloseMethodName = GeneratorUtils.getOnCloseMethodName(classElement,
                                                                              processingEnvironment);
-        final String onShutdownMethodName = GeneratorUtils.getOnShutdownMethodName(classElement,
-                                                                                   processingEnvironment);
         final String onOpenMethodName = GeneratorUtils.getOnOpenMethodName(classElement,
                                                                            processingEnvironment);
         final String onLostFocusMethodName = GeneratorUtils.getOnLostFocusMethodName(classElement,
@@ -144,8 +140,6 @@ public class ClientEditorActivityGenerator extends AbstractGenerator {
                                   "onStartup1ParameterMethodName: " + onStartup1ParameterMethodName);
             messager.printMessage(Kind.NOTE,
                                   "onCloseMethodName: " + onCloseMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "onShutdownMethodName: " + onShutdownMethodName);
             messager.printMessage(Kind.NOTE,
                                   "onOpenMethodName: " + onOpenMethodName);
             messager.printMessage(Kind.NOTE,
@@ -214,8 +208,6 @@ public class ClientEditorActivityGenerator extends AbstractGenerator {
                  onStartup1ParameterMethodName);
         root.put("onCloseMethodName",
                  onCloseMethodName);
-        root.put("onShutdownMethodName",
-                 onShutdownMethodName);
         root.put("onOpenMethodName",
                  onOpenMethodName);
         root.put("onLostFocusMethodName",

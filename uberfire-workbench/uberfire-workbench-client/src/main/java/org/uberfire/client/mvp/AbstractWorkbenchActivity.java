@@ -26,10 +26,6 @@ import org.uberfire.workbench.model.Position;
  */
 public abstract class AbstractWorkbenchActivity extends AbstractActivity implements WorkbenchActivity {
 
-    public AbstractWorkbenchActivity(final PlaceManager placeManager) {
-        super(placeManager);
-    }
-
     @Override
     public Position getDefaultPosition() {
         return CompassPosition.ROOT;
@@ -42,5 +38,6 @@ public abstract class AbstractWorkbenchActivity extends AbstractActivity impleme
 
     @Override
     public void onFocus() {
+        //Do nothing.
     }
 }

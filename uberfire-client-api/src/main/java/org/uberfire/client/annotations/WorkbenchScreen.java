@@ -47,7 +47,6 @@ import java.lang.annotation.Target;
  * <li>{@code @OnFocus}</li>
  * <li>{@code @OnLostFocus}</li>
  * <li>{@code @OnClose}</li>
- * <li>{@code @OnShutdown}</li>
  * </ul>
  */
 @Inherited

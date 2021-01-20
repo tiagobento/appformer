@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.uberfire.annotations.processors.facades;
+package org.uberfire.annotations.processors;
 
 import java.util.Map;
 
@@ -30,8 +30,8 @@ import javax.lang.model.element.TypeElement;
  */
 public class ClientAPIModule {
 
-    public static final String IDENTIFIER = "identifier";
-    public static final String VALUE = "value";
+    private static final String IDENTIFIER = "identifier";
+
     public static final String workbenchPerspective = "org.uberfire.client.annotations.WorkbenchPerspective";
     public static final String workbenchScreen = "org.uberfire.client.annotations.WorkbenchScreen";
     public static final String workbenchClientEditor = "org.uberfire.client.annotations.WorkbenchClientEditor";

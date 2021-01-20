@@ -30,8 +30,6 @@ import javax.tools.Diagnostic.Kind;
 
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
-import org.uberfire.annotations.processors.exceptions.GenerationException;
-import org.uberfire.annotations.processors.facades.ClientAPIModule;
 
 /**
  * Generates a Java source file enerator for Activities

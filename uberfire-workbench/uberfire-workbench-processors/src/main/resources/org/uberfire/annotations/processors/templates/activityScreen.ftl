@@ -35,7 +35,6 @@ import org.jboss.errai.common.client.ui.ElementWrapperWidget;
 </#if>
 import javax.inject.Named;
 import org.uberfire.client.mvp.AbstractWorkbenchScreenActivity;
-import org.uberfire.client.mvp.PlaceManager;
 
 <#if getDefaultPositionMethodName??>
 import org.uberfire.workbench.model.Position;
@@ -72,12 +71,7 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
 </#list>
     private ${realClassName} realPresenter;
 
-    @Inject
-    public ${className}(final PlaceManager placeManager) {
-        super( placeManager );
-    }
     <#if hasPresenterInitMethod>
-
     @PostConstruct
     public void init() {
         ((HasPresenter) realPresenter.${getWidgetMethodName}()).init( realPresenter );
@@ -104,14 +98,6 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
     public void onClose() {
         super.onClose();
         realPresenter.${onCloseMethodName}();
-    }
-    </#if>
-    <#if onShutdownMethodName??>
-
-    @Override
-    public void onShutdown() {
-        super.onShutdown();
-        realPresenter.${onShutdownMethodName}();
     }
     </#if>
     <#if onOpenMethodName??>
