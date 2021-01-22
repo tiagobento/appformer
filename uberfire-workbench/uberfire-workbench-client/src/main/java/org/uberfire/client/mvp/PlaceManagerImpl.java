@@ -170,7 +170,7 @@ public class PlaceManagerImpl implements PlaceManager {
 
         if (resolved.getActivity() != null) {
             final Activity activity = resolved.getActivity();
-            if (activity.isType(ActivityResourceType.SCREEN.name()) || activity.isType(ActivityResourceType.EDITOR.name())) {
+            if (activity.isType(ActivityResourceType.SCREEN.name())) {
                 final WorkbenchActivity workbenchActivity = (WorkbenchActivity) activity;
 
                 launchWorkbenchActivityAtPosition(resolved.getPlaceRequest(),
@@ -303,8 +303,7 @@ public class PlaceManagerImpl implements PlaceManager {
         if (resolved.getActivity() != null) {
             final Activity activity = resolved.getActivity();
 
-            if (activity.isType(ActivityResourceType.EDITOR.name()) ||
-                    activity.isType(ActivityResourceType.CLIENT_EDITOR.name()) ||
+            if (activity.isType(ActivityResourceType.CLIENT_EDITOR.name()) ||
                     activity.isType(ActivityResourceType.SCREEN.name())) {
                 final WorkbenchActivity workbenchActivity = (WorkbenchActivity) activity;
                 launchWorkbenchActivityInPanel(place,
@@ -516,7 +515,7 @@ public class PlaceManagerImpl implements PlaceManager {
                 return;
             }
 
-            if (activity.isType(ActivityResourceType.SCREEN.name()) || activity.isType(ActivityResourceType.EDITOR.name())) {
+            if (activity.isType(ActivityResourceType.SCREEN.name())) {
                 WorkbenchActivity activity1 = (WorkbenchActivity) activity;
                 try {
                     activity1.onClose();

@@ -20,19 +20,12 @@ import com.google.gwt.resources.client.CssResource;
 /**
  * GWT managed CSS for Workbench
  */
-public interface WorkbenchCss
-        extends
-        CssResource {
+public interface WorkbenchCss extends CssResource {
 
     String notification();
 
-    String toolbar();
-
     @ClassName("uf-activeNavTabs")
     String activeNavTabs();
-
-    @ClassName("uf-listbar")
-    String listbar();
 
     @ClassName("uf-modal")
     String modal();

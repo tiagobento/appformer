@@ -235,7 +235,7 @@ public class ActivityManagerImpl implements ActivityManager {
             return singleton(result);
         }
 
-        return asSet(activityBeansCache.getActivity(place.getPath()));
+        throw new RuntimeException();
     }
 
     private Set<SyncBeanDef<Activity>> asSet(final SyncBeanDef<Activity> activity) {

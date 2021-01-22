@@ -16,15 +16,10 @@
 
 package org.uberfire.client.mvp;
 
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Stream;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -34,9 +29,7 @@ import javax.inject.Named;
 import org.jboss.errai.ioc.client.api.EnabledByProperty;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
-import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.util.GWTEditorNativeRegister;
-import org.uberfire.client.workbench.annotations.AssociatedResources;
 
 /**
  *
@@ -49,12 +42,7 @@ public class ActivityBeansCache {
      * All active activity beans mapped by their CDI bean name (names are mandatory for activity beans).
      */
     private final Map<String, SyncBeanDef<Activity>> activitiesById = new HashMap<>();
-    /**
-     * All active Activities that have an {@link AssociatedResources} annotation and are not splash screens.
-     */
-
     private SyncBeanManager iocManager;
-    private final List<ActivityAndMetaInfo> resourceActivities = new ArrayList<>();
     private GWTEditorNativeRegister gwtEditorNativeRegister;
 
     public ActivityBeansCache() {
@@ -81,13 +69,8 @@ public class ActivityBeansCache {
 
             activitiesById.put(id, activityBean);
 
-            if (isClientEditor(activityBean.getQualifiers())) {
+            if (activityBean.getInstance() instanceof AbstractWorkbenchClientEditorActivity) {
                 registerGwtClientBean(id, activityBean);
-            }
-            final List<String> metaInfo = generateActivityMetaInfo(activityBean);
-            if (metaInfo != null) {
-                addResourceActivity(activityBean,
-                                    metaInfo);
             }
         }
     }
@@ -100,14 +83,6 @@ public class ActivityBeansCache {
         gwtEditorNativeRegister.nativeRegisterGwtClientBean(id, activityBean);
     }
 
-    private void addResourceActivity(SyncBeanDef<Activity> activityBean,
-                                     List<String> metaInfo) {
-        ActivityAndMetaInfo activityAndMetaInfo = new ActivityAndMetaInfo(iocManager,
-                                                                          activityBean,
-                                                                          metaInfo);
-        resourceActivities.add(activityAndMetaInfo);
-    }
-
     Collection<SyncBeanDef<Activity>> getAvailableActivities() {
         Collection<SyncBeanDef<Activity>> activeBeans = new ArrayList<>();
         for (SyncBeanDef<Activity> bean : iocManager.lookupBeans(Activity.class)) {
@@ -116,15 +91,6 @@ public class ActivityBeansCache {
             }
         }
         return activeBeans;
-    }
-
-    private boolean isClientEditor(final Set<Annotation> qualifiers) {
-        for (final Annotation qualifier : qualifiers) {
-            if (qualifier instanceof IsClientEditor) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void validateUniqueness(final String id) {
@@ -148,44 +114,5 @@ public class ActivityBeansCache {
             return null;
         }
         return activitiesById.get(id);
-    }
-
-    /**
-     * Returns the activated activity with the highest priority that can handle the given file. Returns null if no
-     * activated activity can handle the path.
-     * @param path the file to find a path-based activity for (probably a {@link WorkbenchClientEditorActivity}, but this cache
-     * makes no guarantees).
-     */
-    public SyncBeanDef<Activity> getActivity(final Path path) {
-
-        Optional<ActivityAndMetaInfo> optional = resourceActivities.stream()
-                .filter(activityAndMetaInfo -> activitySupportsPath(activityAndMetaInfo, path))
-                .findAny();
-
-        if (optional.isPresent()) {
-            return optional.get().getActivityBean();
-        }
-
-        throw new RuntimeException();
-    }
-
-    private boolean activitySupportsPath(ActivityAndMetaInfo activity, Path path) {
-        // Check if the editor resources types support the given path
-        return Stream.of(activity.getResourceTypes())
-                .anyMatch(clientResourceType -> clientResourceType.accept(path));
-    }
-
-    public List<SyncBeanDef<Activity>> getPerspectiveActivities() {
-        List<SyncBeanDef<Activity>> results = new ArrayList<>();
-        for (SyncBeanDef<Activity> beanDef : activitiesById.values()) {
-            if (beanDef.isAssignableTo(PerspectiveActivity.class)) {
-                results.add(beanDef);
-            }
-        }
-        return results;
-    }
-
-    List<String> generateActivityMetaInfo(SyncBeanDef<Activity> activityBean) {
-        return ActivityMetaInfo.generate(activityBean);
     }
 }

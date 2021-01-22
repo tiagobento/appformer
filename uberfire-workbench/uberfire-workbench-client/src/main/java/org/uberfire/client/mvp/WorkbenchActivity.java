@@ -40,7 +40,7 @@ import org.uberfire.workbench.model.Position;
  * {@link AbstractWorkbenchScreenActivity}, or annotate a class with {@link WorkbenchScreen} and follow the rules
  * associated with that annotation.
  * <p>
- * Similarly for {@link WorkbenchClientEditorActivity}, {@link AbstractWorkbenchEditorActivity} and {@link WorkbenchClientEditor};
+ * Similarly for {@link WorkbenchClientEditorActivity} and {@link WorkbenchClientEditor};
  * {@link PerspectiveActivity}, {@link AbstractWorkbenchPerspectiveActivity}, and {@link WorkbenchPerspective}; and so
  * on.
  */

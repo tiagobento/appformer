@@ -27,7 +27,6 @@ public enum ActivityResourceType implements ResourceType {
 
     PERSPECTIVE,
     SCREEN,
-    EDITOR,
     CLIENT_EDITOR;
 
     @Override

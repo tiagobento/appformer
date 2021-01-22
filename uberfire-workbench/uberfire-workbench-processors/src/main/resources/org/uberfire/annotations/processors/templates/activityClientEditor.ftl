@@ -34,7 +34,6 @@ import org.jboss.errai.common.client.ui.ElementWrapperWidget;
 import javax.inject.Named;
 import org.uberfire.client.mvp.AbstractWorkbenchClientEditorActivity;
 import elemental2.promise.Promise;
-import org.uberfire.client.mvp.IsClientEditor;
 
 <#if getDefaultPositionMethodName??>
 import org.uberfire.workbench.model.Position;
@@ -51,7 +50,6 @@ import org.jboss.errai.ioc.client.api.ActivatedBy;
 @Dependent
 @Generated("org.uberfire.annotations.processors.WorkbenchClientEditorProcessor")
 @Named("${identifier}")
-@IsClientEditor
 <#if beanActivatorClass??>
 @ActivatedBy(${beanActivatorClass}.class)
 </#if>
