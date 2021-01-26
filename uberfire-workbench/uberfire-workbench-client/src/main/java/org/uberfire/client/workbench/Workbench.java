@@ -24,8 +24,6 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import org.jboss.errai.ioc.client.api.AfterInitialization;
 import org.jboss.errai.ioc.client.api.EnabledByProperty;
 import org.jboss.errai.ioc.client.api.EntryPoint;
-import org.jboss.errai.ioc.client.container.SyncBeanManager;
-import org.slf4j.Logger;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.resources.WorkbenchResources;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
@@ -76,35 +74,29 @@ import org.uberfire.mvp.impl.DefaultPlaceRequest;
 @EnabledByProperty(value = "uberfire.plugin.mode.active", negated = true)
 public class Workbench {
 
+    public static final String DEFAULT_PERSPECTIVE_NAME = "AuthoringPerspective";
+
     @Inject
-    private SyncBeanManager iocManager;
+    private WorkbenchLayout workbenchLayout;
     @Inject
     private PlaceManager placeManager;
-    @Inject
-    private Logger logger;
 
     @AfterInitialization
     private void afterInit() {
-        logger.info("Starting workbench...");
+        WorkbenchResources.INSTANCE.CSS().ensureInjected();
 
-        final WorkbenchLayout layout = iocManager.lookupBean(WorkbenchLayout.class).getInstance();
-        layout.onBootstrap();
-        RootLayoutPanel.get().add(layout.getRoot());
-        placeManager.goTo(new DefaultPlaceRequest("AuthoringPerspective"));
+        workbenchLayout.onBootstrap();
+        RootLayoutPanel.get().add(workbenchLayout.getRoot());
+        placeManager.goTo(new DefaultPlaceRequest(DEFAULT_PERSPECTIVE_NAME));
 
         // Resizing the Window should resize everything
-        Window.addResizeHandler(event -> layout.resizeTo(event.getWidth(),
-                                                         event.getHeight()));
+        Window.addResizeHandler(event -> workbenchLayout.resizeTo(event.getWidth(),
+                                                                  event.getHeight()));
 
         // Defer the initial resize call until widgets are rendered and sizes are available
-        Scheduler.get().scheduleDeferred(layout::onResize);
+        Scheduler.get().scheduleDeferred(workbenchLayout::onResize);
 
         notifyJSReady();
-    }
-
-    @PostConstruct
-    private void earlyInit() {
-        WorkbenchResources.INSTANCE.CSS().ensureInjected();
     }
 
     private native void notifyJSReady() /*-{

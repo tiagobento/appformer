@@ -82,18 +82,12 @@ public class NotificationPopupsManagerView implements NotificationManager.View {
         view.setNotificationWidth(getWidth() + "px");
 
         if (event.hasNavigation()) {
-            final String identifier = event.getNavigationPlace().getIdentifier();
-            final SyncBeanDef<Activity> syncBeanDefActivity = activityBeansCache.getActivity(identifier);
-            final ResourceRef resourceRef = new ResourceRef(identifier, syncBeanDefActivity.getInstance().getResourceType());
-            final Boolean isAuthorized = true;
-            if (isAuthorized) {
-                view.addNavigation(
-                        event.getNavigationText(),
-                        () -> {
-                            hideCommand.execute();
-                            placeManager.goTo(event.getNavigationPlace());
-                        });
-            }
+            view.addNavigation(
+                    event.getNavigationText(),
+                    () -> {
+                        hideCommand.execute();
+                        placeManager.goTo(event.getNavigationPlace());
+                    });
         }
 
         view.show(hideCommand,
