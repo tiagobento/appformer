@@ -16,7 +16,6 @@
 
 package org.uberfire.client.views.pfly.multipage;
 
-import java.util.Objects;
 import java.util.Optional;
 
 import javax.enterprise.context.Dependent;
@@ -29,11 +28,9 @@ import org.gwtbootstrap3.client.ui.TabListItem;
 import org.uberfire.client.views.pfly.tab.ResizeTabPanel;
 import org.uberfire.client.views.pfly.tab.TabPanelEntry;
 import org.uberfire.client.workbench.widgets.multipage.MultiPageEditorView;
-import org.uberfire.client.workbench.widgets.multipage.Multiple;
 import org.uberfire.client.workbench.widgets.multipage.Page;
 
 @Dependent
-@Multiple
 public class MultiPageEditorViewImpl extends ResizeTabPanel implements MultiPageEditorView {
 
     private Event<MultiPageEditorSelectedPageEvent> selectedPageEvent;
@@ -67,15 +64,6 @@ public class MultiPageEditorViewImpl extends ResizeTabPanel implements MultiPage
         setAsActive(tab);
     }
 
-    @Override
-    public void addPage(int index, final Page page) {
-
-        final TabPanelEntry tab = makeTabPanelEntry(page);
-
-        insertItem(tab, index);
-        setAsActive(tab);
-    }
-
     TabPanelEntry makeTabPanelEntry(final Page page) {
 
         final String title = page.getLabel();
@@ -97,58 +85,6 @@ public class MultiPageEditorViewImpl extends ResizeTabPanel implements MultiPage
 
     public int selectedPage() {
         return this.getSelectedTabIndex();
-    }
-
-    @Override
-    public void disablePage(int index) {
-
-        if (!isValid(index)) {
-            return;
-        }
-
-        final Widget tab = getTabBar().getWidget(index);
-
-        tab.addStyleName("disabled");
-        disableWidget(tab);
-    }
-
-    @Override
-    public void enablePage(int index) {
-
-        if (!isValid(index)) {
-            return;
-        }
-
-        final Widget tab = getTabBar().getWidget(index);
-
-        tab.removeStyleName("disabled");
-        enableWidget(tab);
-    }
-
-    @Override
-    public int getPageIndex(final String title) {
-        final int tabsCount = getTabBar().getWidgetCount();
-        for (int tabIndex = 0; tabIndex < tabsCount; tabIndex++) {
-            if (getTabBar().getWidget(tabIndex) instanceof TabListItem) {
-                final TabListItem tab = (TabListItem) getTabBar().getWidget(tabIndex);
-                if (Objects.equals(tab.getText(), title)) {
-                    return tabIndex;
-                }
-            }
-        }
-        throw new IllegalArgumentException("Page with title: '" + title + "' doesn't exist.");
-    }
-
-    boolean isValid(final int index) {
-        return getTabBar().getWidgetCount() > index;
-    }
-
-    private void enableWidget(final Widget tab) {
-        style(tab).clearProperty("pointerEvents");
-    }
-
-    private void disableWidget(final Widget tab) {
-        style(tab).setProperty("pointerEvents", "none");
     }
 
     private Style style(final Widget tab) {

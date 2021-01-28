@@ -68,7 +68,6 @@ public interface WorkbenchActivity extends Activity {
      * Invoked by the UberFire framework when this activity is the current activity in the current panel. Activities may
      * choose to make their UI more prominent, or begin refreshing their data more aggressively when they are focused.
      * @see #onLostFocus()
-     * @see PanelManager#onPartFocus(org.uberfire.workbench.model.PartDefinition)
      */
     void onFocus();
 
@@ -76,7 +75,6 @@ public interface WorkbenchActivity extends Activity {
      * Invoked by the UberFire framework when this activity is no longer the current activity in the current panel.
      * Typically undoes changes made in the corresponding {@link #onFocus()} call.
      * @see #onLostFocus()
-     * @see PanelManager#onPartFocus(org.uberfire.workbench.model.PartDefinition)
      */
     void onLostFocus();
 

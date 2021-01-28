@@ -22,7 +22,7 @@ import javax.inject.Inject;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
-import org.uberfire.client.workbench.widgets.common.ErrorPopupPresenter;
+import org.uberfire.client.workbench.widgets.ErrorPopupPresenter;
 import org.uberfire.mvp.Command;
 
 /**

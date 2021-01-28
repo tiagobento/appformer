@@ -21,8 +21,6 @@ import com.google.gwt.user.client.ui.IsWidget;
 
 /**
  * Used by the workbench to construct the outer most DOM structure (header, footer and perspective container).
- * Uberfire provides a default {@link org.uberfire.client.workbench.WorkbenchLayoutImpl} that can be replaced
- * through the mechanism described in {@link org.uberfire.client.workbench.LayoutSelection}.
  */
 public interface WorkbenchLayout {
 

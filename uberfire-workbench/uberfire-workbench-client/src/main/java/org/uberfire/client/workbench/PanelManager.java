@@ -133,17 +133,6 @@ public interface PanelManager {
      */
     boolean removePartForPlace(final PlaceRequest toRemove);
 
-    void onPartFocus(final PartDefinition part);
-
-    void onPartLostFocus();
-
-    /**
-     * Gives focus to the given panel, if it is known to this PanelManager. Also removes focus from all other panels
-     * associated with this PanelManager.
-     * @param panel the panel to give focus to. May be null, in which case all panels will lose focus.
-     */
-    void onPanelFocus(final PanelDefinition panel);
-
     /**
      * Clears all existing panel structure from the user interface, then installs a new root panel according to the
      * specifications in the given {@link PanelDefinition}. Only installs the root panel; does not build the child
@@ -152,9 +141,4 @@ public interface PanelManager {
      */
     void setRoot(PerspectiveActivity activity,
                  PanelDefinition root);
-
-    /**
-     * @return the focused {@link PartDefinition}
-     */
-    PartDefinition getFocusedPart();
 }

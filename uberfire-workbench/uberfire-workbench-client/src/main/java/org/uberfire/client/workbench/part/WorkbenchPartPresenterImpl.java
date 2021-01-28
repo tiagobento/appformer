@@ -17,6 +17,7 @@
 package org.uberfire.client.workbench.part;
 
 import javax.annotation.PostConstruct;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 import com.google.gwt.user.client.ui.IsWidget;
@@ -25,14 +26,15 @@ import org.uberfire.workbench.model.PartDefinition;
 /**
  * A Workbench panel part.
  */
-public abstract class AbstractWorkbenchPartPresenter implements WorkbenchPartPresenter {
+@Dependent
+public class WorkbenchPartPresenterImpl implements WorkbenchPartPresenter {
 
     private final View view;
 
     private PartDefinition definition;
 
     @Inject
-    public AbstractWorkbenchPartPresenter(final View view) {
+    public WorkbenchPartPresenterImpl(final View view) {
         this.view = view;
     }
 

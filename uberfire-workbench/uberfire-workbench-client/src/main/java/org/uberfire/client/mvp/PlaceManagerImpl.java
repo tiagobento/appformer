@@ -27,7 +27,6 @@ import java.util.function.Predicate;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
@@ -43,9 +42,6 @@ import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.mvp.ActivityLifecycleError.LifecyclePhase;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.WorkbenchLayout;
-import org.uberfire.client.workbench.events.ClosePlaceEvent;
-import org.uberfire.client.workbench.events.PlaceGainFocusEvent;
-import org.uberfire.client.workbench.events.PlaceLostFocusEvent;
 import org.uberfire.client.workbench.events.SelectPlaceEvent;
 import org.uberfire.client.workbench.panels.impl.StaticWorkbenchPanelPresenter;
 import org.uberfire.mvp.BiParameterizedCommand;
@@ -89,8 +85,6 @@ public class PlaceManagerImpl implements PlaceManager {
     private final Map<PlaceRequest, CustomPanelDefinition> customPanels = new HashMap<>();
 
     private EventBus tempBus = null;
-    @Inject
-    private Event<ClosePlaceEvent> workbenchPartCloseEvent;
     @Inject
     private ActivityManager activityManager;
     @Inject
@@ -528,8 +522,6 @@ public class PlaceManagerImpl implements PlaceManager {
                 activity.onClose();
             }
 
-            workbenchPartCloseEvent.fire(new ClosePlaceEvent(place));
-
             panelManager.removePartForPlace(place);
             existingWorkbenchActivities.remove(place);
             visibleWorkbenchParts.remove(place);
@@ -550,29 +542,6 @@ public class PlaceManagerImpl implements PlaceManager {
                 onAfterClose.execute();
             }
         };
-    }
-
-    @SuppressWarnings("unused")
-    private void onWorkbenchPartOnFocus(@Observes PlaceGainFocusEvent event) {
-        final PlaceRequest place = event.getPlace();
-        final Activity activity = getActivity(place);
-        if (activity == null) {
-            return;
-        }
-        if (activity instanceof WorkbenchActivity) {
-            ((WorkbenchActivity) activity).onFocus();
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private void onWorkbenchPartLostFocus(@Observes PlaceLostFocusEvent event) {
-        final Activity activity = getActivity(event.getPlace());
-        if (activity == null) {
-            return;
-        }
-        if (activity instanceof WorkbenchActivity) {
-            ((WorkbenchActivity) activity).onLostFocus();
-        }
     }
 
     @Produces

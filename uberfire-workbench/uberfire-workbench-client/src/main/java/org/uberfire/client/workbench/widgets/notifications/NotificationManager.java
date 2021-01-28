@@ -31,8 +31,6 @@ import org.kie.soup.commons.validation.PortablePreconditions;
 import org.uberfire.client.mvp.Activity;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.mvp.WorkbenchActivity;
-import org.uberfire.client.workbench.events.ClosePlaceEvent;
-import org.uberfire.client.workbench.events.PlaceLostFocusEvent;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
 import org.uberfire.workbench.events.NotificationEvent;
@@ -106,26 +104,6 @@ public class NotificationManager {
             NotificationPopupHandle handle = notificationsContainerView.show(event,
                                                                              hideCommand);
             hideCommand.setHandle(handle);
-        }
-    }
-
-    //Clean-up container map when an Activity closes; in the absence of a WeakHashMap in JavaScript
-    public void onClosePlaceEvent(@Observes final ClosePlaceEvent event) {
-        final PlaceRequest placeRequest = event.getPlace();
-        if (placeRequest == null) {
-            return;
-        }
-
-        final View view = notificationsContainerViewMap.remove(placeRequest);
-        if (view != null) {
-            view.hideAll();
-        }
-    }
-
-    public void onPlaceLostFocus(@Observes final PlaceLostFocusEvent event) {
-        final View view = notificationsContainerViewMap.get(event.getPlace());
-        if (view != null) {
-            view.hideAll();
         }
     }
 

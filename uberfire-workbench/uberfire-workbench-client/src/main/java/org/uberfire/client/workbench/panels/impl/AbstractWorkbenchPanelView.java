@@ -65,13 +65,6 @@ public abstract class AbstractWorkbenchPanelView<P extends WorkbenchPanelPresent
         return this.presenter;
     }
 
-    protected void addSelectionHandler(HasSelectionHandlers<PartDefinition> widget) {
-        widget.addSelectionHandler(event -> {
-            panelManager.onPartLostFocus();
-            panelManager.onPartFocus(event.getSelectedItem());
-        });
-    }
-
     @Override
     public void setElementId(String elementId) {
         if (elementId == null) {

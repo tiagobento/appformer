@@ -115,12 +115,6 @@ public interface WorkbenchPanelPresenter {
      */
     Map<Position, WorkbenchPanelPresenter> getPanels();
 
-    void changeTitle(final PartDefinition part,
-                     final String title,
-                     final IsWidget titleDecoration);
-
-    void setFocus(final boolean hasFocus);
-
     boolean selectPart(final PartDefinition part);
 
     /**

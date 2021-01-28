@@ -22,12 +22,11 @@ import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 
-import com.google.gwt.user.client.ui.IsWidget;
 import org.uberfire.client.mvp.PerspectiveManager;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
 import org.uberfire.client.workbench.panels.WorkbenchPanelView;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
-import org.uberfire.client.workbench.pmgr.nswe.part.WorkbenchPartPresenterDefault;
+import org.uberfire.client.workbench.part.WorkbenchPartPresenterImpl;
 import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
 import org.uberfire.workbench.model.Position;
@@ -163,20 +162,6 @@ public abstract class AbstractWorkbenchPanelPresenter<P extends AbstractWorkbenc
     }
 
     @Override
-    public void changeTitle(final PartDefinition part,
-                            final String title,
-                            final IsWidget titleDecorator) {
-        getPanelView().changeTitle(part,
-                                   title,
-                                   titleDecorator);
-    }
-
-    @Override
-    public void setFocus(final boolean hasFocus) {
-        view.setFocus(hasFocus);
-    }
-
-    @Override
     public boolean selectPart(final PartDefinition part) {
         if (!contains(part)) {
             return false;
@@ -220,6 +205,6 @@ public abstract class AbstractWorkbenchPanelPresenter<P extends AbstractWorkbenc
     }
 
     public Class<? extends WorkbenchPartPresenter> getPartType() {
-        return WorkbenchPartPresenterDefault.class;
+        return WorkbenchPartPresenterImpl.class;
     }
 }
