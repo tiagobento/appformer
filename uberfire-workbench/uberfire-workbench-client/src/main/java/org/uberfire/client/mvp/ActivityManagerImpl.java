@@ -32,7 +32,6 @@ import org.jboss.errai.ioc.client.container.IOCBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.backend.vfs.Path;
-import org.uberfire.client.mvp.ActivityLifecycleError.LifecyclePhase;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.PathPlaceRequest;
 
@@ -56,8 +55,6 @@ public class ActivityManagerImpl implements ActivityManager {
     private SyncBeanManager iocManager;
     @Inject
     private ActivityBeansCache activityBeansCache;
-    @Inject
-    private ActivityLifecycleErrorHandler lifecycleErrorHandler;
 
     @Override
     public Set<Activity> getActivities(final PlaceRequest placeRequest) {
@@ -180,9 +177,6 @@ public class ActivityManagerImpl implements ActivityManager {
             }
             return activity;
         } catch (Exception ex) {
-            lifecycleErrorHandler.handle(activity,
-                                         LifecyclePhase.STARTUP,
-                                         ex);
             destroyActivity(activity);
             return null;
         }

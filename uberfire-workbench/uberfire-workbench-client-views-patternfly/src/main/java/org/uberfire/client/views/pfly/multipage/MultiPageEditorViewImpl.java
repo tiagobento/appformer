@@ -21,7 +21,6 @@ import java.util.Optional;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Event;
 
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.Widget;
 import org.gwtbootstrap3.client.shared.event.TabShownHandler;
 import org.gwtbootstrap3.client.ui.TabListItem;
@@ -85,10 +84,6 @@ public class MultiPageEditorViewImpl extends ResizeTabPanel implements MultiPage
 
     public int selectedPage() {
         return this.getSelectedTabIndex();
-    }
-
-    private Style style(final Widget tab) {
-        return tab.getElement().getStyle();
     }
 
     TabShownHandler getTabShownHandler() {

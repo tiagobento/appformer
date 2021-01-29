@@ -39,7 +39,6 @@ import org.jboss.errai.ioc.client.api.SharedSingleton;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.backend.vfs.ObservablePath;
 import org.uberfire.backend.vfs.Path;
-import org.uberfire.client.mvp.ActivityLifecycleError.LifecyclePhase;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.WorkbenchLayout;
 import org.uberfire.client.workbench.events.SelectPlaceEvent;
@@ -93,8 +92,6 @@ public class PlaceManagerImpl implements PlaceManager {
     private PanelManager panelManager;
     @Inject
     private PerspectiveManager perspectiveManager;
-    @Inject
-    private ActivityLifecycleErrorHandler lifecycleErrorHandler;
     @Inject
     private SyncBeanManager iocManager;
     private WorkbenchLayout workbenchLayout;
@@ -392,9 +389,6 @@ public class PlaceManagerImpl implements PlaceManager {
         try {
             activity.onOpen();
         } catch (Exception ex) {
-            lifecycleErrorHandler.handle(activity,
-                                         LifecyclePhase.OPEN,
-                                         ex);
             closePlace(place);
         }
     }
@@ -422,9 +416,6 @@ public class PlaceManagerImpl implements PlaceManager {
         try {
             activity.onOpen();
         } catch (Exception ex) {
-            lifecycleErrorHandler.handle(activity,
-                                         LifecyclePhase.OPEN,
-                                         ex);
             try {
                 activity.onClose();
             } catch (Exception ex2) {
@@ -442,9 +433,6 @@ public class PlaceManagerImpl implements PlaceManager {
                                     try {
                                         oldPerspectiveActivity.onClose();
                                     } catch (Exception ex) {
-                                        lifecycleErrorHandler.handle(oldPerspectiveActivity,
-                                                                     LifecyclePhase.CLOSE,
-                                                                     ex);
                                     }
                                     existingWorkbenchActivities.remove(oldPerspectiveActivity.getPlace());
                                     activityManager.destroyActivity(oldPerspectiveActivity);
@@ -514,9 +502,6 @@ public class PlaceManagerImpl implements PlaceManager {
                 try {
                     activity1.onClose();
                 } catch (Exception ex) {
-                    lifecycleErrorHandler.handle(activity1,
-                                                 LifecyclePhase.CLOSE,
-                                                 ex);
                 }
             } else {
                 activity.onClose();
