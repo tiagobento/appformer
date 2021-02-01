@@ -108,22 +108,6 @@ public class ${className} extends AbstractWorkbenchScreenActivity {
         realPresenter.${onOpenMethodName}();
     }
     </#if>
-    <#if onLostFocusMethodName??>
-
-    @Override
-    public void onLostFocus() {
-        super.onLostFocus();
-        realPresenter.${onLostFocusMethodName}();
-    }
-    </#if>
-    <#if onFocusMethodName??>
-
-    @Override
-    public void onFocus() {
-        super.onFocus();
-        realPresenter.${onFocusMethodName}();
-    }
-    </#if>
     <#if getTitleWidgetMethodName??>
 
     @Override

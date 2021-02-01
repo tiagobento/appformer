@@ -231,12 +231,4 @@ public class ActivityManagerImpl implements ActivityManager {
 
         throw new RuntimeException();
     }
-
-    private Set<SyncBeanDef<Activity>> asSet(final SyncBeanDef<Activity> activity) {
-        if (activity == null) {
-            return emptySet();
-        }
-
-        return singleton(activity);
-    }
 }

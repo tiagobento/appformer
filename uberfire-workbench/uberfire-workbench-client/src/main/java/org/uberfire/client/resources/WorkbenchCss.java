@@ -22,11 +22,7 @@ import com.google.gwt.resources.client.CssResource;
  */
 public interface WorkbenchCss extends CssResource {
 
-    String notification();
-
     @ClassName("uf-activeNavTabs")
     String activeNavTabs();
 
-    @ClassName("uf-modal")
-    String modal();
 }

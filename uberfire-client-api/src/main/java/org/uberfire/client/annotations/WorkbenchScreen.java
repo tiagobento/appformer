@@ -44,8 +44,6 @@ import java.lang.annotation.Target;
  * <ul>
  * <li>{@code @OnStartup}</li>
  * <li>{@code @OnOpen}</li>
- * <li>{@code @OnFocus}</li>
- * <li>{@code @OnLostFocus}</li>
  * <li>{@code @OnClose}</li>
  * </ul>
  */

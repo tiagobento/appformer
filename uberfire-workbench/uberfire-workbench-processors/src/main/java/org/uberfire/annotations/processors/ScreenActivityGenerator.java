@@ -92,10 +92,6 @@ public class ScreenActivityGenerator extends AbstractGenerator {
                                                                              processingEnvironment);
         final String onOpenMethodName = GeneratorUtils.getOnOpenMethodName(classElement,
                                                                            processingEnvironment);
-        final String onLostFocusMethodName = GeneratorUtils.getOnLostFocusMethodName(classElement,
-                                                                                     processingEnvironment);
-        final String onFocusMethodName = GeneratorUtils.getOnFocusMethodName(classElement,
-                                                                             processingEnvironment);
         final String getDefaultPositionMethodName = GeneratorUtils.getDefaultPositionMethodName(classElement,
                                                                                                 processingEnvironment);
         final ExecutableElement getWidgetMethod = GeneratorUtils.getWidgetMethodName(classElement,
@@ -126,10 +122,6 @@ public class ScreenActivityGenerator extends AbstractGenerator {
                                   "onCloseMethodName: " + onCloseMethodName);
             messager.printMessage(Kind.NOTE,
                                   "onOpenMethodName: " + onOpenMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "onLostFocusMethodName: " + onLostFocusMethodName);
-            messager.printMessage(Kind.NOTE,
-                                  "onFocusMethodName: " + onFocusMethodName);
             messager.printMessage(Kind.NOTE,
                                   "getDefaultPositionMethodName: " + getDefaultPositionMethodName);
             messager.printMessage(Kind.NOTE,
@@ -179,10 +171,6 @@ public class ScreenActivityGenerator extends AbstractGenerator {
                  onCloseMethodName);
         root.put("onOpenMethodName",
                  onOpenMethodName);
-        root.put("onLostFocusMethodName",
-                 onLostFocusMethodName);
-        root.put("onFocusMethodName",
-                 onFocusMethodName);
         root.put("getDefaultPositionMethodName",
                  getDefaultPositionMethodName);
         root.put("getWidgetMethodName",

@@ -22,7 +22,6 @@ import jsinterop.annotations.JsType;
 import org.uberfire.client.annotations.WorkbenchClientEditor;
 import org.uberfire.client.annotations.WorkbenchPerspective;
 import org.uberfire.client.annotations.WorkbenchScreen;
-import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.workbench.model.Position;
 
 /**
@@ -63,20 +62,6 @@ public interface WorkbenchActivity extends Activity {
      * activity's view should be added directly to the root panel.
      */
     Position getDefaultPosition();
-
-    /**
-     * Invoked by the UberFire framework when this activity is the current activity in the current panel. Activities may
-     * choose to make their UI more prominent, or begin refreshing their data more aggressively when they are focused.
-     * @see #onLostFocus()
-     */
-    void onFocus();
-
-    /**
-     * Invoked by the UberFire framework when this activity is no longer the current activity in the current panel.
-     * Typically undoes changes made in the corresponding {@link #onFocus()} call.
-     * @see #onLostFocus()
-     */
-    void onLostFocus();
 
     @JsIgnore
     IsWidget getWidget();

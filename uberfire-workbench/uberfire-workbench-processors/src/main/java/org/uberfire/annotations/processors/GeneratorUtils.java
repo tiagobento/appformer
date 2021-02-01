@@ -51,8 +51,6 @@ public class GeneratorUtils {
     private static final String GET_CONTENT_CLASS = "org.uberfire.lifecycle.GetContent";
     private static final String GET_PREVIEW_CLASS = "org.uberfire.lifecycle.GetPreview";
     private static final String ON_CLOSE_CLASS = "org.uberfire.lifecycle.OnClose";
-    private static final String ON_FOCUS_CLASS = "org.uberfire.lifecycle.OnFocus";
-    private static final String ON_LOST_FOCUS_CLASS = "org.uberfire.lifecycle.OnLostFocus";
     private static final String ON_OPEN_CLASS = "org.uberfire.lifecycle.OnOpen";
     private static final String ON_STARTUP_CLASS = "org.uberfire.lifecycle.OnStartup";
     private static final String ACTIVATED_BY_CLASS = "org.jboss.errai.ioc.client.api.ActivatedBy";
@@ -187,37 +185,6 @@ public class GeneratorUtils {
         return getVoidMethodName(classElement,
                                  processingEnvironment,
                                  ON_OPEN_CLASS);
-    }
-
-    /**
-     * Get the method name annotated with {@code @OnLostFocus}. The method must
-     * be public, non-static, have a return-type of void and take zero
-     * parameters.
-     * @param classElement
-     * @param processingEnvironment
-     * @return null if none found
-     * @throws GenerationException
-     */
-    public static String getOnLostFocusMethodName(final TypeElement classElement,
-                                                  final ProcessingEnvironment processingEnvironment) throws GenerationException {
-        return getVoidMethodName(classElement,
-                                 processingEnvironment,
-                                 ON_LOST_FOCUS_CLASS);
-    }
-
-    /**
-     * Get the method name annotated with {@code @OnFocus}. The method must be
-     * public, non-static, have a return-type of void and take zero parameters.
-     * @param classElement
-     * @param processingEnvironment
-     * @return null if none found
-     * @throws GenerationException
-     */
-    public static String getOnFocusMethodName(final TypeElement classElement,
-                                              final ProcessingEnvironment processingEnvironment) throws GenerationException {
-        return getVoidMethodName(classElement,
-                                 processingEnvironment,
-                                 ON_FOCUS_CLASS);
     }
 
     /**

@@ -105,22 +105,7 @@ public class ${className} extends AbstractWorkbenchClientEditorActivity {
     }
 
     </#if>
-    <#if onLostFocusMethodName??>
-    @Override
-    public void onLostFocus() {
-        super.onLostFocus();
-        realPresenter.${onLostFocusMethodName}();
-    }
 
-    </#if>
-    <#if onFocusMethodName??>
-    @Override
-    public void onFocus() {
-        super.onFocus();
-        realPresenter.${onFocusMethodName}();
-    }
-
-    </#if>
     <#if getTitleWidgetMethodName??>
     @Override
     public IsWidget getTitleDecoration() {

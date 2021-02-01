@@ -31,13 +31,4 @@ public abstract class AbstractWorkbenchActivity extends AbstractActivity impleme
         return CompassPosition.ROOT;
     }
 
-    @Override
-    public void onLostFocus() {
-        //Do nothing.
-    }
-
-    @Override
-    public void onFocus() {
-        //Do nothing.
-    }
 }
