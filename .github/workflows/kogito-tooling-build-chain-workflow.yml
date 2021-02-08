@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
     runs-on: ubuntu-latest
-    name: Maven Build
+    name: Build chain
     steps:
       - name: Set up JDK
         uses: actions/setup-java@v1
@@ -25,9 +25,9 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Build chain
+      - name: Run build chain
         id: build-chain
-        uses: kiegroup/github-action-build-chain@v2.4
+        uses: kiegroup/github-action-build-chain@v2.5
         with:
           starting-project: kiegroup/kogito-tooling
           definition-file: https://raw.githubusercontent.com/tiagobento/kogito-online-ci/gh-actions-kogito-tooling-checks-v7/.ci/kogito-tooling-pull-request-config.yaml
