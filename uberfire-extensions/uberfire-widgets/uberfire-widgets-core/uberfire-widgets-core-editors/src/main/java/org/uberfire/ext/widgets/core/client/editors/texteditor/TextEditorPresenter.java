@@ -16,22 +16,50 @@
 
 package org.uberfire.ext.widgets.core.client.editors.texteditor;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import com.google.gwt.user.client.ui.IsWidget;
 import org.uberfire.backend.vfs.Path;
+import org.uberfire.client.mvp.AbstractActivity;
 import org.uberfire.ext.widgets.common.client.ace.AceEditorMode;
+import org.uberfire.security.ResourceType;
+import org.uberfire.workbench.model.ActivityResourceType;
 
-public abstract class TextEditorPresenter {
+@Dependent
+//@Named(TextEditorPresenter.IDENTIFIER) uncomment after removing TextEditorPresenterActivity
+public class TextEditorPresenter extends AbstractActivity {
+
+    public static final String IDENTIFIER = "TextEditor";
 
     @Inject
     public View view;
     protected Path path;
 
+    @Override
+    public ResourceType getResourceType() {
+        return ActivityResourceType.EDITOR;
+    }
+
+    @Override
+    public String getIdentifier() {
+        return IDENTIFIER;
+    }
+
+    @Override
     public void onOpen() {
+        super.onOpen();
         view.setFocus();
     }
 
+    @Override
+    public void onClose() {
+        super.onClose();
+        this.path = null;
+    }
+
+    @Override
     public IsWidget getWidget() {
         return view;
     }
