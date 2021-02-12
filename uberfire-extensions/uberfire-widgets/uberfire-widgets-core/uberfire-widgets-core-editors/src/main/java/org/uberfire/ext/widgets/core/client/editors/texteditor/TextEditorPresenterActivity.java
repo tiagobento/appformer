@@ -16,7 +16,7 @@
 
 package org.uberfire.ext.widgets.core.client.editors.texteditor;
 
-import javax.enterprise.context.Dependent;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -24,7 +24,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import org.uberfire.client.mvp.AbstractActivity;
 
 // TODO: [CAPONETTO] Remove this class and transfer the logic to TextEditorPresenter.
-@Dependent
+@ApplicationScoped
 @Named(TextEditorPresenter.IDENTIFIER)
 public class TextEditorPresenterActivity extends AbstractActivity {
 
