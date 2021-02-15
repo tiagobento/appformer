@@ -34,7 +34,7 @@ import org.uberfire.client.workbench.docks.UberfireDockContainerReadyEvent;
 import org.uberfire.client.workbench.docks.UberfireDockPosition;
 import org.uberfire.client.workbench.docks.UberfireDockReadyEvent;
 import org.uberfire.client.workbench.docks.UberfireDocks;
-import org.uberfire.client.workbench.events.PerspectiveChange;
+import org.uberfire.client.workbench.PerspectiveChange;
 import org.uberfire.mvp.Command;
 
 @ApplicationScoped

@@ -21,7 +21,7 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 import org.uberfire.client.workbench.PanelManager;
-import org.uberfire.client.workbench.events.PerspectiveChange;
+import org.uberfire.client.workbench.PerspectiveChange;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;

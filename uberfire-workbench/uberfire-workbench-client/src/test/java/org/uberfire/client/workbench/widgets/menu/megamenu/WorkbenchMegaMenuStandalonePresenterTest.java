@@ -29,7 +29,7 @@ import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PerspectiveManager;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.workbench.Workbench;
-import org.uberfire.client.workbench.events.PerspectiveChange;
+import org.uberfire.client.workbench.PerspectiveChange;
 import org.uberfire.client.workbench.widgets.menu.megamenu.brand.MegaMenuBrand;
 import org.uberfire.client.workbench.widgets.menu.megamenu.contextmenuitem.ChildContextMenuItemPresenter;
 import org.uberfire.client.workbench.widgets.menu.megamenu.contextmenuitem.GroupContextMenuItemPresenter;

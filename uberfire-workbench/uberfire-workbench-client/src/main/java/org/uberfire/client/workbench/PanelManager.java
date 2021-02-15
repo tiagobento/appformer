@@ -20,7 +20,6 @@ import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.IsWidget;
 import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
-import org.uberfire.client.workbench.events.SelectPlaceEvent;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
 import org.uberfire.client.workbench.panels.WorkbenchPanelView;
 import org.uberfire.mvp.PlaceRequest;
@@ -47,8 +46,7 @@ public interface PanelManager {
     PanelDefinition getRoot();
 
     /**
-     * Adds the given part to the given panel, which must already be part of the visible workbench layout. Fires a
-     * {@link SelectPlaceEvent} with the given {@link PlaceRequest} once the part has been added.
+     * Adds the given part to the given panel, which must already be part of the visible workbench layout.
      * @param place The PlaceRequest that the part was resolved from. Not null.
      * @param part The description of the part to add. Not null.
      * @param panel definition of the panel to add the part to (must describe a panel that is already present in the

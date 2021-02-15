@@ -17,14 +17,11 @@
 package org.uberfire.client.workbench;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Event;
-import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 
@@ -41,7 +38,6 @@ import org.jboss.errai.common.client.dom.elemental2.Elemental2DomUtil;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
-import org.uberfire.client.workbench.events.SelectPlaceEvent;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.debug.Debug;
@@ -81,7 +77,6 @@ public class PanelManagerImpl implements PanelManager {
      */
     protected final Map<PanelDefinition, elemental2.dom.HTMLElement> customPanelsInsideElemental2HTMLElements = new HashMap<>();
 
-    protected Event<SelectPlaceEvent> selectPlaceEvent;
     protected SyncBeanManager iocManager;
     protected Instance<PlaceManager> placeManager;
     /**
@@ -100,13 +95,11 @@ public class PanelManagerImpl implements PanelManager {
 
     @Inject
     public PanelManagerImpl(
-            Event<SelectPlaceEvent> selectPlaceEvent,
             SyncBeanManager iocManager,
             Instance<PlaceManager> placeManager,
             BeanFactory beanFactory,
             Elemental2DomUtil elemental2DomUtil,
             WorkbenchLayout workbenchLayout) {
-        this.selectPlaceEvent = selectPlaceEvent;
         this.iocManager = iocManager;
         this.placeManager = placeManager;
         this.beanFactory = beanFactory;
@@ -190,9 +183,6 @@ public class PanelManagerImpl implements PanelManager {
         }
 
         panelPresenter.addPart(partPresenter);
-
-        //Select newly inserted part
-        selectPlaceEvent.fire(new SelectPlaceEvent(place));
     }
 
     @Override
@@ -272,20 +262,6 @@ public class PanelManagerImpl implements PanelManager {
                     }
 
                     parentPresenter.removePanel(presenterToRemove);
-                }
-            }
-        }
-    }
-
-    void onSelectPlaceEvent(@Observes SelectPlaceEvent event) {
-        final PlaceRequest place = event.getPlace();
-
-        // TODO (hbraun): PanelDefinition is not distinct (missing hashcode)
-        for (Map.Entry<PanelDefinition, WorkbenchPanelPresenter> e : new HashSet<>(mapPanelDefinitionToPresenter.entrySet())) {
-            WorkbenchPanelPresenter panelPresenter = e.getValue();
-            for (PartDefinition part : ensureIterable(panelPresenter.getDefinition().getParts())) {
-                if (part.getPlace().asString().equals(place.asString())) {
-                    panelPresenter.selectPart(part);
                 }
             }
         }

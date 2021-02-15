@@ -26,7 +26,6 @@ import java.util.function.Predicate;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Event;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
@@ -41,7 +40,6 @@ import org.uberfire.backend.vfs.ObservablePath;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.WorkbenchLayout;
-import org.uberfire.client.workbench.events.SelectPlaceEvent;
 import org.uberfire.client.workbench.panels.impl.StaticWorkbenchPanelPresenter;
 import org.uberfire.mvp.BiParameterizedCommand;
 import org.uberfire.mvp.Command;
@@ -86,8 +84,6 @@ public class PlaceManagerImpl implements PlaceManager {
     private EventBus tempBus = null;
     @Inject
     private ActivityManager activityManager;
-    @Inject
-    private Event<SelectPlaceEvent> selectWorkbenchPartEvent;
     @Inject
     private PanelManager panelManager;
     @Inject
@@ -341,7 +337,6 @@ public class PlaceManagerImpl implements PlaceManager {
                                                    final PanelDefinition _panel) {
 
         if (visibleWorkbenchParts.containsKey(place)) {
-            selectWorkbenchPartEvent.fire(new SelectPlaceEvent(place));
             return;
         }
 
@@ -369,7 +364,6 @@ public class PlaceManagerImpl implements PlaceManager {
                                                 final PartDefinition part,
                                                 final PanelDefinition panel) {
         if (visibleWorkbenchParts.containsKey(place)) {
-            selectWorkbenchPartEvent.fire(new SelectPlaceEvent(place));
             return;
         }
 

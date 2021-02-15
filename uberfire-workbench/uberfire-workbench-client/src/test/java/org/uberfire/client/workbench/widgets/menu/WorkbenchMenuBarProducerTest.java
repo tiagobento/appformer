@@ -24,7 +24,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.uberfire.client.mvp.ActivityManager;
 import org.uberfire.client.mvp.PerspectiveManager;
 import org.uberfire.client.mvp.PlaceManager;
-import org.uberfire.client.workbench.events.PerspectiveChange;
+import org.uberfire.client.workbench.PerspectiveChange;
 import org.uberfire.client.workbench.events.PlaceMaximizedEvent;
 import org.uberfire.client.workbench.events.PlaceMinimizedEvent;
 import org.uberfire.client.workbench.widgets.menu.events.PerspectiveVisibiltiyChangeEvent;

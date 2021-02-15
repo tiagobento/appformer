@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.uberfire.client.workbench.events;
+package org.uberfire.client.workbench;
 
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.events.UberFireEvent;

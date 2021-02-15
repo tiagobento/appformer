@@ -26,7 +26,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.uberfire.client.mvp.ActivityManager;
 import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PerspectiveManager;
-import org.uberfire.client.workbench.events.PerspectiveChange;
+import org.uberfire.client.workbench.PerspectiveChange;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.model.ActivityResourceType;
