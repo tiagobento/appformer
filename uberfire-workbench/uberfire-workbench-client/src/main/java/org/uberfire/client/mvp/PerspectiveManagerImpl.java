@@ -17,11 +17,9 @@
 package org.uberfire.client.mvp;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 import org.uberfire.client.workbench.PanelManager;
-import org.uberfire.client.workbench.PerspectiveChange;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;
@@ -39,9 +37,6 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     private PanelManager panelManager;
 
     @Inject
-    private Event<PerspectiveChange> perspectiveChangeEvent;
-
-    @Inject
     private ActivityBeansCache activityBeansCache;
 
     private PerspectiveActivity currentPerspective;
@@ -54,8 +49,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
         // switching perspectives is a chain of async operations. they're declared here
         // in reverse order (last to first):
 
-        NotifyOthersOfPerspectiveChangeCommand fourthOperation = new NotifyOthersOfPerspectiveChangeCommand(placeRequest,
-                                                                                                            doWhenFinished);
+        NotifyOthersOfPerspectiveChangeCommand fourthOperation = new NotifyOthersOfPerspectiveChangeCommand(doWhenFinished);
 
         BuildPerspectiveFromDefinitionCommand thirdOperation = new BuildPerspectiveFromDefinitionCommand(activity,
                                                                                                          fourthOperation);
@@ -156,24 +150,17 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
         }
     }
 
-    class NotifyOthersOfPerspectiveChangeCommand implements ParameterizedCommand<PerspectiveDefinition> {
+    static class NotifyOthersOfPerspectiveChangeCommand implements ParameterizedCommand<PerspectiveDefinition> {
 
-        private final PlaceRequest placeRequest;
         private final ParameterizedCommand<PerspectiveDefinition> doWhenFinished;
 
-        public NotifyOthersOfPerspectiveChangeCommand(final PlaceRequest placeRequest,
-                                                      final ParameterizedCommand<PerspectiveDefinition> doWhenFinished) {
-            this.placeRequest = checkNotNull("placeRequest",
-                                             placeRequest);
+        public NotifyOthersOfPerspectiveChangeCommand(final ParameterizedCommand<PerspectiveDefinition> doWhenFinished) {
             this.doWhenFinished = checkNotNull("doWhenFinished",
                                                doWhenFinished);
         }
 
         @Override
         public void execute(PerspectiveDefinition perspectiveDef) {
-            perspectiveChangeEvent.fire(new PerspectiveChange(placeRequest,
-                                                              perspectiveDef,
-                                                              currentPerspective.getIdentifier()));
             doWhenFinished.execute(perspectiveDef);
         }
     }
