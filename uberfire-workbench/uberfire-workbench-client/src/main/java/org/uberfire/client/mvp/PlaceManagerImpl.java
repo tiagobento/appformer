@@ -15,8 +15,6 @@
  */
 package org.uberfire.client.mvp;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -24,7 +22,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -32,10 +29,8 @@ import javax.inject.Inject;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import jsinterop.annotations.JsMethod;
 import org.jboss.errai.ioc.client.api.EnabledByProperty;
 import org.jboss.errai.ioc.client.api.SharedSingleton;
-import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.backend.vfs.ObservablePath;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.workbench.PanelManager;
@@ -53,10 +48,8 @@ import org.uberfire.workbench.model.CustomPanelDefinition;
 import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
 import org.uberfire.workbench.model.PerspectiveDefinition;
-import org.uberfire.workbench.model.Position;
 import org.uberfire.workbench.model.impl.PartDefinitionImpl;
 
-import static java.util.Collections.unmodifiableCollection;
 import static org.uberfire.plugin.PluginUtil.ensureIterable;
 import static org.uberfire.plugin.PluginUtil.toInteger;
 
@@ -64,19 +57,8 @@ import static org.uberfire.plugin.PluginUtil.toInteger;
 @EnabledByProperty(value = "uberfire.plugin.mode.active", negated = true)
 public class PlaceManagerImpl implements PlaceManager {
 
-    /**
-     * Activities that have been created by us but not destroyed (TODO: move this state tracking to ActivityManager!).
-     */
     private final Map<PlaceRequest, Activity> existingWorkbenchActivities = new HashMap<>();
-
-    /**
-     * Places that are currently open in the current perspective.
-     */
     private final Map<PlaceRequest, PartDefinition> visibleWorkbenchParts = new HashMap<>();
-
-    /**
-     * Custom panels we have opened but not yet closed.
-     */
     private final Map<PlaceRequest, CustomPanelDefinition> customPanels = new HashMap<>();
 
     private EventBus tempBus = null;
@@ -85,24 +67,25 @@ public class PlaceManagerImpl implements PlaceManager {
     @Inject
     private PanelManager panelManager;
     @Inject
-    private SyncBeanManager iocManager;
+    private PerspectiveActivity defaultPerspective;
+    @Inject
     private WorkbenchLayout workbenchLayout;
-    private PerspectiveActivity currentPerspective;
-
-    @PostConstruct
-    public void init() {
-        workbenchLayout = iocManager.lookupBean(WorkbenchLayout.class).getInstance();
-    }
 
     @Override
-    public void goTo(PlaceRequest place) {
-        goTo(place,
-             (PanelDefinition) null);
+    public void bootstrapPerspective() {
+        final ParameterizedCommand<PerspectiveDefinition> command = perspectiveDef -> {
+            panelManager.setRoot(defaultPerspective,
+                                 perspectiveDef.getRoot());
+            openPartsRecursively(perspectiveDef.getRoot());
+            workbenchLayout.onResize();
+        };
+
+        command.execute(defaultPerspective.getDefaultPerspectiveLayout());
     }
 
     private void goTo(final PlaceRequest place,
-                     final PanelDefinition panel) {
-        if (place == null || place.equals(DefaultPlaceRequest.NOWHERE)) {
+                      final PanelDefinition panel) {
+        if (place == null || place.equals(PlaceRequest.NOWHERE)) {
             return;
         }
 
@@ -111,13 +94,9 @@ public class PlaceManagerImpl implements PlaceManager {
         if (resolved.getActivity() != null) {
             final Activity activity = resolved.getActivity();
             if (activity.isType(ActivityResourceType.SCREEN.name())) {
-                launchWorkbenchActivityAtPosition(resolved.getPlaceRequest(),
-                                                  activity,
-                                                  activity.getDefaultPosition(),
-                                                  panel);
-            } else if (activity.isType(ActivityResourceType.PERSPECTIVE.name())) {
-                launchPerspectiveActivity(place,
-                                          (PerspectiveActivity) activity);
+                launchWorkbenchActivity(resolved.getPlaceRequest(),
+                                        activity,
+                                        panel);
             }
         } else {
             goTo(resolved.getPlaceRequest(),
@@ -128,21 +107,17 @@ public class PlaceManagerImpl implements PlaceManager {
     @Override
     public void goTo(PlaceRequest place,
                      HasWidgets addTo) {
-        closeOpenPlacesAt(panelsOfThisHasWidgets(addTo));
+        final Predicate<CustomPanelDefinition> filter = p -> p.getHasWidgetsContainer().isPresent()
+                && p.getHasWidgetsContainer().get().equals(addTo);
+
+        new HashSet<>(customPanels.values()).stream()
+                .filter(filter)
+                .flatMap(p -> p.getParts().stream())
+                .forEach(part -> closePlace(part.getPlace()));
+
         goToTargetPanel(place,
                         panelManager.addCustomPanel(addTo,
                                                     StaticWorkbenchPanelPresenter.class.getName()));
-    }
-
-    private void closeOpenPlacesAt(Predicate<CustomPanelDefinition> filterPanels) {
-        new HashSet<>(customPanels.values()).stream()
-                .filter(filterPanels)
-                .flatMap(p -> p.getParts().stream())
-                .forEach(part -> closePlace(part.getPlace()));
-    }
-
-    private Predicate<CustomPanelDefinition> panelsOfThisHasWidgets(HasWidgets addTo) {
-        return p -> p.getHasWidgetsContainer().isPresent() && p.getHasWidgetsContainer().get().equals(addTo);
     }
 
     private void goToTargetPanel(final PlaceRequest place,
@@ -282,19 +257,18 @@ public class PlaceManagerImpl implements PlaceManager {
                 throw new IllegalArgumentException("placeRequest does not represent a WorkbenchActivity. Only WorkbenchActivities can be launched in a specific targetPanel.");
             }
         } else {
-            goTo(resolved.getPlaceRequest());
+            goTo(resolved.getPlaceRequest(),
+                 (PanelDefinition) null);
         }
     }
 
-    @Override
-    public Activity getActivity(final PlaceRequest place) {
+    private Activity getActivity(final PlaceRequest place) {
         if (place == null) {
             return null;
         }
         return existingWorkbenchActivities.get(place);
     }
 
-    @JsMethod
     @Override
     public void closePlace(final PlaceRequest placeToClose) {
         if (placeToClose == null) {
@@ -304,21 +278,9 @@ public class PlaceManagerImpl implements PlaceManager {
                    null);
     }
 
-    /**
-     * Returns all the PlaceRequests that map to activies that are currently in the open state and accessible
-     * somewhere in the current perspective.
-     * @return an unmodifiable view of the current active place requests. This view may or may not update after
-     * further calls into PlaceManager that modify the workbench state. It's best not to hold on to the returned
-     * set; instead, call this method again for current information.
-     */
-    public Collection<PlaceRequest> getActivePlaceRequests() {
-        return unmodifiableCollection(existingWorkbenchActivities.keySet());
-    }
-
-    private void launchWorkbenchActivityAtPosition(final PlaceRequest place,
-                                                   final Activity activity,
-                                                   final Position position,
-                                                   final PanelDefinition _panel) {
+    private void launchWorkbenchActivity(final PlaceRequest place,
+                                         final Activity activity,
+                                         final PanelDefinition _panel) {
 
         if (visibleWorkbenchParts.containsKey(place)) {
             return;
@@ -329,12 +291,7 @@ public class PlaceManagerImpl implements PlaceManager {
         if (_panel != null) {
             panel = _panel;
         } else {
-            panel = panelManager.addWorkbenchPanel(panelManager.getRoot(), //FIXME: TIAGO -> O SEGREDO ALI
-                                                   position,
-                                                   -1,
-                                                   -1,
-                                                   null,
-                                                   null);
+            throw new RuntimeException("CAPONETTO");
         }
 
         launchWorkbenchActivityInPanel(place,
@@ -366,57 +323,6 @@ public class PlaceManagerImpl implements PlaceManager {
         } catch (Exception ex) {
             closePlace(place);
         }
-    }
-
-    /**
-     * Before launching the perspective we check that it isn't already open by asking the
-     * placeHistory service to extract the perspective encoded in the URL
-     * @param place
-     * @param activity
-     */
-    private void launchPerspectiveActivity(final PlaceRequest place,
-                                           final PerspectiveActivity activity) {
-        final PerspectiveActivity oldPerspectiveActivity = currentPerspective;
-        if (oldPerspectiveActivity != null && place.equals(oldPerspectiveActivity.getPlace())) {
-            return;
-        }
-
-        // first try to open the new perspective, so we can avoid leaving the user on a blank screen if the onOpen() method fails
-        try {
-            activity.onOpen();
-        } catch (Exception ex) {
-            try {
-                activity.onClose();
-            } catch (Exception ex2) {
-                // not unexpected; probably happened because onOpen failed to complete
-            }
-            existingWorkbenchActivities.remove(place);
-            activityManager.destroyActivity(activity);
-            return;
-        }
-
-        switchToPerspective(activity,
-                            perspectiveDef -> {
-                                openPartsRecursively(perspectiveDef.getRoot());
-                                workbenchLayout.onResize();
-                            });
-    }
-
-    private void switchToPerspective(final PerspectiveActivity newPerspectiveActivity,
-                                     final ParameterizedCommand<PerspectiveDefinition> closeOldPerspectiveOpenPartsAndExecuteChainedCallback) {
-        for (final PlaceRequest placeRequest : new ArrayList<>(visibleWorkbenchParts.keySet())) {
-            closePlace(placeRequest);
-        }
-
-        currentPerspective = newPerspectiveActivity;
-
-        ParameterizedCommand<PerspectiveDefinition> command = perspectiveDef -> {
-            panelManager.setRoot(currentPerspective,
-                                 perspectiveDef.getRoot());
-            closeOldPerspectiveOpenPartsAndExecuteChainedCallback.execute(perspectiveDef);
-        };
-
-        command.execute(currentPerspective.getDefaultPerspectiveLayout());
     }
 
     /**

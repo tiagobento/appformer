@@ -196,24 +196,6 @@ public class PanelManagerImpl implements PanelManager {
     }
 
     @Override
-    public PanelDefinition addWorkbenchPanel(final PanelDefinition targetPanel,
-                                             final Position position,
-                                             final Integer height,
-                                             final Integer width,
-                                             final Integer minHeight,
-                                             final Integer minWidth) {
-        final PanelDefinitionImpl childPanel = new PanelDefinitionImpl(PanelDefinition.PARENT_CHOOSES_TYPE);
-
-        childPanel.setHeight(height);
-        childPanel.setWidth(width);
-        childPanel.setMinHeight(minHeight);
-        childPanel.setMinWidth(minWidth);
-        return addWorkbenchPanel(targetPanel,
-                                 childPanel,
-                                 position);
-    }
-
-    @Override
     public void removeWorkbenchPanel(final PanelDefinition toRemove) throws IllegalStateException {
         if (toRemove.isRoot()) {
             throw new IllegalArgumentException("The root panel cannot be removed. To replace it, call setRoot()");
@@ -299,49 +281,6 @@ public class PanelManagerImpl implements PanelManager {
 
         WorkbenchPartPresenter deadPartPresenter = mapPartDefinitionToPresenter.remove(part);
         getBeanFactory().destroy(deadPartPresenter);
-    }
-
-    @Override
-    public PanelDefinition addWorkbenchPanel(final PanelDefinition targetPanel,
-                                             final PanelDefinition childPanel,
-                                             final Position position) {
-
-        WorkbenchPanelPresenter targetPanelPresenter = mapPanelDefinitionToPresenter.get(targetPanel);
-
-        if (targetPanelPresenter == null) {
-            targetPanelPresenter = beanFactory.newWorkbenchPanel(targetPanel);
-            mapPanelDefinitionToPresenter.put(targetPanel,
-                                              targetPanelPresenter);
-        }
-
-        PanelDefinition newPanel;
-
-        // Position instance could come from a different script so we compare using position.getName
-        if (CompassPosition.ROOT.getName().equals(position.getName())) {
-            newPanel = rootPanelDef;
-        } else if (CompassPosition.SELF.getName().equals(position.getName())) {
-            newPanel = targetPanelPresenter.getDefinition();
-        } else {
-            String defaultChildType = targetPanelPresenter.getDefaultChildType();
-            if (defaultChildType == null) {
-                throw new IllegalArgumentException("Target panel (type " + targetPanelPresenter.getClass().getName() + ")"
-                                                           + " does not allow child panels");
-            }
-
-            if (childPanel.getPanelType().equals(PanelDefinition.PARENT_CHOOSES_TYPE)) {
-                childPanel.setPanelType(defaultChildType);
-            }
-
-            final WorkbenchPanelPresenter childPanelPresenter = beanFactory.newWorkbenchPanel(childPanel);
-            mapPanelDefinitionToPresenter.put(childPanel,
-                                              childPanelPresenter);
-
-            targetPanelPresenter.addPanel(childPanelPresenter,
-                                          position);
-            newPanel = childPanel;
-        }
-
-        return newPanel;
     }
 
     @Override
