@@ -42,13 +42,10 @@ import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.debug.Debug;
 import org.uberfire.mvp.PlaceRequest;
-import org.uberfire.workbench.model.CompassPosition;
 import org.uberfire.workbench.model.CustomPanelDefinition;
 import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
-import org.uberfire.workbench.model.Position;
 import org.uberfire.workbench.model.impl.CustomPanelDefinitionImpl;
-import org.uberfire.workbench.model.impl.PanelDefinitionImpl;
 
 import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull;
 import static org.uberfire.plugin.PluginUtil.ensureIterable;
@@ -142,20 +139,15 @@ public class PanelManagerImpl implements PanelManager {
             throw new IllegalStateException(message);
         }
 
-        HasWidgets perspectiveContainer = workbenchLayout.getPerspectiveContainer();
-        perspectiveContainer.clear();
-
         getBeanFactory().destroy(oldRootPanelPresenter);
 
         this.rootPanelDef = root;
-        WorkbenchPanelPresenter newPresenter = mapPanelDefinitionToPresenter.get(root);
-        if (newPresenter == null) {
-            newPresenter = getBeanFactory().newRootPanel(activity,
-                                                         root);
-            mapPanelDefinitionToPresenter.put(root,
-                                              newPresenter);
-        }
-        perspectiveContainer.add(newPresenter.getPanelView().asWidget());
+        WorkbenchPanelPresenter newPresenter =
+                mapPanelDefinitionToPresenter.computeIfAbsent(root, p ->
+                        getBeanFactory().newRootPanel(activity,
+                                                      root)
+                );
+        workbenchLayout.addContent(newPresenter.getPanelView().asWidget());
     }
 
     @Override
@@ -173,14 +165,13 @@ public class PanelManagerImpl implements PanelManager {
             throw new IllegalArgumentException("Target panel is not part of the layout");
         }
 
-        WorkbenchPartPresenter partPresenter = mapPartDefinitionToPresenter.get(partDef);
-        if (partPresenter == null) {
-            partPresenter = getBeanFactory().newWorkbenchPart(partDef,
-                                                              panelPresenter.getPartType());
-            partPresenter.setWrappedWidget(widget); //FIXME: TIAGO: AQUI O ATTACH NO DOM ACONTECE
-            mapPartDefinitionToPresenter.put(partDef,
-                                             partPresenter);
-        }
+        WorkbenchPartPresenter partPresenter =
+                mapPartDefinitionToPresenter.computeIfAbsent(partDef, p -> {
+                    WorkbenchPartPresenter part = getBeanFactory().newWorkbenchPart(p,
+                                                                                    panelPresenter.getPartType());
+                    part.setWrappedWidget(widget);
+                    return part;
+                });
 
         panelPresenter.addPart(partPresenter);
     }
