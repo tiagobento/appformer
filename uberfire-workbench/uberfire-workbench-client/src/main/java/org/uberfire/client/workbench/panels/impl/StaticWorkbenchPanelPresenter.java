@@ -37,7 +37,7 @@ public class StaticWorkbenchPanelPresenter extends AbstractWorkbenchPanelPresent
     private PlaceManager placeManager;
 
     @Inject
-    public StaticWorkbenchPanelPresenter(@Named("StaticWorkbenchPanelView") final StaticWorkbenchPanelView view,
+    public StaticWorkbenchPanelPresenter(final StaticWorkbenchPanelView view,
                                          final PlaceManager placeManager) {
         super(view);
         this.placeManager = placeManager;

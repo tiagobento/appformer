@@ -22,7 +22,6 @@ import java.util.Collections;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import com.google.gwt.user.client.ui.Widget;
 import org.uberfire.client.mvp.PlaceManager;
@@ -36,7 +35,6 @@ import org.uberfire.workbench.model.PartDefinition;
  * The view component of {@link StaticWorkbenchPanelPresenter}.
  */
 @Dependent
-@Named("StaticWorkbenchPanelView")
 public class StaticWorkbenchPanelView
         extends AbstractWorkbenchPanelView<StaticWorkbenchPanelPresenter> {
 

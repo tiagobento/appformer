@@ -62,7 +62,7 @@ public class PanelManagerImpl implements PanelManager {
      * Remembers which HasWidgets contains each existing custom panel. Items are removed from this map when the panels
      * are closed/removed.
      */
-    protected final Map<PanelDefinition, HasWidgets> customPanels = new HashMap<PanelDefinition, HasWidgets>();
+    protected final Map<PanelDefinition, HasWidgets> customPanels = new HashMap<>();
     /**
      * Remembers which HTMLElements contain each existing custom panel. Items are removed from this map when the panels
      * are closed/removed.
@@ -82,9 +82,10 @@ public class PanelManagerImpl implements PanelManager {
      * UberView -> Presenter -> Definition). This may change in the future. See UF-117.
      */
     protected PanelDefinition rootPanelDef = null;
-    private BeanFactory beanFactory;
     private Elemental2DomUtil elemental2DomUtil;
     private WorkbenchLayout workbenchLayout;
+    private Instance<WorkbenchPartPresenter> partPresenterInstances;
+    private Instance<WorkbenchPanelPresenter> panelPresenterInstances;
     /**
      * Registration for the native preview handler that watches for ^M events and maximizes/restores the current panel.
      */
@@ -94,14 +95,16 @@ public class PanelManagerImpl implements PanelManager {
     public PanelManagerImpl(
             SyncBeanManager iocManager,
             Instance<PlaceManager> placeManager,
-            BeanFactory beanFactory,
             Elemental2DomUtil elemental2DomUtil,
-            WorkbenchLayout workbenchLayout) {
+            WorkbenchLayout workbenchLayout,
+            Instance<WorkbenchPartPresenter> partPresenterInstances,
+            Instance<WorkbenchPanelPresenter> panelPresenterInstances) {
         this.iocManager = iocManager;
         this.placeManager = placeManager;
-        this.beanFactory = beanFactory;
         this.elemental2DomUtil = elemental2DomUtil;
         this.workbenchLayout = workbenchLayout;
+        this.partPresenterInstances = partPresenterInstances;
+        this.panelPresenterInstances = panelPresenterInstances;
     }
 
     @PostConstruct
@@ -113,10 +116,6 @@ public class PanelManagerImpl implements PanelManager {
     @PreDestroy
     private void teardown() {
         globalHandlerRegistration.removeHandler();
-    }
-
-    protected BeanFactory getBeanFactory() {
-        return beanFactory;
     }
 
     @Override
@@ -139,14 +138,14 @@ public class PanelManagerImpl implements PanelManager {
             throw new IllegalStateException(message);
         }
 
-        getBeanFactory().destroy(oldRootPanelPresenter);
+        iocManager.destroyBean(oldRootPanelPresenter);
 
         this.rootPanelDef = root;
-        WorkbenchPanelPresenter newPresenter =
-                mapPanelDefinitionToPresenter.computeIfAbsent(root, p ->
-                        getBeanFactory().newRootPanel(activity,
-                                                      root)
-                );
+        WorkbenchPanelPresenter newPresenter = mapPanelDefinitionToPresenter.computeIfAbsent(root, panelDefinition -> {
+            WorkbenchPanelPresenter p = panelPresenterInstances.get();
+            p.setDefinition(root);
+            return p;
+        });
         workbenchLayout.addContent(newPresenter.getPanelView().asWidget());
     }
 
@@ -165,15 +164,15 @@ public class PanelManagerImpl implements PanelManager {
             throw new IllegalArgumentException("Target panel is not part of the layout");
         }
 
-        WorkbenchPartPresenter partPresenter =
-                mapPartDefinitionToPresenter.computeIfAbsent(partDef, p -> {
-                    WorkbenchPartPresenter part = getBeanFactory().newWorkbenchPart(p,
-                                                                                    panelPresenter.getPartType());
-                    part.setWrappedWidget(widget);
-                    return part;
+        WorkbenchPartPresenter part =
+                mapPartDefinitionToPresenter.computeIfAbsent(partDef, pd -> {
+                    WorkbenchPartPresenter p = partPresenterInstances.get();
+                    p.setDefinition(pd);
+                    p.setWrappedWidget(widget);
+                    return p;
                 });
 
-        panelPresenter.addPart(partPresenter);
+        panelPresenter.addPart(part);
     }
 
     @Override
@@ -209,7 +208,7 @@ public class PanelManagerImpl implements PanelManager {
             throw new IllegalStateException("Panel still contains child panels: " + toRemove.getChildren());
         }
 
-        getBeanFactory().destroy(presenterToRemove);
+        iocManager.destroyBean(presenterToRemove);
     }
 
     private void removeWorkbenchPanelFromParent(final PanelDefinition toRemove,
@@ -271,7 +270,7 @@ public class PanelManagerImpl implements PanelManager {
         }
 
         WorkbenchPartPresenter deadPartPresenter = mapPartDefinitionToPresenter.remove(part);
-        getBeanFactory().destroy(deadPartPresenter);
+        iocManager.destroyBean(deadPartPresenter);
     }
 
     @Override
@@ -286,7 +285,8 @@ public class PanelManagerImpl implements PanelManager {
     private CustomPanelDefinition addCustomPanelOnContainer(final Object container,
                                                             CustomPanelDefinitionImpl panelDef,
                                                             final boolean isElemental2) {
-        final WorkbenchPanelPresenter panelPresenter = beanFactory.newWorkbenchPanel(panelDef);
+        final WorkbenchPanelPresenter panelPresenter = panelPresenterInstances.get();
+        panelPresenter.setDefinition(panelDef);
         Widget panelViewWidget = panelPresenter.getPanelView().asWidget();
         panelViewWidget.addAttachHandler(new CustomPanelCleanupHandler(panelPresenter));
 
