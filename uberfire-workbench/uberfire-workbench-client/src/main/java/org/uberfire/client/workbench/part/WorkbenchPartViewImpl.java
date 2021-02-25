@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,53 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.uberfire.client.workbench.part;
 
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
 
 import com.google.gwt.user.client.ui.IsWidget;
-import org.uberfire.workbench.model.PartDefinition;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SimpleLayoutPanel;
+import org.uberfire.client.util.Layouts;
 
 /**
  * A Workbench panel part.
  */
 @Dependent
-public class WorkbenchPartPresenterImpl implements WorkbenchPartPresenter {
+public class WorkbenchPartViewImpl extends SimpleLayoutPanel implements WorkbenchPartView {
 
-    private final WorkbenchPartView view;
+    private final ScrollPanel sp = new ScrollPanel();
+    private WorkbenchPartPresenter presenter;
 
-    private PartDefinition definition;
+    public WorkbenchPartViewImpl() {
+        setWidget(sp);
 
-    @Inject
-    public WorkbenchPartPresenterImpl(final WorkbenchPartView view) {
-        this.view = view;
-    }
-
-    @PostConstruct
-    void init() {
-        view.init(this);
+        // ScrollPanel creates an additional internal div that we need to style
+        sp.getElement().getFirstChildElement().setClassName("uf-scroll-panel");
     }
 
     @Override
-    public PartDefinition getDefinition() {
-        return definition;
+    public void init(WorkbenchPartPresenter presenter) {
+        this.presenter = presenter;
+        Layouts.setToFillParent(this);
     }
 
     @Override
-    public void setDefinition(final PartDefinition definition) {
-        this.definition = definition;
-    }
-
-    @Override
-    public WorkbenchPartView getPartView() {
-        return view;
+    public WorkbenchPartPresenter getPresenter() {
+        return this.presenter;
     }
 
     @Override
     public void setWrappedWidget(final IsWidget widget) {
-        this.view.setWrappedWidget(widget);
+        sp.setWidget(widget);
     }
 }

@@ -40,7 +40,6 @@ import org.uberfire.mvp.BiParameterizedCommand;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;
-import org.uberfire.mvp.impl.ConditionalPlaceRequest;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
 import org.uberfire.mvp.impl.PathPlaceRequest;
 import org.uberfire.workbench.model.ActivityResourceType;
@@ -194,18 +193,7 @@ public class PlaceManagerImpl implements PlaceManager {
     }
 
     private PlaceRequest resolvePlaceRequest(PlaceRequest place) {
-        if (isaConditionalPlaceRequest(place)) {
-            return resolveConditionalPlaceRequest((ConditionalPlaceRequest) place);
-        }
         return place;
-    }
-
-    private PlaceRequest resolveConditionalPlaceRequest(ConditionalPlaceRequest conditionalPlaceRequest) {
-        return conditionalPlaceRequest.resolveConditionalPlaceRequest();
-    }
-
-    private boolean isaConditionalPlaceRequest(PlaceRequest place) {
-        return place instanceof ConditionalPlaceRequest;
     }
 
     private ResolvedRequest resolveExistingParts(final PlaceRequest place) {

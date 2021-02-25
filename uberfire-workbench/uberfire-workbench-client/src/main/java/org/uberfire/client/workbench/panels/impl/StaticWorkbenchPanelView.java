@@ -27,7 +27,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.util.Layouts;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
-import org.uberfire.client.workbench.part.WorkbenchPartPresenter.View;
+import org.uberfire.client.workbench.part.WorkbenchPartView;
 import org.uberfire.client.workbench.widgets.panel.StaticFocusedResizePanel;
 import org.uberfire.workbench.model.PartDefinition;
 
@@ -71,7 +71,7 @@ public class StaticWorkbenchPanelView
     }
 
     @Override
-    public void addPart(final WorkbenchPartPresenter.View view) {
+    public void addPart(final WorkbenchPartView view) {
         if (panel.getPartView() == null) {
             panel.setPart(view);
             onResize();
@@ -104,7 +104,7 @@ public class StaticWorkbenchPanelView
     }
 
     PartDefinition getCurrentPartDefinition() {
-        View partView = panel.getPartView();
+        WorkbenchPartView partView = panel.getPartView();
         if (partView == null) {
             return null;
         }

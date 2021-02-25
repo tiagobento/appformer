@@ -18,10 +18,9 @@ package org.uberfire.client.workbench.panels;
 
 import java.util.Collection;
 
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
 import org.uberfire.client.mvp.UberView;
-import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
+import org.uberfire.client.workbench.part.WorkbenchPartView;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
@@ -65,7 +64,7 @@ public interface WorkbenchPanelView<P extends WorkbenchPanelPresenter> extends U
      * {@link #selectPart(PartDefinition) selected} and the given one is not added.
      * @param view the view to add as long as it is not a duplicate. Must not be null.
      */
-    void addPart(final WorkbenchPartPresenter.View view);
+    void addPart(final WorkbenchPartView view);
 
     /**
      * Nests the given WorkbenchPanelView inside this one at the given position, which must be unoccupied. This is an
