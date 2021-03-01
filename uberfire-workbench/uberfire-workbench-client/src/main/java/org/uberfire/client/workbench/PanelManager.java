@@ -37,11 +37,6 @@ import org.uberfire.workbench.model.PartDefinition;
 public interface PanelManager {
 
     /**
-     * Returns the description of the entire panel + part tree that makes up the UI in its current state.
-     */
-    PanelDefinition getRoot();
-
-    /**
      * Adds the given part to the given panel, which must already be part of the visible workbench layout.
      * @param place The PlaceRequest that the part was resolved from. Not null.
      * @param part The description of the part to add. Not null.

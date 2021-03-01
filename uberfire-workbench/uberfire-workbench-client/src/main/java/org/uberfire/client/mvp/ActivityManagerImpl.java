@@ -43,14 +43,9 @@ import static java.util.Collections.singletonList;
 @EnabledByProperty(value = "uberfire.plugin.mode.active", negated = true)
 public class ActivityManagerImpl implements ActivityManager {
 
-    /**
-     * Activities in this set have had their {@link Activity#onStartup(PlaceRequest)} method called and have not been
-     * shut down yet. This set tracks objects by identity, so it is possible that it could have multiple activities of
-     * the same type within it (for example, multiple editors of the same type for different files.)
-     */
     private final Map<Activity, PlaceRequest> startedActivities = new IdentityHashMap<>();
-    private final Map<Object, Boolean> containsCache = new HashMap<>();
     private final Map<String, SyncBeanDef<Activity>> activitiesById = new HashMap<>();
+
     @Inject
     private SyncBeanManager iocManager;
     @Inject
@@ -92,31 +87,6 @@ public class ActivityManagerImpl implements ActivityManager {
     }
 
     @Override
-    public boolean containsActivity(final PlaceRequest placeRequest) {
-        if (containsCache.containsKey(placeRequest.getIdentifier())) {
-            return containsCache.get(placeRequest.getIdentifier());
-        }
-        final Activity result = getActivity(Activity.class,
-                                            placeRequest);
-        containsCache.put(placeRequest.getIdentifier(),
-                          result != null);
-        return result != null;
-    }
-
-    @Override
-    public <T extends Activity> T getActivity(final Class<T> clazz,
-                                              final PlaceRequest placeRequest) {
-        final Set<Activity> activities = getActivities(placeRequest);
-        if (activities.isEmpty()) {
-            return null;
-        }
-
-        final Activity activity = activities.iterator().next();
-
-        return (T) activity;
-    }
-
-    @Override
     public void destroyActivity(final Activity activity) {
         if (startedActivities.remove(activity) != null) {
             if (getBeanScope(activity) == Dependent.class) {
@@ -127,13 +97,6 @@ public class ActivityManagerImpl implements ActivityManager {
         }
     }
 
-    /**
-     * Returns the scope of the given activity bean, first in the Errai bean manager and then falling back on checking
-     * with the activity cache (the only way to look up the BeanDef for a runtime plugin activity). Beans that are not
-     * started (or were started but have been shut down) will cause an NPE if the fallback to the activity beans cache
-     * happens.
-     * @param startedActivity an activity that is in the <i>started</i> or <i>open</i> state.
-     */
     private Class<?> getBeanScope(Activity startedActivity) {
         final IOCBeanDef<?> beanDef = activitiesById.get(startedActivity.getPlace().getIdentifier());
         if (beanDef == null) {
@@ -142,22 +105,22 @@ public class ActivityManagerImpl implements ActivityManager {
         return beanDef.getScope();
     }
 
-    private <T extends Activity> Set<T> getActivitiesFromBeans(final Collection<SyncBeanDef<T>> activityBeans) {
-        final Set<T> activities = new HashSet<T>(activityBeans.size());
+    private Set<Activity> getActivitiesFromBeans(final Collection<SyncBeanDef<Activity>> activityBeans) {
+        final HashSet<Activity> activities = new HashSet<>(activityBeans.size());
 
-        for (final SyncBeanDef<T> activityBean : activityBeans) {
+        for (final SyncBeanDef<Activity> activityBean : activityBeans) {
             if (!activityBean.isActivated()) {
                 continue;
             }
-            final T instance = activityBean.getInstance();
+            final Activity instance = activityBean.getInstance();
             activities.add(instance);
         }
 
         return activities;
     }
 
-    private <T extends Activity> T startIfNecessary(T activity,
-                                                    PlaceRequest place) {
+    private Activity startIfNecessary(Activity activity,
+                                      PlaceRequest place) {
         if (activity == null) {
             return null;
         }
@@ -174,16 +137,9 @@ public class ActivityManagerImpl implements ActivityManager {
         }
     }
 
-    /**
-     * Starts the activities in the given set. If any are null or throw an exception from their <code>onStartup()</code>
-     * method, they will not appear in the returned set.
-     * @param activities
-     * @param place
-     * @return
-     */
     private Set<Activity> startIfNecessary(Set<Activity> activities,
                                            PlaceRequest place) {
-        Set<Activity> validatedActivities = new HashSet<Activity>();
+        Set<Activity> validatedActivities = new HashSet<>();
         for (Activity activity : activities) {
             Activity validated = startIfNecessary(activity,
                                                   place);
@@ -194,11 +150,6 @@ public class ActivityManagerImpl implements ActivityManager {
         return validatedActivities;
     }
 
-    /**
-     * Gets the bean definition of the activity associated with the given place IDENTIFIER, if one exists.
-     * @param identifier the place IDENTIFIER. Null is permitted, but always resolves to an empty collection.
-     * @return an unmodifiable collection with zero or one item, depending on if the resolution was successful.
-     */
     private Collection<SyncBeanDef<Activity>> resolveById(final String identifier) {
         if (identifier == null) {
             return emptyList();

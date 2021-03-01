@@ -64,17 +64,17 @@ public class PlaceManagerImpl implements PlaceManager {
 
     @Override
     public void bootstrapRootPanel() {
-        final BiParameterizedCommand<PanelDefinition, PartDefinition> command = (panelDef, partDef) -> {
+        final BiParameterizedCommand<PanelDefinition, PlaceRequest> command = (panelDef, place) -> {
             panelManager.setRoot(panelDef);
-            goToEditor(partDef, panelDef);
+            goToEditor(place, panelDef);
             workbenchLayout.onResize();
         };
 
+        final PlaceRequest editorPlaceRequest = resolveEditorPlaceRequest();
         final PanelDefinitionImpl rootPanel = new PanelDefinitionImpl(WorkbenchPanelPresenterImpl.class.getName());
-        final PartDefinitionImpl editorPart = new PartDefinitionImpl(resolveEditorPlaceRequest());
         rootPanel.setRoot(true);
-        rootPanel.addPart(editorPart);
-        command.execute(rootPanel, editorPart);
+        rootPanel.addPart(new PartDefinitionImpl(editorPlaceRequest));
+        command.execute(rootPanel, editorPlaceRequest);
     }
 
     private DefaultPlaceRequest resolveEditorPlaceRequest() {
@@ -100,7 +100,7 @@ public class PlaceManagerImpl implements PlaceManager {
         new HashSet<>(customPanels.values()).stream()
                 .filter(filter)
                 .flatMap(p -> p.getParts().stream())
-                .forEach(part -> closePlace(part.getPlace()));
+                .forEach(part -> closePlace(part.getPlace(), null));
 
         final CustomPanelDefinition customPanel = panelManager.addCustomPanel(addTo);
         customPanels.put(place,
@@ -120,27 +120,26 @@ public class PlaceManagerImpl implements PlaceManager {
         }
     }
 
-    private void goToEditor(final PartDefinition part,
+    private void goToEditor(final PlaceRequest place,
                             final PanelDefinition panel) {
-        final PlaceRequest place = part.getPlace();
-        if (place == null) {
+        if (place == null || place.equals(PlaceRequest.NOWHERE)) {
             return;
         }
 
-        final Activity resolved = resolveActivity(place);
+        final Activity activity = resolveActivity(place);
 
-        if (!resolved.isType(ActivityResourceType.EDITOR.name())) {
+        if (!activity.isType(ActivityResourceType.EDITOR.name())) {
             throw new IllegalArgumentException("Only EditorActivity can be launched in a specific targetPanel.");
         }
 
         launchActivity(place,
-                       resolved,
-                       part,
+                       activity,
+                       new PartDefinitionImpl(place),
                        panel);
     }
 
     private Activity resolveActivity(final PlaceRequest place) {
-        final Activity existingDestination = resolveExistingParts(place);
+        final Activity existingDestination = getActivity(place);
 
         if (existingDestination != null) {
             return existingDestination;
@@ -158,30 +157,11 @@ public class PlaceManagerImpl implements PlaceManager {
         return resolvedActivity;
     }
 
-    private Activity resolveExistingParts(final PlaceRequest place) {
-        final Activity activity = getActivity(place);
-
-        if (activity != null) {
-            return activity;
-        }
-
-        return null;
-    }
-
     private Activity getActivity(final PlaceRequest place) {
         if (place == null) {
             return null;
         }
         return existingWorkbenchActivities.get(place);
-    }
-
-    @Override
-    public void closePlace(final PlaceRequest placeToClose) {
-        if (placeToClose == null) {
-            return;
-        }
-        closePlace(placeToClose,
-                   null);
     }
 
     private void launchActivity(final PlaceRequest place,
@@ -205,14 +185,16 @@ public class PlaceManagerImpl implements PlaceManager {
         try {
             activity.onOpen();
         } catch (Exception ex) {
-            closePlace(place);
+            closePlace(place, null);
         }
     }
 
     @Override
     public void closePlace(final PlaceRequest place,
                            final Command onAfterClose) {
-
+        if (place == null) {
+            return;
+        }
         final Activity existingActivity = existingWorkbenchActivities.get(place);
         if (existingActivity == null) {
             return;

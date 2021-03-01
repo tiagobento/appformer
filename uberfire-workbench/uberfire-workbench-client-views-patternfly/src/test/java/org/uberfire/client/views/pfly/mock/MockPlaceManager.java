@@ -38,11 +38,6 @@ public class MockPlaceManager implements PlaceManager {
     }
 
     @Override
-    public void closePlace(PlaceRequest place) {
-        throw new UnsupportedOperationException("Not implemented.");
-    }
-
-    @Override
     public void closePlace(PlaceRequest placeToClose, Command onAfterClose) {
         throw new UnsupportedOperationException("Not implemented.");
     }
