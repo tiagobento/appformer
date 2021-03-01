@@ -16,6 +16,7 @@
 
 package org.uberfire.client.mvp;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -32,6 +34,7 @@ import org.jboss.errai.ioc.client.container.IOCBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.backend.vfs.Path;
+import org.uberfire.client.util.GWTEditorNativeRegister;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.PathPlaceRequest;
 
@@ -51,10 +54,38 @@ public class ActivityManagerImpl implements ActivityManager {
      */
     private final Map<Activity, PlaceRequest> startedActivities = new IdentityHashMap<>();
     private final Map<Object, Boolean> containsCache = new HashMap<>();
+    private final Map<String, SyncBeanDef<Activity>> activitiesById = new HashMap<>();
     @Inject
     private SyncBeanManager iocManager;
     @Inject
-    private ActivityBeansCache activityBeansCache;
+    private GWTEditorNativeRegister gwtEditorNativeRegister;
+
+    @PostConstruct
+    void init() {
+        gwtEditorNativeRegister.nativeRegisterGwtEditorProvider();
+
+        final Collection<SyncBeanDef<Activity>> availableActivities = new ArrayList<>();
+        for (SyncBeanDef<Activity> bean : iocManager.lookupBeans(Activity.class)) {
+            if (bean.isActivated()) {
+                availableActivities.add(bean);
+            }
+        }
+
+        for (final SyncBeanDef<Activity> activityBean : availableActivities) {
+
+            final String id = activityBean.getName();
+
+            if (activitiesById.containsKey(id)) {
+                throw new RuntimeException("Conflict detected: Activity already exists with id " + id);
+            }
+
+            activitiesById.put(id, activityBean);
+
+            if (activityBean.getInstance() instanceof EditorActivity) {
+                gwtEditorNativeRegister.nativeRegisterGwtClientBean(id, activityBean);
+            }
+        }
+    }
 
     @Override
     public Set<Activity> getActivities(final PlaceRequest placeRequest) {
@@ -143,7 +174,7 @@ public class ActivityManagerImpl implements ActivityManager {
      * @param startedActivity an activity that is in the <i>started</i> or <i>open</i> state.
      */
     private Class<?> getBeanScope(Activity startedActivity) {
-        final IOCBeanDef<?> beanDef = activityBeansCache.getActivity(startedActivity.getPlace().getIdentifier());
+        final IOCBeanDef<?> beanDef = activitiesById.get(startedActivity.getPlace().getIdentifier());
         if (beanDef == null) {
             return Dependent.class;
         }
@@ -212,7 +243,7 @@ public class ActivityManagerImpl implements ActivityManager {
             return emptyList();
         }
 
-        SyncBeanDef<Activity> beanDefActivity = activityBeansCache.getActivity(identifier);
+        SyncBeanDef<Activity> beanDefActivity = activitiesById.get(identifier);
         if (beanDefActivity == null) {
             return emptyList();
         }
@@ -223,7 +254,7 @@ public class ActivityManagerImpl implements ActivityManager {
         if (place == null) {
             return emptySet();
         }
-        final SyncBeanDef<Activity> result = activityBeansCache.getActivity(place.getIdentifier());
+        final SyncBeanDef<Activity> result = activitiesById.get(place.getIdentifier());
 
         if (result != null) {
             return singleton(result);
