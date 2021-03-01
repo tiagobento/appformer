@@ -36,9 +36,9 @@ import org.jboss.errai.common.client.dom.DOMUtil;
 import org.jboss.errai.common.client.dom.HTMLElement;
 import org.jboss.errai.common.client.dom.elemental2.Elemental2DomUtil;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
-import org.uberfire.client.mvp.PerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
+import org.uberfire.client.workbench.panels.WorkbenchPanelPresenterImpl;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.debug.Debug;
 import org.uberfire.mvp.PlaceRequest;
@@ -124,8 +124,7 @@ public class PanelManagerImpl implements PanelManager {
     }
 
     @Override
-    public void setRoot(PerspectiveActivity activity,
-                        PanelDefinition root) {
+    public void setRoot(PanelDefinition root) {
         checkNotNull("root",
                      root);
 
@@ -274,17 +273,14 @@ public class PanelManagerImpl implements PanelManager {
     }
 
     @Override
-    public CustomPanelDefinition addCustomPanel(final HasWidgets container,
-                                                final String panelType) {
+    public CustomPanelDefinition addCustomPanel(final HasWidgets container) {
         return addCustomPanelOnContainer(container,
-                                         new CustomPanelDefinitionImpl(panelType,
-                                                                       container),
-                                         false);
+                                         new CustomPanelDefinitionImpl(WorkbenchPanelPresenterImpl.class.getName(),
+                                                                       container));
     }
 
     private CustomPanelDefinition addCustomPanelOnContainer(final Object container,
-                                                            CustomPanelDefinitionImpl panelDef,
-                                                            final boolean isElemental2) {
+                                                            CustomPanelDefinitionImpl panelDef) {
         final WorkbenchPanelPresenter panelPresenter = panelPresenterInstances.get();
         panelPresenter.setDefinition(panelDef);
         Widget panelViewWidget = panelPresenter.getPanelView().asWidget();
@@ -296,20 +292,11 @@ public class PanelManagerImpl implements PanelManager {
             customPanels.put(panelDef,
                              widgetContainer);
         } else {
-            // Cannot do instanceof against native JsType interface
-            if (isElemental2) {
-                elemental2.dom.HTMLElement htmlContainer = (elemental2.dom.HTMLElement) container;
-                appendWidgetToElement(htmlContainer,
-                                      panelViewWidget);
-                customPanelsInsideElemental2HTMLElements.put(panelDef,
-                                                             htmlContainer);
-            } else {
-                HTMLElement htmlContainer = (HTMLElement) container;
-                appendWidgetToElement(htmlContainer,
-                                      panelViewWidget);
-                customPanelsInsideHTMLElements.put(panelDef,
-                                                   htmlContainer);
-            }
+            HTMLElement htmlContainer = (HTMLElement) container;
+            DOMUtil.appendWidgetToElement(htmlContainer,
+                                          panelViewWidget.asWidget());
+            customPanelsInsideHTMLElements.put(panelDef,
+                                               htmlContainer);
         }
 
         mapPanelDefinitionToPresenter.put(panelDef,
@@ -317,22 +304,8 @@ public class PanelManagerImpl implements PanelManager {
         return panelDef;
     }
 
-    void appendWidgetToElement(final HTMLElement container,
-                               final Widget panelViewWidget) {
-        DOMUtil.appendWidgetToElement(container,
-                                      panelViewWidget.asWidget());
-    }
-
-    void appendWidgetToElement(final elemental2.dom.HTMLElement container,
-                               final Widget panelViewWidget) {
-        elemental2DomUtil.appendWidgetToElement(container,
-                                                panelViewWidget.asWidget());
-    }
-
     /**
      * Cleanup handler for custom panels that are removed from the DOM before they are removed via PlaceManager.
-     *
-     * @see PanelManagerImpl#addCustomPanel(HasWidgets, String)
      */
     private final class CustomPanelCleanupHandler implements AttachEvent.Handler {
 

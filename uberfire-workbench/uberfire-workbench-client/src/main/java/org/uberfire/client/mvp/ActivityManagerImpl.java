@@ -97,7 +97,7 @@ public class ActivityManagerImpl implements ActivityManager {
             beans = resolveById(placeRequest.getIdentifier());
         }
 
-        final Set<Activity> activities = startIfNecessary(secure(beans),
+        final Set<Activity> activities = startIfNecessary(getActivitiesFromBeans(beans),
                                                           placeRequest);
 
         if (placeRequest instanceof PathPlaceRequest) {
@@ -181,7 +181,7 @@ public class ActivityManagerImpl implements ActivityManager {
         return beanDef.getScope();
     }
 
-    private <T extends Activity> Set<T> secure(final Collection<SyncBeanDef<T>> activityBeans) {
+    private <T extends Activity> Set<T> getActivitiesFromBeans(final Collection<SyncBeanDef<T>> activityBeans) {
         final Set<T> activities = new HashSet<T>(activityBeans.size());
 
         for (final SyncBeanDef<T> activityBean : activityBeans) {

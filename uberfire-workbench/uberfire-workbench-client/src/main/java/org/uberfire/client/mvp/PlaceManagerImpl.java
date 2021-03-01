@@ -15,22 +15,20 @@
  */
 package org.uberfire.client.mvp;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import com.google.gwt.user.client.ui.HasWidgets;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 import org.jboss.errai.ioc.client.api.EnabledByProperty;
 import org.jboss.errai.ioc.client.api.SharedSingleton;
+import org.jboss.errai.ioc.client.container.SyncBeanDef;
+import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.backend.vfs.ObservablePath;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.workbench.PanelManager;
@@ -46,7 +44,7 @@ import org.uberfire.workbench.model.ActivityResourceType;
 import org.uberfire.workbench.model.CustomPanelDefinition;
 import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
-import org.uberfire.workbench.model.PerspectiveDefinition;
+import org.uberfire.workbench.model.impl.PanelDefinitionImpl;
 import org.uberfire.workbench.model.impl.PartDefinitionImpl;
 
 import static org.uberfire.plugin.PluginUtil.ensureIterable;
@@ -60,52 +58,52 @@ public class PlaceManagerImpl implements PlaceManager {
     private final Map<PlaceRequest, PartDefinition> visibleWorkbenchParts = new HashMap<>();
     private final Map<PlaceRequest, CustomPanelDefinition> customPanels = new HashMap<>();
 
-    private EventBus tempBus = null;
     @Inject
     private ActivityManager activityManager;
     @Inject
     private PanelManager panelManager;
     @Inject
-    private PerspectiveActivity defaultPerspective;
-    @Inject
     private WorkbenchLayout workbenchLayout;
+    @Inject
+    private SyncBeanManager iocManager;
 
     @Override
-    public void bootstrapPerspective() {
-        final ParameterizedCommand<PerspectiveDefinition> command = perspectiveDef -> {
-            panelManager.setRoot(defaultPerspective,
-                                 perspectiveDef.getRoot());
-            openPartsRecursively(perspectiveDef.getRoot());
+    public void bootstrapRootPanel() {
+        final ParameterizedCommand<PanelDefinition> command = panelDef -> {
+            panelManager.setRoot(panelDef);
+
+            for (PartDefinition part : ensureIterable(panelDef.getParts())) {
+                final PlaceRequest place = part.getPlace().clone();
+                part.setPlace(place);
+                goTo(part, panelDef);
+            }
+
             workbenchLayout.onResize();
         };
 
-        command.execute(defaultPerspective.getDefaultPerspectiveLayout());
+        final PanelDefinitionImpl rootPanel = new PanelDefinitionImpl(WorkbenchPanelPresenterImpl.class.getName());
+        rootPanel.setRoot(true);
+        rootPanel.addPart(new PartDefinitionImpl(new DefaultPlaceRequest(resolveEditorPlaceRequest())));
+        command.execute(rootPanel);
     }
 
-    private void goTo(final PlaceRequest place,
-                      final PanelDefinition panel) {
+    private String resolveEditorPlaceRequest() {
+        final Collection<SyncBeanDef<EditorActivity>> editors = iocManager.lookupBeans(EditorActivity.class);
+
+        if (editors.size() != 1) {
+            throw new RuntimeException("There must be exactly one instance of EditorActivity.");
+        }
+
+        return editors.iterator().next().getInstance().getIdentifier();
+    }
+
+    @Override
+    public void goToDock(PlaceRequest place,
+                         HasWidgets addTo) {
         if (place == null || place.equals(PlaceRequest.NOWHERE)) {
             return;
         }
 
-        final ResolvedRequest resolved = resolveActivity(place);
-
-        if (resolved.getActivity() != null) {
-            final Activity activity = resolved.getActivity();
-            if (activity.isType(ActivityResourceType.DOCK.name())) {
-                launchWorkbenchActivity(resolved.getPlaceRequest(),
-                                        activity,
-                                        panel);
-            }
-        } else {
-            goTo(resolved.getPlaceRequest(),
-                 panel);
-        }
-    }
-
-    @Override
-    public void goTo(PlaceRequest place,
-                     HasWidgets addTo) {
         final Predicate<CustomPanelDefinition> filter = p -> p.getHasWidgetsContainer().isPresent()
                 && p.getHasWidgetsContainer().get().equals(addTo);
 
@@ -114,94 +112,48 @@ public class PlaceManagerImpl implements PlaceManager {
                 .flatMap(p -> p.getParts().stream())
                 .forEach(part -> closePlace(part.getPlace()));
 
-        goToTargetPanel(place,
-                        panelManager.addCustomPanel(addTo,
-                                                    WorkbenchPanelPresenterImpl.class.getName()));
-    }
+        final CustomPanelDefinition customPanel = panelManager.addCustomPanel(addTo);
+        customPanels.put(place,
+                         customPanel);
 
-    private void goToTargetPanel(final PlaceRequest place,
-                                 final CustomPanelDefinition adoptedPanel) {
-        if (existingWorkbenchActivities.containsKey(place)) {
-            // if already open, behaviour is to select the place where it already lives
-            goTo(place,
-                 (PanelDefinition)null);
-        } else {
-            customPanels.put(place,
-                             adoptedPanel);
-            goTo(place,
-                 adoptedPanel);
+        final Activity activity = resolveActivity(place);
+
+        if (activity.isType(ActivityResourceType.DOCK.name())) {
+            if (visibleWorkbenchParts.containsKey(place)) {
+                return;
+            }
+
+            launchActivity(place,
+                           activity,
+                           new PartDefinitionImpl(place),
+                           customPanel);
         }
     }
 
-    /**
-     * Resolves the given place request into an Activity instance, if one can be found. If not, this method substitutes
-     * special "not found" or "too many" place requests when the resolution doesn't work.
-     * <p/>
-     * @param place A non-null place request that could have originated from within application code, from within the
-     * framework, or by parsing a hash fragment from a browser history event.
-     * @return a non-null ResolvedRequest, where:
-     * <ul>
-     * <li>the Activity value is either the unambiguous resolved Activity instance, or null if the activity was
-     * not resolvable; in this case, the Activity has been added to the {@link #existingWorkbenchActivities} map.
-     * <li>if there is an Activity value, the PlaceRequest represents that Activity; otherwise
-     * it is a substitute PlaceRequest that should be navigated to recursively (ultimately by another call to
-     * this method). The PlaceRequest is never null.
-     * </ul>
-     * TODO (UF-94) : make this simpler. with enough tests in place, we should experiment with doing the recursive
-     * lookup automatically.
-     */
-    private ResolvedRequest resolveActivity(final PlaceRequest place) {
-
-        final PlaceRequest resolvedPlaceRequest = resolvePlaceRequest(place);
-
-        final ResolvedRequest existingDestination = resolveExistingParts(resolvedPlaceRequest);
+    private Activity resolveActivity(final PlaceRequest place) {
+        final Activity existingDestination = resolveExistingParts(place);
 
         if (existingDestination != null) {
             return existingDestination;
         }
 
-        final Set<Activity> activities = activityManager.getActivities(resolvedPlaceRequest);
+        final Set<Activity> activities = activityManager.getActivities(place);
 
-        if (activities == null || activities.isEmpty()) {
-            final PlaceRequest notFoundPopup = new DefaultPlaceRequest("workbench.activity.notfound");
-            notFoundPopup.addParameter("requestedPlaceIdentifier",
-                                       resolvedPlaceRequest.getIdentifier());
-
-            if (activityManager.containsActivity(notFoundPopup)) {
-                return new ResolvedRequest(null,
-                                           notFoundPopup);
-            } else {
-                final PlaceRequest ufNotFoundPopup = new DefaultPlaceRequest("uf.workbench.activity.notfound");
-                ufNotFoundPopup.addParameter("requestedPlaceIdentifier",
-                                             place.getIdentifier());
-                return new ResolvedRequest(null,
-                                           ufNotFoundPopup);
-            }
-        } else if (activities.size() > 1) {
-            final PlaceRequest multiplePlaces = new DefaultPlaceRequest("workbench.activities.multiple").addParameter("requestedPlaceIdentifier",
-                                                                                                                      null);
-
-            return new ResolvedRequest(null,
-                                       multiplePlaces);
+        if (activities.size() != 1) {
+            throw new RuntimeException("There shouldn't be more than one activity associated with a place request.");
         }
 
-        Activity unambigousActivity = activities.iterator().next();
-        existingWorkbenchActivities.put(resolvedPlaceRequest,
-                                        unambigousActivity);
-        return new ResolvedRequest(unambigousActivity,
-                                   resolvedPlaceRequest);
+        Activity resolvedActivity = activities.iterator().next();
+        existingWorkbenchActivities.put(place,
+                                        resolvedActivity);
+        return resolvedActivity;
     }
 
-    private PlaceRequest resolvePlaceRequest(PlaceRequest place) {
-        return place;
-    }
-
-    private ResolvedRequest resolveExistingParts(final PlaceRequest place) {
+    private Activity resolveExistingParts(final PlaceRequest place) {
         final Activity activity = getActivity(place);
 
         if (activity != null) {
-            return new ResolvedRequest(activity,
-                                       place);
+            return activity;
         }
 
         if (place instanceof PathPlaceRequest) {
@@ -213,8 +165,7 @@ public class PlaceManagerImpl implements PlaceManager {
                     final Path visiblePath = ((PathPlaceRequest) pr).getPath();
                     final String visiblePathURI = visiblePath.toURI();
                     if ((visiblePathURI != null && visiblePathURI.compareTo(path.toURI()) == 0) || visiblePath.compareTo(path) == 0) {
-                        return new ResolvedRequest(getActivity(pr),
-                                                   pr);
+                        return getActivity(pr);
                     }
                 }
             }
@@ -224,30 +175,22 @@ public class PlaceManagerImpl implements PlaceManager {
     }
 
     private void goTo(final PartDefinition part,
-                     final PanelDefinition panel) {
+                      final PanelDefinition panel) {
         final PlaceRequest place = part.getPlace();
         if (place == null) {
             return;
         }
 
-        final ResolvedRequest resolved = resolveActivity(place);
+        final Activity resolved = resolveActivity(place);
 
-        if (resolved.getActivity() != null) {
-            final Activity activity = resolved.getActivity();
-
-            if (activity.isType(ActivityResourceType.EDITOR.name()) ||
-                    activity.isType(ActivityResourceType.DOCK.name())) {
-                launchWorkbenchActivityInPanel(place,
-                                               activity,
-                                               part,
-                                               panel);
-            } else {
-                throw new IllegalArgumentException("placeRequest does not represent a WorkbenchActivity. Only WorkbenchActivities can be launched in a specific targetPanel.");
-            }
-        } else {
-            goTo(resolved.getPlaceRequest(),
-                 (PanelDefinition) null);
+        if (!resolved.isType(ActivityResourceType.EDITOR.name())) {
+            throw new IllegalArgumentException("Only EditorActivity can be launched in a specific targetPanel.");
         }
+
+        launchActivity(place,
+                       resolved,
+                       part,
+                       panel);
     }
 
     private Activity getActivity(final PlaceRequest place) {
@@ -266,32 +209,10 @@ public class PlaceManagerImpl implements PlaceManager {
                    null);
     }
 
-    private void launchWorkbenchActivity(final PlaceRequest place,
-                                         final Activity activity,
-                                         final PanelDefinition _panel) {
-
-        if (visibleWorkbenchParts.containsKey(place)) {
-            return;
-        }
-
-        final PartDefinition part = new PartDefinitionImpl(place);
-        final PanelDefinition panel;
-        if (_panel != null) {
-            panel = _panel;
-        } else {
-            throw new RuntimeException("CAPONETTO");
-        }
-
-        launchWorkbenchActivityInPanel(place,
-                                       activity,
-                                       part,
-                                       panel);
-    }
-
-    private void launchWorkbenchActivityInPanel(final PlaceRequest place,
-                                                final Activity activity,
-                                                final PartDefinition part,
-                                                final PanelDefinition panel) {
+    private void launchActivity(final PlaceRequest place,
+                                final Activity activity,
+                                final PartDefinition part,
+                                final PanelDefinition panel) {
         if (visibleWorkbenchParts.containsKey(place)) {
             return;
         }
@@ -310,22 +231,6 @@ public class PlaceManagerImpl implements PlaceManager {
             activity.onOpen();
         } catch (Exception ex) {
             closePlace(place);
-        }
-    }
-
-    /**
-     * Opens all the parts of the given panel and its subpanels. This is a subroutine of the perspective switching
-     * process.
-     */
-    private void openPartsRecursively(PanelDefinition panel) {
-
-        for (PartDefinition part : ensureIterable(panel.getParts())) {
-            final PlaceRequest place = part.getPlace().clone();
-            part.setPlace(place);
-            goTo(part, panel);
-        }
-        for (PanelDefinition child : ensureIterable(panel.getChildren())) {
-            openPartsRecursively(child);
         }
     }
 
@@ -355,14 +260,7 @@ public class PlaceManagerImpl implements PlaceManager {
                 return;
             }
 
-            if (activity.isType(ActivityResourceType.DOCK.name())) {
-                try {
-                    activity.onClose();
-                } catch (Exception ex) {
-                }
-            } else {
-                activity.onClose();
-            }
+            activity.onClose();
 
             panelManager.removePartForPlace(place);
             existingWorkbenchActivities.remove(place);
@@ -384,68 +282,5 @@ public class PlaceManagerImpl implements PlaceManager {
                 onAfterClose.execute();
             }
         };
-    }
-
-    @Produces
-    @ApplicationScoped
-    private EventBus produceEventBus() {
-        if (tempBus == null) {
-            tempBus = new SimpleEventBus();
-        }
-        return tempBus;
-    }
-
-    /**
-     * The result of an attempt to resolve a PlaceRequest to an Activity.
-     */
-    private static class ResolvedRequest {
-
-        private final Activity activity;
-        private final PlaceRequest placeRequest;
-
-        public ResolvedRequest(final Activity resolvedActivity,
-                               final PlaceRequest substitutePlace) {
-            this.activity = resolvedActivity;
-            this.placeRequest = substitutePlace;
-        }
-
-        public Activity getActivity() {
-            return activity;
-        }
-
-        public PlaceRequest getPlaceRequest() {
-            return placeRequest;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-
-            final ResolvedRequest resolvedRequest = (ResolvedRequest) o;
-
-            if (!Objects.equals(activity, resolvedRequest.activity)) {
-                return false;
-            }
-
-            return Objects.equals(placeRequest, resolvedRequest.placeRequest);
-        }
-
-        @Override
-        public int hashCode() {
-            int result;
-            result = activity != null ? activity.hashCode() : 0;
-            result = 31 * result + (placeRequest != null ? placeRequest.hashCode() : 0);
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "{activity=" + activity + ", placeRequest=" + placeRequest + "}";
-        }
     }
 }

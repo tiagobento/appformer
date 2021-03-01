@@ -160,8 +160,8 @@ public class PlaceManagerTest {
         when(kansasActivity.isType(ActivityResourceType.DOCK.name())).thenReturn(true);
         when(kansasActivity.isDynamic()).thenReturn(false);
 
-        placeManager.goTo(kansas,
-                          (PanelDefinition) null);
+        placeManager.goToDock(kansas,
+                              (PanelDefinition) null);
         resetInjectedMocks();
         reset(kansasActivity);
 
@@ -257,7 +257,7 @@ public class PlaceManagerTest {
         }).when(doraActivity).getMenus(any());
         when(activityManager.getActivities(dora)).thenReturn(singleton((Activity) doraActivity));
 
-        placeManager.goTo(dora);
+        placeManager.goToDock(dora);
 
         verifyActivityLaunchSideEffects(dora,
                                         doraActivity,
@@ -286,7 +286,7 @@ public class PlaceManagerTest {
         when(activityManager.getActivities(dora)).thenReturn(singleton((Activity) doraActivity));
         when(activityManager.getActivities(other)).thenReturn(singleton((Activity) otherActivity));
 
-        placeManager.goTo(dora);
+        placeManager.goToDock(dora);
 
         verify(doraActivity,
                never()).onOpen();
@@ -311,8 +311,8 @@ public class PlaceManagerTest {
         }).when(ozActivity).getMenus(any());
         when(activityManager.getActivities(oz)).thenReturn(singleton((Activity) ozActivity));
 
-        placeManager.goTo(oz,
-                          (PanelDefinition) null);
+        placeManager.goToDock(oz,
+                              (PanelDefinition) null);
 
         verifyActivityLaunchSideEffects(oz,
                                         ozActivity,
@@ -322,8 +322,8 @@ public class PlaceManagerTest {
     @Test
     public void testGoToPlaceWeAreAlreadyAt() throws Exception {
         when(kansasActivity.isType(ActivityResourceType.DOCK.name())).thenReturn(true);
-        placeManager.goTo(kansas,
-                          (PanelDefinition) null);
+        placeManager.goToDock(kansas,
+                              (PanelDefinition) null);
 
         // note "refEq" tests equality field by field using reflection. don't read it as "reference equals!" :)
         verify(selectWorkbenchPartEvent).fire(refEq(new SelectPlaceEvent(kansas)));
@@ -335,8 +335,8 @@ public class PlaceManagerTest {
     @Test
     public void testGoToPartWeAreAlreadyAt() throws Exception {
         when(kansasActivity.isType(ActivityResourceType.DOCK.name())).thenReturn(true);
-        placeManager.goTo(new PartDefinitionImpl(kansas),
-                          null);
+        placeManager.goToDock(new PartDefinitionImpl(kansas),
+                              null);
 
         // note "refEq" tests equality field by field using reflection. don't read it as "reference equals!" :)
         verify(selectWorkbenchPartEvent).fire(refEq(new SelectPlaceEvent(kansas)));
@@ -347,8 +347,8 @@ public class PlaceManagerTest {
 
     @Test
     public void testGoToNowhereDoesNothing() throws Exception {
-        placeManager.goTo(PlaceRequest.NOWHERE,
-                          (PanelDefinition) null);
+        placeManager.goToDock(PlaceRequest.NOWHERE,
+                              (PanelDefinition) null);
 
         verifyNoActivityLaunchSideEffects(kansas,
                                           kansasActivity);
@@ -358,8 +358,8 @@ public class PlaceManagerTest {
     @Test
     public void testGoToNullDoesNothing() throws Exception {
 
-        placeManager.goTo((PlaceRequest) null,
-                          (PanelDefinition) null);
+        placeManager.goToDock((PlaceRequest) null,
+                              (PanelDefinition) null);
 
         verifyNoActivityLaunchSideEffects(kansas,
                                           kansasActivity);
@@ -378,8 +378,8 @@ public class PlaceManagerTest {
         }).when(ozActivity).getMenus(any());
         when(activityManager.getActivities(yellowBrickRoad)).thenReturn(singleton((Activity) ozActivity));
 
-        placeManager.goTo(yellowBrickRoad,
-                          (PanelDefinition) null);
+        placeManager.goToDock(yellowBrickRoad,
+                              (PanelDefinition) null);
 
         verifyActivityLaunchSideEffects(yellowBrickRoad,
                                         ozActivity,
@@ -493,7 +493,7 @@ public class PlaceManagerTest {
         when(ozPerspectiveActivity.getDefaultPerspectiveLayout()).thenReturn(ozPerspectiveDef);
         when(ozPerspectiveActivity.getPlace()).thenReturn(ozPerspectivePlace);
         when(ozPerspectiveActivity.isType(ActivityResourceType.PERSPECTIVE.name())).thenReturn(true);
-        placeManager.goTo(ozPerspectivePlace);
+        placeManager.goToDock(ozPerspectivePlace);
 
         // verify perspective changed to oz
         verify(perspectiveManager).savePerspectiveState(any(Command.class));
@@ -526,7 +526,7 @@ public class PlaceManagerTest {
         PerspectiveActivity kansasPerspectiveActivity = mock(PerspectiveActivity.class);
         when(perspectiveManager.getCurrentPerspective()).thenReturn(kansasPerspectiveActivity);
 
-        placeManager.goTo(ozPerspectivePlace);
+        placeManager.goToDock(ozPerspectivePlace);
 
         // verify proper shutdown of kansasPerspective and its contents
         InOrder inOrder = inOrder(activityManager,
@@ -569,7 +569,7 @@ public class PlaceManagerTest {
                                                        chain.execute();
                                                    });
 
-        placeManager.goTo(ozPerspectivePlace);
+        placeManager.goToDock(ozPerspectivePlace);
 
         // verify close chain was ran
         assertTrue(chainExecuted.get());
@@ -615,7 +615,7 @@ public class PlaceManagerTest {
                                                        // chain was not executed.
                                                    });
 
-        placeManager.goTo(ozPerspectivePlace);
+        placeManager.goToDock(ozPerspectivePlace);
 
         // verify close chain was ran
         assertTrue(chainExecuted.get());
@@ -656,7 +656,7 @@ public class PlaceManagerTest {
         placeManager.registerPerspectiveCloseChain("oz_perspective",
                                                    closeChain);
 
-        placeManager.goTo(ozPerspectivePlace);
+        placeManager.goToDock(ozPerspectivePlace);
 
         verify(closeChain,
                never()).execute(any(), any());
@@ -722,7 +722,7 @@ public class PlaceManagerTest {
             return null;
         });
 
-        placeManager.goTo(mainPlaceRequest);
+        placeManager.goToDock(mainPlaceRequest);
 
         verify(panelPlaceRequest).clone();
 
@@ -779,8 +779,8 @@ public class PlaceManagerTest {
             return null;
         }).when(emeraldCityActivity).getMenus(any());
 
-        placeManager.goTo(emeraldCityPlace,
-                          (PanelDefinition) null);
+        placeManager.goToDock(emeraldCityPlace,
+                              (PanelDefinition) null);
 
         // verify perspective changed to oz
         verify(perspectiveManager).savePerspectiveState(any(Command.class));
@@ -817,7 +817,7 @@ public class PlaceManagerTest {
         when(perspectiveActivity.isType(ActivityResourceType.PERSPECTIVE.name())).thenReturn(true);
         when(splashScreenActivity.isType(ActivityResourceType.SPLASH.name())).thenReturn(true);
 
-        placeManager.goTo(perspectivePlace);
+        placeManager.goToDock(perspectivePlace);
 
         // splash screen should be open and registered as an active splash screen
         verify(splashScreenActivity,
@@ -871,8 +871,8 @@ public class PlaceManagerTest {
             return null;
         }).when(kansasActivity).getMenus(any());
 
-        placeManager.goTo(perspectivePlace);
-        placeManager.goTo(kansas);
+        placeManager.goToDock(perspectivePlace);
+        placeManager.goToDock(kansas);
 
         assertTrue(placeManager.getActiveSplashScreens().contains(splashScreenActivity1));
         assertTrue(placeManager.getActiveSplashScreens().contains(splashScreenActivity2));
@@ -887,7 +887,7 @@ public class PlaceManagerTest {
         when(activityManager.getActivities(otherPerspectivePlace))
                 .thenReturn(singleton((Activity) otherPerspectiveActivity));
 
-        placeManager.goTo(otherPerspectivePlace);
+        placeManager.goToDock(otherPerspectivePlace);
 
         assertTrue(placeManager.getActiveSplashScreens().isEmpty());
         verify(splashScreenActivity1).closeIfOpen();
@@ -913,8 +913,8 @@ public class PlaceManagerTest {
         when(activityManager.getSplashScreenInterceptor(oz)).thenReturn(lollipopGuildActivity);
         when(lollipopGuildActivity.isType(ActivityResourceType.SPLASH.name())).thenReturn(true);
 
-        placeManager.goTo(oz,
-                          (PanelDefinition) null);
+        placeManager.goToDock(oz,
+                              (PanelDefinition) null);
 
         assertTrue(placeManager.getActiveSplashScreens().contains(lollipopGuildActivity));
         verify(lollipopGuildActivity,
@@ -941,8 +941,8 @@ public class PlaceManagerTest {
             return null;
         }).when(ozActivity).getMenus(any());
 
-        placeManager.goTo(oz,
-                          (PanelDefinition) null);
+        placeManager.goToDock(oz,
+                              (PanelDefinition) null);
         placeManager.closePlace(oz);
 
         assertTrue(placeManager.getActiveSplashScreens().isEmpty());
@@ -965,7 +965,7 @@ public class PlaceManagerTest {
         final SplashScreenActivity splashScreenActivity = mock(SplashScreenActivity.class);
         when(activityManager.getActivities(somewhere)).thenReturn(singleton((Activity) splashScreenActivity));
 
-        placeManager.goTo(somewhere);
+        placeManager.goToDock(somewhere);
 
         verify(splashScreenActivity,
                never()).onStartup(eq(somewhere));
@@ -987,7 +987,7 @@ public class PlaceManagerTest {
         final ContextActivity activity = mock(ContextActivity.class);
         when(activityManager.getActivities(somewhere)).thenReturn(singleton((Activity) activity));
 
-        placeManager.goTo(somewhere);
+        placeManager.goToDock(somewhere);
 
         verify(activity,
                never()).onStartup(eq(somewhere));
@@ -1004,7 +1004,7 @@ public class PlaceManagerTest {
         when(activityManager.getActivities(popupPlace)).thenReturn(singleton((Activity) popupActivity));
         when(popupActivity.isType(ActivityResourceType.POPUP.name())).thenReturn(true);
 
-        placeManager.goTo(popupPlace);
+        placeManager.goToDock(popupPlace);
 
         verify(popupActivity,
                never()).onStartup(any(PlaceRequest.class));
@@ -1026,8 +1026,8 @@ public class PlaceManagerTest {
         when(activityManager.getActivities(popupPlace)).thenReturn(singleton((Activity) popupActivity));
         when(popupActivity.isType(ActivityResourceType.POPUP.name())).thenReturn(true);
 
-        placeManager.goTo(popupPlace);
-        placeManager.goTo(popupPlace);
+        placeManager.goToDock(popupPlace);
+        placeManager.goToDock(popupPlace);
 
         verify(popupActivity,
                never()).onStartup(any(PlaceRequest.class));
@@ -1046,9 +1046,9 @@ public class PlaceManagerTest {
         when(popupActivity.isType(ActivityResourceType.POPUP.name())).thenReturn(true);
         when(activityManager.getActivities(popupPlace)).thenReturn(singleton((Activity) popupActivity));
 
-        placeManager.goTo(popupPlace);
+        placeManager.goToDock(popupPlace);
         placeManager.closePlace(popupPlace);
-        placeManager.goTo(popupPlace);
+        placeManager.goToDock(popupPlace);
 
         verify(popupActivity,
                times(2)).onOpen();
@@ -1067,7 +1067,7 @@ public class PlaceManagerTest {
         when(popupActivity.isType(ActivityResourceType.POPUP.name())).thenReturn(true);
         when(activityManager.getActivities(popupPlace)).thenReturn(singleton((Activity) popupActivity));
 
-        placeManager.goTo(popupPlace);
+        placeManager.goToDock(popupPlace);
         placeManager.closePlace(popupPlace);
 
         verify(popupActivity,
@@ -1100,8 +1100,8 @@ public class PlaceManagerTest {
 
         HasWidgets customContainer = mock(HasWidgets.class);
 
-        placeManager.goTo(emeraldCityPlace,
-                          customContainer);
+        placeManager.goToDock(emeraldCityPlace,
+                              customContainer);
 
         verifyActivityLaunchSideEffects(emeraldCityPlace,
                                         emeraldCityActivity,
@@ -1152,8 +1152,8 @@ public class PlaceManagerTest {
             return null;
         }).when(emeraldCityActivity2).getMenus(any());
 
-        placeManagerSpy.goTo(emeraldCityPlace,
-                               panel);
+        placeManagerSpy.goToDock(emeraldCityPlace,
+                                 panel);
 
         verifyActivityLaunchSideEffects(emeraldCityPlace,
                                         emeraldCityActivity,
@@ -1174,8 +1174,8 @@ public class PlaceManagerTest {
         when(part.getPlace()).thenReturn(emeraldCityPlace);
         when(customPanelDef.getParts()).thenReturn(parts);
 
-        placeManagerSpy.goTo(emeraldCityPlace2,
-                               panel);
+        placeManagerSpy.goToDock(emeraldCityPlace2,
+                                 panel);
 
         verifyActivityLaunchSideEffects(emeraldCityPlace2,
                                         emeraldCityActivity2,
@@ -1230,8 +1230,8 @@ public class PlaceManagerTest {
                 .thenReturn(singleton((Activity) emeraldCityActivity2));
         when(emeraldCityActivity2.isType(ActivityResourceType.DOCK.name())).thenReturn(true);
 
-        placeManagerSpy.goTo(emeraldCityPlace,
-                             panel);
+        placeManagerSpy.goToDock(emeraldCityPlace,
+                                 panel);
 
         verifyActivityLaunchSideEffects(emeraldCityPlace,
                                         emeraldCityActivity,
@@ -1252,8 +1252,8 @@ public class PlaceManagerTest {
         when(part.getPlace()).thenReturn(emeraldCityPlace);
         when(customPanelDef.getParts()).thenReturn(parts);
 
-        placeManagerSpy.goTo(emeraldCityPlace2,
-                             panel);
+        placeManagerSpy.goToDock(emeraldCityPlace2,
+                                 panel);
 
         verifyActivityLaunchSideEffects(emeraldCityPlace2,
                                         emeraldCityActivity2,
@@ -1278,8 +1278,8 @@ public class PlaceManagerTest {
         HasWidgets customContainer = mock(HasWidgets.class);
 
         when(kansasActivity.isType(ActivityResourceType.DOCK.name())).thenReturn(true);
-        placeManager.goTo(kansas,
-                          customContainer);
+        placeManager.goToDock(kansas,
+                              customContainer);
 
         verify(panelManager,
                never())
@@ -1305,8 +1305,8 @@ public class PlaceManagerTest {
 
         HasWidgets customContainer = mock(HasWidgets.class);
 
-        placeManager.goTo(emeraldCityPlace,
-                          customContainer);
+        placeManager.goToDock(emeraldCityPlace,
+                              customContainer);
         placeManager.closePlace(emeraldCityPlace);
 
         assertTrue(customPanelDef.getParts().isEmpty());
@@ -1328,8 +1328,8 @@ public class PlaceManagerTest {
 
         HasWidgets customContainer = mock(HasWidgets.class);
 
-        placeManager.goTo(emeraldCityPlace,
-                          customContainer);
+        placeManager.goToDock(emeraldCityPlace,
+                              customContainer);
         placeManager.closeAllPlaces();
 
         assertTrue(customPanelDef.getParts().isEmpty());
@@ -1360,8 +1360,8 @@ public class PlaceManagerTest {
 
         HTMLElement customContainer = mock(HTMLElement.class);
 
-        placeManager.goTo(emeraldCityPlace,
-                          customContainer);
+        placeManager.goToDock(emeraldCityPlace,
+                              customContainer);
 
         verifyActivityLaunchSideEffects(emeraldCityPlace,
                                         emeraldCityActivity,
@@ -1382,8 +1382,8 @@ public class PlaceManagerTest {
         HTMLElement customContainer = mock(HTMLElement.class);
 
         when(kansasActivity.isType(ActivityResourceType.DOCK.name())).thenReturn(true);
-        placeManager.goTo(kansas,
-                          customContainer);
+        placeManager.goToDock(kansas,
+                              customContainer);
 
         verify(panelManager,
                never())
@@ -1409,8 +1409,8 @@ public class PlaceManagerTest {
 
         HTMLElement customContainer = mock(HTMLElement.class);
 
-        placeManager.goTo(emeraldCityPlace,
-                          customContainer);
+        placeManager.goToDock(emeraldCityPlace,
+                              customContainer);
         placeManager.closePlace(emeraldCityPlace);
 
         assertTrue(customPanelDef.getParts().isEmpty());
@@ -1432,8 +1432,8 @@ public class PlaceManagerTest {
 
         HTMLElement customContainer = mock(HTMLElement.class);
 
-        placeManager.goTo(emeraldCityPlace,
-                          customContainer);
+        placeManager.goToDock(emeraldCityPlace,
+                              customContainer);
         placeManager.closeAllPlaces();
 
         assertTrue(customPanelDef.getParts().isEmpty());
@@ -1453,7 +1453,7 @@ public class PlaceManagerTest {
             return null;
         }).when(ozActivity).getMenus(any());
 
-        placeManager.goTo(yellowBrickRoad);
+        placeManager.goToDock(yellowBrickRoad);
 
         verifyActivityLaunchSideEffects(yellowBrickRoad,
                                         ozActivity,
@@ -1482,7 +1482,7 @@ public class PlaceManagerTest {
             return null;
         }).when(ozActivity).getMenus(any());
 
-        placeManager.goTo(yellowBrickRoad);
+        placeManager.goToDock(yellowBrickRoad);
 
         verifyActivityLaunchSideEffects(yellowBrickRoad,
                                         ozActivity,
@@ -1510,7 +1510,7 @@ public class PlaceManagerTest {
     public void testCloseAllPlacesOrNothingSucceeds() throws Exception {
         PlaceRequest emeraldCityPlace = new DefaultPlaceRequest("emerald_city");
         WorkbenchScreenActivity emeraldCityActivity = createWorkbenchScreenActivity(emeraldCityPlace);
-        placeManager.goTo(emeraldCityPlace);
+        placeManager.goToDock(emeraldCityPlace);
 
         when(kansasActivity.onMayClose()).thenReturn(true);
         when(kansasActivity.isType(ActivityResourceType.DOCK.name())).thenReturn(true);
@@ -1528,7 +1528,7 @@ public class PlaceManagerTest {
         PlaceRequest emeraldCityPlace = new DefaultPlaceRequest("emerald_city");
         WorkbenchScreenActivity emeraldCityActivity = createWorkbenchScreenActivity(emeraldCityPlace);
         doReturn(false).when(emeraldCityActivity).onMayClose();
-        placeManager.goTo(emeraldCityPlace);
+        placeManager.goToDock(emeraldCityPlace);
 
         when(kansasActivity.onMayClose()).thenReturn(true);
         when(kansasActivity.isType(ActivityResourceType.DOCK.name())).thenReturn(true);

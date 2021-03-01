@@ -92,7 +92,7 @@ public class WorkbenchStartupTest {
     @Test
     public void goToHomePerspective() throws Exception {
         workbench.startIfNotBlocked();
-        verify(placeManager).goTo(new DefaultPlaceRequest(perspectiveActivity1.getIdentifier()));
+        verify(placeManager).goToDock(new DefaultPlaceRequest(perspectiveActivity1.getIdentifier()));
     }
 
     @Test
@@ -100,7 +100,7 @@ public class WorkbenchStartupTest {
         when(perspectiveActivity1.isDefault()).thenReturn(true);
         when(perspectiveActivity2.isDefault()).thenReturn(false);
         workbench.startIfNotBlocked();
-        verify(placeManager).goTo(new DefaultPlaceRequest(perspectiveActivity1.getIdentifier()));
+        verify(placeManager).goToDock(new DefaultPlaceRequest(perspectiveActivity1.getIdentifier()));
     }
 
     @Test
@@ -108,6 +108,6 @@ public class WorkbenchStartupTest {
         when(perspectiveActivity2.isDefault()).thenReturn(false);
         workbench.startIfNotBlocked();
         verify(placeManager,
-               never()).goTo(any(PlaceRequest.class));
+               never()).goToDock(any(PlaceRequest.class));
     }
 }

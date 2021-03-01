@@ -16,11 +16,15 @@
 package org.uberfire.client.workbench;
 
 import javax.annotation.PostConstruct;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.SimpleEventBus;
 import org.jboss.errai.ioc.client.api.AfterInitialization;
 import org.jboss.errai.ioc.client.api.EnabledByProperty;
 import org.jboss.errai.ioc.client.api.EntryPoint;
@@ -78,13 +82,24 @@ public class Workbench {
     @Inject
     private PlaceManager placeManager;
 
+    private EventBus tempBus = null;
+
+    @Produces
+    @ApplicationScoped
+    private EventBus produceEventBus() {
+        if (tempBus == null) {
+            tempBus = new SimpleEventBus();
+        }
+        return tempBus;
+    }
+
     @AfterInitialization
     private void afterInit() {
         WorkbenchResources.INSTANCE.CSS().ensureInjected();
 
         workbenchLayout.onBootstrap();
         RootLayoutPanel.get().add(workbenchLayout.getRoot());
-        placeManager.bootstrapPerspective();
+        placeManager.bootstrapRootPanel();
 
         // Resizing the Window should resize everything
         Window.addResizeHandler(event -> workbenchLayout.resizeTo(event.getWidth(),

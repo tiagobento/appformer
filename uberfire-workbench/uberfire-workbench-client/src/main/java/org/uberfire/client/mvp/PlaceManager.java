@@ -27,11 +27,11 @@ import org.uberfire.mvp.PlaceRequest;
 public interface PlaceManager {
 
     @JsIgnore
-    void goTo(final PlaceRequest place,
-              final HasWidgets addTo);
+    void goToDock(final PlaceRequest place,
+                  final HasWidgets addTo);
 
     @JsIgnore
-    void bootstrapPerspective();
+    void bootstrapRootPanel();
 
     @JsMethod
     void closePlace(final PlaceRequest placeToClose);
