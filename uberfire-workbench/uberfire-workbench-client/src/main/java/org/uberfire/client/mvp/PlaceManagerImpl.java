@@ -29,17 +29,13 @@ import org.jboss.errai.ioc.client.api.EnabledByProperty;
 import org.jboss.errai.ioc.client.api.SharedSingleton;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
-import org.uberfire.backend.vfs.ObservablePath;
-import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.WorkbenchLayout;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenterImpl;
 import org.uberfire.mvp.BiParameterizedCommand;
 import org.uberfire.mvp.Command;
-import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
-import org.uberfire.mvp.impl.PathPlaceRequest;
 import org.uberfire.workbench.model.ActivityResourceType;
 import org.uberfire.workbench.model.CustomPanelDefinition;
 import org.uberfire.workbench.model.PanelDefinition;
@@ -47,7 +43,6 @@ import org.uberfire.workbench.model.PartDefinition;
 import org.uberfire.workbench.model.impl.PanelDefinitionImpl;
 import org.uberfire.workbench.model.impl.PartDefinitionImpl;
 
-import static org.uberfire.plugin.PluginUtil.ensureIterable;
 import static org.uberfire.plugin.PluginUtil.toInteger;
 
 @SharedSingleton
@@ -69,32 +64,27 @@ public class PlaceManagerImpl implements PlaceManager {
 
     @Override
     public void bootstrapRootPanel() {
-        final ParameterizedCommand<PanelDefinition> command = panelDef -> {
+        final BiParameterizedCommand<PanelDefinition, PartDefinition> command = (panelDef, partDef) -> {
             panelManager.setRoot(panelDef);
-
-            for (PartDefinition part : ensureIterable(panelDef.getParts())) {
-                final PlaceRequest place = part.getPlace().clone();
-                part.setPlace(place);
-                goTo(part, panelDef);
-            }
-
+            goToEditor(partDef, panelDef);
             workbenchLayout.onResize();
         };
 
         final PanelDefinitionImpl rootPanel = new PanelDefinitionImpl(WorkbenchPanelPresenterImpl.class.getName());
+        final PartDefinitionImpl editorPart = new PartDefinitionImpl(resolveEditorPlaceRequest());
         rootPanel.setRoot(true);
-        rootPanel.addPart(new PartDefinitionImpl(new DefaultPlaceRequest(resolveEditorPlaceRequest())));
-        command.execute(rootPanel);
+        rootPanel.addPart(editorPart);
+        command.execute(rootPanel, editorPart);
     }
 
-    private String resolveEditorPlaceRequest() {
+    private DefaultPlaceRequest resolveEditorPlaceRequest() {
         final Collection<SyncBeanDef<EditorActivity>> editors = iocManager.lookupBeans(EditorActivity.class);
 
         if (editors.size() != 1) {
             throw new RuntimeException("There must be exactly one instance of EditorActivity.");
         }
 
-        return editors.iterator().next().getInstance().getIdentifier();
+        return new DefaultPlaceRequest(editors.iterator().next().getInstance().getIdentifier());
     }
 
     @Override
@@ -130,6 +120,25 @@ public class PlaceManagerImpl implements PlaceManager {
         }
     }
 
+    private void goToEditor(final PartDefinition part,
+                            final PanelDefinition panel) {
+        final PlaceRequest place = part.getPlace();
+        if (place == null) {
+            return;
+        }
+
+        final Activity resolved = resolveActivity(place);
+
+        if (!resolved.isType(ActivityResourceType.EDITOR.name())) {
+            throw new IllegalArgumentException("Only EditorActivity can be launched in a specific targetPanel.");
+        }
+
+        launchActivity(place,
+                       resolved,
+                       part,
+                       panel);
+    }
+
     private Activity resolveActivity(final PlaceRequest place) {
         final Activity existingDestination = resolveExistingParts(place);
 
@@ -156,41 +165,7 @@ public class PlaceManagerImpl implements PlaceManager {
             return activity;
         }
 
-        if (place instanceof PathPlaceRequest) {
-            final ObservablePath path = ((PathPlaceRequest) place).getPath();
-
-            for (final Map.Entry<PlaceRequest, PartDefinition> entry : visibleWorkbenchParts.entrySet()) {
-                final PlaceRequest pr = entry.getKey();
-                if (pr instanceof PathPlaceRequest) {
-                    final Path visiblePath = ((PathPlaceRequest) pr).getPath();
-                    final String visiblePathURI = visiblePath.toURI();
-                    if ((visiblePathURI != null && visiblePathURI.compareTo(path.toURI()) == 0) || visiblePath.compareTo(path) == 0) {
-                        return getActivity(pr);
-                    }
-                }
-            }
-        }
-
         return null;
-    }
-
-    private void goTo(final PartDefinition part,
-                      final PanelDefinition panel) {
-        final PlaceRequest place = part.getPlace();
-        if (place == null) {
-            return;
-        }
-
-        final Activity resolved = resolveActivity(place);
-
-        if (!resolved.isType(ActivityResourceType.EDITOR.name())) {
-            throw new IllegalArgumentException("Only EditorActivity can be launched in a specific targetPanel.");
-        }
-
-        launchActivity(place,
-                       resolved,
-                       part,
-                       panel);
     }
 
     private Activity getActivity(final PlaceRequest place) {
@@ -272,10 +247,6 @@ public class PlaceManagerImpl implements PlaceManager {
             PanelDefinition customPanelDef = customPanels.remove(place);
             if (customPanelDef != null) {
                 panelManager.removeWorkbenchPanel(customPanelDef);
-            }
-
-            if (place instanceof PathPlaceRequest) {
-                ((PathPlaceRequest) place).getPath().dispose();
             }
 
             if (onAfterClose != null) {

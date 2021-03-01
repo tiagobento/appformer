@@ -33,14 +33,10 @@ import org.jboss.errai.ioc.client.api.EnabledByProperty;
 import org.jboss.errai.ioc.client.container.IOCBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
-import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.util.GWTEditorNativeRegister;
 import org.uberfire.mvp.PlaceRequest;
-import org.uberfire.mvp.impl.PathPlaceRequest;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 
 @ApplicationScoped
@@ -89,31 +85,10 @@ public class ActivityManagerImpl implements ActivityManager {
 
     @Override
     public Set<Activity> getActivities(final PlaceRequest placeRequest) {
-
         final Collection<SyncBeanDef<Activity>> beans;
-        if (placeRequest instanceof PathPlaceRequest) {
-            beans = resolveByPath((PathPlaceRequest) placeRequest);
-        } else {
-            beans = resolveById(placeRequest.getIdentifier());
-        }
-
-        final Set<Activity> activities = startIfNecessary(getActivitiesFromBeans(beans),
-                                                          placeRequest);
-
-        if (placeRequest instanceof PathPlaceRequest) {
-            resolvePathPlaceRequestIdentifier(placeRequest,
-                                              activities);
-        }
-
-        return activities;
-    }
-
-    private void resolvePathPlaceRequestIdentifier(PlaceRequest placeRequest,
-                                                   Set<Activity> activities) {
-        if (activities != null && !activities.isEmpty()) {
-            final Activity activity = activities.iterator().next();
-            placeRequest.setIdentifier(activity.getIdentifier());
-        }
+        beans = resolveById(placeRequest.getIdentifier());
+        return startIfNecessary(getActivitiesFromBeans(beans),
+                                placeRequest);
     }
 
     @Override
@@ -121,24 +96,10 @@ public class ActivityManagerImpl implements ActivityManager {
         if (containsCache.containsKey(placeRequest.getIdentifier())) {
             return containsCache.get(placeRequest.getIdentifier());
         }
-
-        Path path = null;
-        if (placeRequest instanceof PathPlaceRequest) {
-            path = ((PathPlaceRequest) placeRequest).getPath();
-            if (containsCache.containsKey(path)) {
-                return containsCache.get(path);
-            }
-        }
-
         final Activity result = getActivity(Activity.class,
                                             placeRequest);
         containsCache.put(placeRequest.getIdentifier(),
                           result != null);
-        if (path != null) {
-            containsCache.put(path,
-                              result != null);
-        }
-
         return result != null;
     }
 
@@ -248,18 +209,5 @@ public class ActivityManagerImpl implements ActivityManager {
             return emptyList();
         }
         return singletonList(beanDefActivity);
-    }
-
-    private Set<SyncBeanDef<Activity>> resolveByPath(final PathPlaceRequest place) {
-        if (place == null) {
-            return emptySet();
-        }
-        final SyncBeanDef<Activity> result = activitiesById.get(place.getIdentifier());
-
-        if (result != null) {
-            return singleton(result);
-        }
-
-        throw new RuntimeException();
     }
 }
