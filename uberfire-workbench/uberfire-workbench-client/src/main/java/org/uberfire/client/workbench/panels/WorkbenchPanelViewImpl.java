@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.uberfire.client.workbench.panels.impl;
+package org.uberfire.client.workbench.panels;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,22 +24,17 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 import com.google.gwt.user.client.ui.Widget;
-import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.util.Layouts;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartView;
-import org.uberfire.client.workbench.widgets.panel.StaticFocusedResizePanel;
 import org.uberfire.workbench.model.PartDefinition;
 
 /**
- * The view component of {@link StaticWorkbenchPanelPresenter}.
+ * The view component of {@link WorkbenchPanelPresenterImpl}.
  */
 @Dependent
-public class StaticWorkbenchPanelView
-        extends AbstractWorkbenchPanelView<StaticWorkbenchPanelPresenter> {
-
-    @Inject
-    PlaceManager placeManager;
+public class WorkbenchPanelViewImpl
+        extends AbstractWorkbenchPanelView<WorkbenchPanelPresenterImpl> {
 
     @Inject
     StaticFocusedResizePanel panel;
@@ -61,12 +56,12 @@ public class StaticWorkbenchPanelView
     }
 
     @Override
-    public void init(final StaticWorkbenchPanelPresenter presenter) {
+    public void init(final WorkbenchPanelPresenterImpl presenter) {
         this.presenter = presenter;
     }
 
     @Override
-    public StaticWorkbenchPanelPresenter getPresenter() {
+    public WorkbenchPanelPresenterImpl getPresenter() {
         return this.presenter;
     }
 

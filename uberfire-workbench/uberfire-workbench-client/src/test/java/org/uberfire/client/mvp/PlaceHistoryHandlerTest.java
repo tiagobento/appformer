@@ -49,7 +49,7 @@ public class PlaceHistoryHandlerTest {
     public void setup() {
 
         when(screenActivity.isDynamic()).thenReturn(false);
-        when(screenActivity.isType(ActivityResourceType.SCREEN.name())).thenReturn(true);
+        when(screenActivity.isType(ActivityResourceType.DOCK.name())).thenReturn(true);
         when(screenActivity.onMayClose()).thenReturn(true);
         when(screenActivity.preferredWidth()).thenReturn(26);
         when(screenActivity.preferredHeight()).thenReturn(77);

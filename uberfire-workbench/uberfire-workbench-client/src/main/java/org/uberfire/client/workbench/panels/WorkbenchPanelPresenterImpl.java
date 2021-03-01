@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.uberfire.client.workbench.panels.impl;
+package org.uberfire.client.workbench.panels;
 
 import java.util.Collection;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
@@ -32,19 +31,19 @@ import org.uberfire.workbench.model.PartDefinition;
  * parts.
  */
 @Dependent
-public class StaticWorkbenchPanelPresenter extends AbstractWorkbenchPanelPresenter<StaticWorkbenchPanelPresenter> {
+public class WorkbenchPanelPresenterImpl extends AbstractWorkbenchPanelPresenter<WorkbenchPanelPresenterImpl> {
 
     private PlaceManager placeManager;
 
     @Inject
-    public StaticWorkbenchPanelPresenter(final StaticWorkbenchPanelView view,
-                                         final PlaceManager placeManager) {
+    public WorkbenchPanelPresenterImpl(final WorkbenchPanelViewImpl view,
+                                       final PlaceManager placeManager) {
         super(view);
         this.placeManager = placeManager;
     }
 
     @Override
-    protected StaticWorkbenchPanelPresenter asPresenterType() {
+    protected WorkbenchPanelPresenterImpl asPresenterType() {
         return this;
     }
 

@@ -30,7 +30,7 @@ public class PerspectiveDefinitionImpl implements PerspectiveDefinition {
     private final PanelDefinition root;
 
     public PerspectiveDefinitionImpl() {
-        this("org.uberfire.client.workbench.panels.impl.StaticWorkbenchPanelPresenter");
+        this("org.uberfire.client.workbench.panels.WorkbenchPanelPresenterImpl");
     }
 
     public PerspectiveDefinitionImpl(final String panelType) {

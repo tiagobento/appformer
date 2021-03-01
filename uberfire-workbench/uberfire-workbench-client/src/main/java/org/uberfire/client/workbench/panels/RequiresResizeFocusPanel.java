@@ -14,10 +14,19 @@
  * limitations under the License.
  */
 
-package org.uberfire.client.workbench.widgets.multipage;
+package org.uberfire.client.workbench.panels;
 
-import com.google.gwt.user.client.ui.IsWidget;
+import com.google.gwt.user.client.ui.FocusPanel;
+import com.google.gwt.user.client.ui.RequiresResize;
 
-public interface PageView extends IsWidget {
+public class RequiresResizeFocusPanel
+        extends FocusPanel
+        implements RequiresResize {
 
+    @Override
+    public void onResize() {
+        if (getWidget() instanceof RequiresResize) {
+            ((RequiresResize) getWidget()).onResize();
+        }
+    }
 }

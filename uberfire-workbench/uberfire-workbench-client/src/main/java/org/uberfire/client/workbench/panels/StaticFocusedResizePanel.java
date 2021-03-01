@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.uberfire.client.workbench.widgets.panel;
+package org.uberfire.client.workbench.panels;
 
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HasFocusHandlers;
@@ -24,7 +24,6 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import org.uberfire.client.util.CSSLocatorsUtils;
-import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartView;
 import org.uberfire.workbench.model.PartDefinition;
 

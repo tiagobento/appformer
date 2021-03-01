@@ -35,7 +35,7 @@ import org.uberfire.backend.vfs.ObservablePath;
 import org.uberfire.backend.vfs.Path;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.WorkbenchLayout;
-import org.uberfire.client.workbench.panels.impl.StaticWorkbenchPanelPresenter;
+import org.uberfire.client.workbench.panels.WorkbenchPanelPresenterImpl;
 import org.uberfire.mvp.BiParameterizedCommand;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.ParameterizedCommand;
@@ -92,7 +92,7 @@ public class PlaceManagerImpl implements PlaceManager {
 
         if (resolved.getActivity() != null) {
             final Activity activity = resolved.getActivity();
-            if (activity.isType(ActivityResourceType.SCREEN.name())) {
+            if (activity.isType(ActivityResourceType.DOCK.name())) {
                 launchWorkbenchActivity(resolved.getPlaceRequest(),
                                         activity,
                                         panel);
@@ -116,7 +116,7 @@ public class PlaceManagerImpl implements PlaceManager {
 
         goToTargetPanel(place,
                         panelManager.addCustomPanel(addTo,
-                                                    StaticWorkbenchPanelPresenter.class.getName()));
+                                                    WorkbenchPanelPresenterImpl.class.getName()));
     }
 
     private void goToTargetPanel(final PlaceRequest place,
@@ -236,7 +236,7 @@ public class PlaceManagerImpl implements PlaceManager {
             final Activity activity = resolved.getActivity();
 
             if (activity.isType(ActivityResourceType.EDITOR.name()) ||
-                    activity.isType(ActivityResourceType.SCREEN.name())) {
+                    activity.isType(ActivityResourceType.DOCK.name())) {
                 launchWorkbenchActivityInPanel(place,
                                                activity,
                                                part,
@@ -355,7 +355,7 @@ public class PlaceManagerImpl implements PlaceManager {
                 return;
             }
 
-            if (activity.isType(ActivityResourceType.SCREEN.name())) {
+            if (activity.isType(ActivityResourceType.DOCK.name())) {
                 try {
                     activity.onClose();
                 } catch (Exception ex) {

@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package org.uberfire.client.workbench.panels.impl;
-
-import javax.inject.Inject;
+package org.uberfire.client.workbench.panels;
 
 import com.google.gwt.user.client.ui.ResizeComposite;
-import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
 import org.uberfire.client.workbench.panels.WorkbenchPanelView;
 import org.uberfire.workbench.model.PanelDefinition;
@@ -32,9 +29,6 @@ import org.uberfire.workbench.model.Position;
 public abstract class AbstractWorkbenchPanelView<P extends WorkbenchPanelPresenter>
         extends ResizeComposite
         implements WorkbenchPanelView<P> {
-
-    @Inject
-    protected PanelManager panelManager;
 
     protected P presenter;
 

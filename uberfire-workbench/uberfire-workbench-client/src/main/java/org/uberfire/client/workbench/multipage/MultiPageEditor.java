@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-package org.uberfire.client.workbench.widgets.multipage;
+package org.uberfire.client.workbench.multipage;
 
-public interface Page {
+import com.google.gwt.user.client.ui.IsWidget;
 
-    String getLabel();
+public interface MultiPageEditor extends IsWidget {
 
-    void onFocus();
+    void addPage(final Page page);
 
-    void onLostFocus();
+    void selectPage(final int index);
 
-    PageView getView();
+    int selectedPage();
+
+    MultiPageEditorView getView();
+
+    void clear();
+
+    void addTabBarWidget(final IsWidget customWidget);
 }

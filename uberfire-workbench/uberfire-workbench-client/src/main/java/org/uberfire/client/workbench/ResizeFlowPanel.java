@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.uberfire.client.workbench.widgets;
+package org.uberfire.client.workbench;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
