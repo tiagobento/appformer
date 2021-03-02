@@ -23,9 +23,9 @@ import javax.inject.Inject;
 
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
-import org.uberfire.client.workbench.multipage.MultiPageEditor;
-import org.uberfire.client.workbench.multipage.MultiPageEditorView;
-import org.uberfire.client.workbench.multipage.Page;
+import org.uberfire.client.workbench.widgets.multipage.MultiPageEditor;
+import org.uberfire.client.workbench.widgets.multipage.MultiPageEditorView;
+import org.uberfire.client.workbench.widgets.multipage.Page;
 
 @Dependent
 public class MultiPageEditorImpl implements MultiPageEditor {

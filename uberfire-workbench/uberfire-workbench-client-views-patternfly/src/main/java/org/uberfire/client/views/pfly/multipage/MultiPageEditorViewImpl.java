@@ -26,8 +26,8 @@ import org.gwtbootstrap3.client.shared.event.TabShownHandler;
 import org.gwtbootstrap3.client.ui.TabListItem;
 import org.uberfire.client.views.pfly.tab.ResizeTabPanel;
 import org.uberfire.client.views.pfly.tab.TabPanelEntry;
-import org.uberfire.client.workbench.multipage.MultiPageEditorView;
-import org.uberfire.client.workbench.multipage.Page;
+import org.uberfire.client.workbench.widgets.multipage.MultiPageEditorView;
+import org.uberfire.client.workbench.widgets.multipage.Page;
 
 @Dependent
 public class MultiPageEditorViewImpl extends ResizeTabPanel implements MultiPageEditorView {

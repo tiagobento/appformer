@@ -17,8 +17,8 @@
 package org.uberfire.client.views.pfly.multipage;
 
 import com.google.gwt.user.client.ui.IsWidget;
-import org.uberfire.client.workbench.multipage.Page;
-import org.uberfire.client.workbench.multipage.PageView;
+import org.uberfire.client.workbench.widgets.multipage.Page;
+import org.uberfire.client.workbench.widgets.multipage.PageView;
 
 public class PageImpl implements Page {
 
