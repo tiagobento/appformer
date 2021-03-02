@@ -82,11 +82,9 @@ public class PanelManagerImpl implements PanelManager {
             throw new RuntimeException("Cannot set root more than once.");
         }
 
-        WorkbenchPanelPresenter newPresenter = mapPanelDefinitionToPresenter.computeIfAbsent(root, panelDefinition -> {
-            WorkbenchPanelPresenter p = panelPresenterInstances.get();
-            p.setDefinition(root);
-            return p;
-        });
+        final WorkbenchPanelPresenter newPresenter = panelPresenterInstances.get();
+        newPresenter.setDefinition(root);
+        mapPanelDefinitionToPresenter.put(root, newPresenter);
         workbenchLayout.addContent(newPresenter.getPanelView().asWidget());
         isRootSet = true;
     }

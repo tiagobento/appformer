@@ -17,10 +17,8 @@ package org.uberfire.client.mvp;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import javax.inject.Inject;
 
@@ -50,8 +48,7 @@ import static org.uberfire.plugin.PluginUtil.toInteger;
 public class PlaceManagerImpl implements PlaceManager {
 
     private final Map<PlaceRequest, Activity> existingWorkbenchActivities = new HashMap<>();
-    private final Map<PlaceRequest, PartDefinition> visibleWorkbenchParts = new HashMap<>();
-    private final Map<PlaceRequest, CustomPanelDefinition> customPanels = new HashMap<>();
+    private final Map<PlaceRequest, CustomPanelDefinition> dockPanels = new HashMap<>();
 
     @Inject
     private ActivityManager activityManager;
@@ -90,46 +87,26 @@ public class PlaceManagerImpl implements PlaceManager {
     @Override
     public void goToDock(PlaceRequest place,
                          HasWidgets addTo) {
-        if (place == null || place.equals(PlaceRequest.NOWHERE)) {
+        final Activity activity = resolveActivity(place);
+        if (!activity.isType(ActivityResourceType.DOCK.name()) || place == null || place.equals(PlaceRequest.NOWHERE)) {
             return;
         }
 
-        final Predicate<CustomPanelDefinition> filter = p -> p.getHasWidgetsContainer().isPresent()
-                && p.getHasWidgetsContainer().get().equals(addTo);
-
-        new HashSet<>(customPanels.values()).stream()
-                .filter(filter)
-                .flatMap(p -> p.getParts().stream())
-                .forEach(part -> closePlace(part.getPlace(), null));
-
-        final CustomPanelDefinition customPanel = panelManager.addCustomPanel(addTo);
-        customPanels.put(place,
-                         customPanel);
-
-        final Activity activity = resolveActivity(place);
-
-        if (activity.isType(ActivityResourceType.DOCK.name())) {
-            if (visibleWorkbenchParts.containsKey(place)) {
-                return;
-            }
-
-            launchActivity(place,
-                           activity,
-                           new PartDefinitionImpl(place),
-                           customPanel);
-        }
+        final CustomPanelDefinition dockPanel = panelManager.addCustomPanel(addTo);
+        dockPanels.put(place,
+                       dockPanel);
+        launchActivity(place,
+                       activity,
+                       new PartDefinitionImpl(place),
+                       dockPanel);
     }
 
     private void goToEditor(final PlaceRequest place,
                             final PanelDefinition panel) {
-        if (place == null || place.equals(PlaceRequest.NOWHERE)) {
-            return;
-        }
-
         final Activity activity = resolveActivity(place);
-
-        if (!activity.isType(ActivityResourceType.EDITOR.name())) {
-            throw new IllegalArgumentException("Only EditorActivity can be launched in a specific targetPanel.");
+        if (!activity.isType(ActivityResourceType.EDITOR.name()) ||
+                place == null || place.equals(PlaceRequest.NOWHERE)) {
+            return;
         }
 
         launchActivity(place,
@@ -139,49 +116,27 @@ public class PlaceManagerImpl implements PlaceManager {
     }
 
     private Activity resolveActivity(final PlaceRequest place) {
-        final Activity existingDestination = getActivity(place);
-
-        if (existingDestination != null) {
-            return existingDestination;
-        }
-
         final Set<Activity> activities = activityManager.getActivities(place);
-
         if (activities.size() != 1) {
             throw new RuntimeException("There shouldn't be more than one activity associated with a place request.");
         }
 
-        Activity resolvedActivity = activities.iterator().next();
+        final Activity resolvedActivity = activities.iterator().next();
         existingWorkbenchActivities.put(place,
                                         resolvedActivity);
         return resolvedActivity;
-    }
-
-    private Activity getActivity(final PlaceRequest place) {
-        if (place == null) {
-            return null;
-        }
-        return existingWorkbenchActivities.get(place);
     }
 
     private void launchActivity(final PlaceRequest place,
                                 final Activity activity,
                                 final PartDefinition part,
                                 final PanelDefinition panel) {
-        if (visibleWorkbenchParts.containsKey(place)) {
-            return;
-        }
-
-        visibleWorkbenchParts.put(place,
-                                  part);
-
         panelManager.addWorkbenchPart(place,
                                       part,
                                       panel,
                                       activity.getWidget(),
                                       toInteger(panel.getWidthAsInt()),
                                       toInteger(panel.getHeightAsInt()));
-
         try {
             activity.onOpen();
         } catch (Exception ex) {
@@ -221,12 +176,11 @@ public class PlaceManagerImpl implements PlaceManager {
 
             panelManager.removePartForPlace(place);
             existingWorkbenchActivities.remove(place);
-            visibleWorkbenchParts.remove(place);
             activityManager.destroyActivity(activity);
 
             // currently, we force all custom panels as Static panels, so they can only ever contain the one part we put in them.
             // we are responsible for cleaning them up when their place closes.
-            PanelDefinition customPanelDef = customPanels.remove(place);
+            PanelDefinition customPanelDef = dockPanels.remove(place);
             if (customPanelDef != null) {
                 panelManager.removeWorkbenchPanel(customPanelDef);
             }
