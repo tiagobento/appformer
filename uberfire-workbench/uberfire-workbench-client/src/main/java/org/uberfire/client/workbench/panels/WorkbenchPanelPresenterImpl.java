@@ -60,9 +60,6 @@ public class WorkbenchPanelPresenterImpl implements WorkbenchPanelPresenter {
 
     @Override
     public void addPart(final WorkbenchPartPresenter part) {
-        if (!getPanelView().getParts().isEmpty()) {
-            throw new RuntimeException("CAPONETTO REMOVE IT");
-        }
         // special case: when new perspectives are being built up based on definitions,
         // our definition will already say it contains the given part! We should not try to add it again.
         Optional<PartDefinition> optional = definition.getParts().stream()
@@ -78,27 +75,6 @@ public class WorkbenchPanelPresenterImpl implements WorkbenchPanelPresenter {
     public boolean removePart(final PartDefinition part) {
         view.removePart(part);
         return definition.removePart(part);
-    }
-
-    @Override
-    public boolean removePanel(WorkbenchPanelPresenter child) {
-        Position position = positionOf(child);
-        if (position == null) {
-            return false;
-        }
-        getPanelView().removePanel(child.getPanelView());
-        definition.removeChild(position);
-        childPanels.remove(position);
-        return true;
-    }
-
-    protected Position positionOf(WorkbenchPanelPresenter child) {
-        for (Map.Entry<Position, WorkbenchPanelPresenter> entry : childPanels.entrySet()) {
-            if (child == entry.getValue()) {
-                return entry.getKey();
-            }
-        }
-        return null;
     }
 
     @Override

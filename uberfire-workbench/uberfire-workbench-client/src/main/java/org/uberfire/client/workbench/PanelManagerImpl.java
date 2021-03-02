@@ -30,8 +30,8 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.mvp.PlaceManager;
-import org.uberfire.client.workbench.panels.WorkbenchPanelPresenterImpl;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
+import org.uberfire.client.workbench.panels.WorkbenchPanelPresenterImpl;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.debug.Debug;
 import org.uberfire.mvp.PlaceRequest;
@@ -158,14 +158,6 @@ public class PanelManagerImpl implements PanelManager {
         HasWidgets customContainer = customPanels.remove(toRemove);
         if (customContainer != null) {
             customContainer.remove(presenterToRemove.getPanelView().asWidget());
-        } else {
-            final PanelDefinition parentDef = toRemove.getParent();
-            final WorkbenchPanelPresenter parentPresenter = mapPanelDefinitionToPresenter.get(parentDef);
-            if (parentPresenter == null) {
-                throw new IllegalArgumentException("The given panel's parent could not be found");
-            }
-
-            parentPresenter.removePanel(presenterToRemove);
         }
     }
 

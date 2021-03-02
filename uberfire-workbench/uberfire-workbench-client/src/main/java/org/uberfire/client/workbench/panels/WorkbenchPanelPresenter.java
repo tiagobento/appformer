@@ -64,14 +64,6 @@ public interface WorkbenchPanelPresenter {
     boolean removePart(final PartDefinition part);
 
     /**
-     * Removes the given panel presenter and its view from this panel, freeing all resources associated with them.
-     * @param child The child panel to remove. Must be a direct child of this panel, and must be empty (contain no parts
-     * or child panels). Null is not permitted.
-     * @return true if the child was found and removed from this panel; false if the child panel could not be found.
-     */
-    boolean removePanel(WorkbenchPanelPresenter child);
-
-    /**
      * Returns the view that was given to this panel when it was first created.
      */
     WorkbenchPanelView getPanelView();

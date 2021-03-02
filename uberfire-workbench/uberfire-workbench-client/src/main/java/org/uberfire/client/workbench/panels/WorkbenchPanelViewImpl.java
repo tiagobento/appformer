@@ -16,10 +16,6 @@
 
 package org.uberfire.client.workbench.panels;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
@@ -29,9 +25,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.uberfire.client.util.Layouts;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartView;
-import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
-import org.uberfire.workbench.model.Position;
 
 @Dependent
 public class WorkbenchPanelViewImpl extends ResizeComposite implements WorkbenchPanelView {
@@ -52,10 +46,6 @@ public class WorkbenchPanelViewImpl extends ResizeComposite implements Workbench
         return panel;
     }
 
-    public StaticFocusedResizePanel getPanel() {
-        return panel;
-    }
-
     @Override
     public void init(final WorkbenchPanelPresenter presenter) {
         this.presenter = presenter;
@@ -69,12 +59,6 @@ public class WorkbenchPanelViewImpl extends ResizeComposite implements Workbench
         } else {
             throw new RuntimeException("Uberfire Panel Invalid State: This panel support only one part.");
         }
-    }
-
-    @Override
-    public boolean selectPart(final PartDefinition part) {
-        PartDefinition currentPartDefinition = getCurrentPartDefinition();
-        return currentPartDefinition != null && currentPartDefinition.equals(part);
     }
 
     @Override
@@ -106,32 +90,6 @@ public class WorkbenchPanelViewImpl extends ResizeComposite implements Workbench
         }
 
         return presenter.getDefinition();
-    }
-
-    @Override
-    public Collection<PartDefinition> getParts() {
-        PartDefinition currentPartDefinition = getCurrentPartDefinition();
-        if (currentPartDefinition == null) {
-            return new ArrayList<>();
-        }
-        return Collections.singletonList(currentPartDefinition);
-    }
-
-    @Override
-    public void addPanel(PanelDefinition panel,
-                         WorkbenchPanelView view,
-                         Position position) {
-        throw new UnsupportedOperationException("This panel does not support child panels");
-    }
-
-    @Override
-    public boolean removePanel(WorkbenchPanelView child) {
-        throw new UnsupportedOperationException("This panel does not support child panels");
-    }
-
-    @Override
-    public WorkbenchPanelPresenter getPresenter() {
-        return this.presenter;
     }
 
     @Override
