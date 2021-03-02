@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.uberfire.client.workbench.panels;
 
 import java.util.ArrayList;
@@ -23,21 +24,22 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
+import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 import org.uberfire.client.util.Layouts;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartView;
+import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
+import org.uberfire.workbench.model.Position;
 
-/**
- * The view component of {@link WorkbenchPanelPresenterImpl}.
- */
 @Dependent
-public class WorkbenchPanelViewImpl
-        extends AbstractWorkbenchPanelView<WorkbenchPanelPresenterImpl> {
+public class WorkbenchPanelViewImpl extends ResizeComposite implements WorkbenchPanelView {
 
     @Inject
     StaticFocusedResizePanel panel;
+
+    protected WorkbenchPanelPresenter presenter;
 
     @PostConstruct
     void postConstruct() {
@@ -45,7 +47,6 @@ public class WorkbenchPanelViewImpl
         initWidget(panel);
     }
 
-    // override is for unit test: super.getWidget() returns a new mock every time
     @Override
     public Widget getWidget() {
         return panel;
@@ -56,13 +57,8 @@ public class WorkbenchPanelViewImpl
     }
 
     @Override
-    public void init(final WorkbenchPanelPresenterImpl presenter) {
+    public void init(final WorkbenchPanelPresenter presenter) {
         this.presenter = presenter;
-    }
-
-    @Override
-    public WorkbenchPanelPresenterImpl getPresenter() {
-        return this.presenter;
     }
 
     @Override
@@ -119,5 +115,38 @@ public class WorkbenchPanelViewImpl
             return new ArrayList<>();
         }
         return Collections.singletonList(currentPartDefinition);
+    }
+
+    @Override
+    public void addPanel(PanelDefinition panel,
+                         WorkbenchPanelView view,
+                         Position position) {
+        throw new UnsupportedOperationException("This panel does not support child panels");
+    }
+
+    @Override
+    public boolean removePanel(WorkbenchPanelView child) {
+        throw new UnsupportedOperationException("This panel does not support child panels");
+    }
+
+    @Override
+    public WorkbenchPanelPresenter getPresenter() {
+        return this.presenter;
+    }
+
+    @Override
+    public void setElementId(String elementId) {
+        if (elementId == null) {
+            getElement().removeAttribute("id");
+        } else {
+            getElement().setAttribute("id",
+                                      elementId);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getName() + "@" + System.identityHashCode(this) +
+                " id=" + getElement().getAttribute("id");
     }
 }

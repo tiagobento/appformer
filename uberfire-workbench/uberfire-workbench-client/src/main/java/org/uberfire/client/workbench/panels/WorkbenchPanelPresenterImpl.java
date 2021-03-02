@@ -15,64 +15,119 @@
  */
 package org.uberfire.client.workbench.panels;
 
-import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
-import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
-import org.uberfire.mvp.PlaceRequest;
+import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
+import org.uberfire.workbench.model.Position;
 
-/**
- * An undecorated panel that can contain one part at a time and does not support child panels. The part's view fills
- * the entire panel. Adding a new part replaces the existing part. Does not support drag-and-drop rearrangement of
- * parts.
- */
+import static org.uberfire.debug.Debug.objectId;
+
 @Dependent
-public class WorkbenchPanelPresenterImpl extends AbstractWorkbenchPanelPresenter<WorkbenchPanelPresenterImpl> {
+public class WorkbenchPanelPresenterImpl implements WorkbenchPanelPresenter {
 
-    private PlaceManager placeManager;
+    protected final Map<Position, WorkbenchPanelPresenter> childPanels = new LinkedHashMap<>();
+    private final WorkbenchPanelView view;
+    private PanelDefinition definition;
 
     @Inject
-    public WorkbenchPanelPresenterImpl(final WorkbenchPanelViewImpl view,
-                                       final PlaceManager placeManager) {
-        super(view);
-        this.placeManager = placeManager;
+    public WorkbenchPanelPresenterImpl(final WorkbenchPanelView view) {
+        this.view = view;
+    }
+
+    @PostConstruct
+    void init() {
+        getPanelView().init(this);
     }
 
     @Override
-    protected WorkbenchPanelPresenterImpl asPresenterType() {
-        return this;
-    }
-
-    /**
-     * Returns null (static panels don't support child panels).
-     */
-    @Override
-    public String getDefaultChildType() {
-        return null;
+    public PanelDefinition getDefinition() {
+        return definition;
     }
 
     @Override
-    public void addPart(WorkbenchPartPresenter part) {
-        if (getPanelView().getParts().isEmpty()) {
-            super.addPart(part);
-        } else {
-            placeManager.closePlace(getPlaceFromFirstPart(),
-                                    () -> super.addPart(part));
+    public void setDefinition(final PanelDefinition definition) {
+        this.definition = definition;
+        view.setElementId(definition.getElementId());
+    }
+
+    @Override
+    public void addPart(final WorkbenchPartPresenter part) {
+        if (!getPanelView().getParts().isEmpty()) {
+            throw new RuntimeException("CAPONETTO REMOVE IT");
         }
+        // special case: when new perspectives are being built up based on definitions,
+        // our definition will already say it contains the given part! We should not try to add it again.
+        Optional<PartDefinition> optional = definition.getParts().stream()
+                .filter(partDefinition -> partDefinition.equals(part.getDefinition()))
+                .findAny();
+        if (!optional.isPresent()) {
+            definition.addPart(part.getDefinition());
+        }
+        getPanelView().addPart(part.getPartView());
     }
 
-    private PlaceRequest getPlaceFromFirstPart() {
-        Collection<PartDefinition> parts = getPanelView().getParts();
-        if (parts.iterator().hasNext()) {
-            PartDefinition part = parts.iterator().next();
-            if (part != null) {
-                return part.getPlace();
+    @Override
+    public boolean removePart(final PartDefinition part) {
+        view.removePart(part);
+        return definition.removePart(part);
+    }
+
+    @Override
+    public boolean removePanel(WorkbenchPanelPresenter child) {
+        Position position = positionOf(child);
+        if (position == null) {
+            return false;
+        }
+        getPanelView().removePanel(child.getPanelView());
+        definition.removeChild(position);
+        childPanels.remove(position);
+        return true;
+    }
+
+    protected Position positionOf(WorkbenchPanelPresenter child) {
+        for (Map.Entry<Position, WorkbenchPanelPresenter> entry : childPanels.entrySet()) {
+            if (child == entry.getValue()) {
+                return entry.getKey();
             }
         }
         return null;
+    }
+
+    @Override
+    public WorkbenchPanelView getPanelView() {
+        return view;
+    }
+
+    @Override
+    public void onResize(final int width,
+                         final int height) {
+        if (width != 0) {
+            getDefinition().setWidth(width);
+        }
+
+        if (height != 0) {
+            getDefinition().setHeight(height);
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder(getClass().getName());
+        sb.append(objectId(this));
+        if (getDefinition() == null) {
+            sb.append(" (no definition)");
+        } else {
+            sb.append(" id=").append(getDefinition().getElementId());
+        }
+
+        return sb.toString();
     }
 }

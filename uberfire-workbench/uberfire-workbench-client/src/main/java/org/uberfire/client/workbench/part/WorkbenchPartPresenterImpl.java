@@ -23,9 +23,6 @@ import javax.inject.Inject;
 import com.google.gwt.user.client.ui.IsWidget;
 import org.uberfire.workbench.model.PartDefinition;
 
-/**
- * A Workbench panel part.
- */
 @Dependent
 public class WorkbenchPartPresenterImpl implements WorkbenchPartPresenter {
 

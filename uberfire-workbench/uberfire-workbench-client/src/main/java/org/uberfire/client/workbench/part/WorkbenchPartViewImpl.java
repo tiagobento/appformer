@@ -22,9 +22,6 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import org.uberfire.client.util.Layouts;
 
-/**
- * A Workbench panel part.
- */
 @Dependent
 public class WorkbenchPartViewImpl extends SimpleLayoutPanel implements WorkbenchPartView {
 

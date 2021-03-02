@@ -48,15 +48,16 @@ import org.uberfire.workbench.model.Position;
  * being destroyed too. At this point, the view's {@code @PreDestroy} method is invoked by Errai IOC.
  * </ol>
  */
-public interface WorkbenchPanelView<P extends WorkbenchPanelPresenter> extends UberView<P>,
-                                                                               RequiresResize {
+public interface WorkbenchPanelView extends UberView<WorkbenchPanelPresenter>,
+                                            RequiresResize {
 
     /**
      * Returns this view's presenter.
+     *
      * @return the presenter that this view is bound to. Will return null if invoked before the presenter calls
      * {@link #init(Object)}; afterward, the return value is never null.
      */
-    P getPresenter();
+    WorkbenchPanelPresenter getPresenter();
 
     /**
      * Adds the given part view to this panel if this panel does not already contain a view that handles the same
@@ -80,14 +81,14 @@ public interface WorkbenchPanelView<P extends WorkbenchPanelPresenter> extends U
      * @throws UnsupportedOperationException if this panel does not support child panels at all.
      */
     void addPanel(final PanelDefinition panel,
-                  final WorkbenchPanelView<?> view,
+                  final WorkbenchPanelView view,
                   final Position position);
 
     /**
      * Removes the view widget associated with the given child from this panel, freeing any resources that were
      * allocated by this panel when the child was added.
      */
-    boolean removePanel(WorkbenchPanelView<?> child);
+    boolean removePanel(WorkbenchPanelView child);
 
     /**
      * Makes the given part visible and focused, if it belongs to this view.
