@@ -26,7 +26,6 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import org.jboss.errai.ioc.client.api.AfterInitialization;
-import org.jboss.errai.ioc.client.api.EnabledByProperty;
 import org.jboss.errai.ioc.client.api.EntryPoint;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.resources.WorkbenchResources;
@@ -74,7 +73,6 @@ import org.uberfire.client.resources.WorkbenchResources;
  * </pre>
  */
 @EntryPoint
-@EnabledByProperty(value = "uberfire.plugin.mode.active", negated = true)
 public class Workbench {
 
     @Inject

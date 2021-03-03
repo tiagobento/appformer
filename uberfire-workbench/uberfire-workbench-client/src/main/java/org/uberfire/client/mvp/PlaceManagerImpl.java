@@ -23,7 +23,6 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import com.google.gwt.user.client.ui.HasWidgets;
-import org.jboss.errai.ioc.client.api.EnabledByProperty;
 import org.jboss.errai.ioc.client.api.SharedSingleton;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
@@ -44,7 +43,6 @@ import org.uberfire.workbench.model.impl.PartDefinitionImpl;
 import static org.uberfire.plugin.PluginUtil.toInteger;
 
 @SharedSingleton
-@EnabledByProperty(value = "uberfire.plugin.mode.active", negated = true)
 public class PlaceManagerImpl implements PlaceManager {
 
     private final Map<PlaceRequest, Activity> existingWorkbenchActivities = new HashMap<>();
@@ -61,9 +59,19 @@ public class PlaceManagerImpl implements PlaceManager {
 
     @Override
     public void bootstrapRootPanel() {
-        final BiParameterizedCommand<PanelDefinition, PlaceRequest> command = (panelDef, place) -> {
+        final BiParameterizedCommand<PanelDefinition, PlaceRequest> command = (panelDef, editorPlace) -> {
             panelManager.setRoot(panelDef);
-            goToEditor(place, panelDef);
+
+            final Activity editorActivity = resolveActivity(editorPlace, ActivityResourceType.EDITOR);
+            if (editorActivity == null) {
+                return;
+            }
+
+            launchActivity(editorPlace,
+                           editorActivity,
+                           new PartDefinitionImpl(editorPlace),
+                           panelDef);
+
             workbenchLayout.onResize();
         };
 
@@ -87,8 +95,8 @@ public class PlaceManagerImpl implements PlaceManager {
     @Override
     public void goToDock(PlaceRequest place,
                          HasWidgets addTo) {
-        final Activity activity = resolveActivity(place);
-        if (!activity.isType(ActivityResourceType.DOCK.name()) || place == null || place.equals(PlaceRequest.NOWHERE)) {
+        final Activity dockActivity = resolveActivity(place, ActivityResourceType.DOCK);
+        if (place == null || dockActivity == null) {
             return;
         }
 
@@ -96,32 +104,23 @@ public class PlaceManagerImpl implements PlaceManager {
         dockPanels.put(place,
                        dockPanel);
         launchActivity(place,
-                       activity,
+                       dockActivity,
                        new PartDefinitionImpl(place),
                        dockPanel);
     }
 
-    private void goToEditor(final PlaceRequest place,
-                            final PanelDefinition panel) {
-        final Activity activity = resolveActivity(place);
-        if (!activity.isType(ActivityResourceType.EDITOR.name()) ||
-                place == null || place.equals(PlaceRequest.NOWHERE)) {
-            return;
-        }
-
-        launchActivity(place,
-                       activity,
-                       new PartDefinitionImpl(place),
-                       panel);
-    }
-
-    private Activity resolveActivity(final PlaceRequest place) {
+    private Activity resolveActivity(final PlaceRequest place,
+                                     final ActivityResourceType type) {
         final Set<Activity> activities = activityManager.getActivities(place);
         if (activities.size() != 1) {
             throw new RuntimeException("There shouldn't be more than one activity associated with a place request.");
         }
 
         final Activity resolvedActivity = activities.iterator().next();
+        if (!resolvedActivity.isType(type.name())) {
+            return null;
+        }
+
         existingWorkbenchActivities.put(place,
                                         resolvedActivity);
         return resolvedActivity;
@@ -150,44 +149,26 @@ public class PlaceManagerImpl implements PlaceManager {
         if (place == null) {
             return;
         }
-        final Activity existingActivity = existingWorkbenchActivities.get(place);
-        if (existingActivity == null) {
+        final Activity activity = existingWorkbenchActivities.get(place);
+        if (activity == null) {
             return;
         }
 
-        final Command closeCommand = getCloseCommand(place,
-                                                     onAfterClose);
+        activity.onClose();
 
-        final BiParameterizedCommand<Command, PlaceRequest> closeChain = (chain, placeRequest) -> chain.execute();
-        closeChain.execute(closeCommand,
-                           place);
-    }
+        panelManager.removePartForPlace(place);
+        existingWorkbenchActivities.remove(place);
+        activityManager.destroyActivity(activity);
 
-    private Command getCloseCommand(final PlaceRequest place,
-                                    final Command onAfterClose) {
-        return () -> {
+        // currently, we force all custom panels as Static panels, so they can only ever contain the one part we put in them.
+        // we are responsible for cleaning them up when their place closes.
+        PanelDefinition customPanelDef = dockPanels.remove(place);
+        if (customPanelDef != null) {
+            panelManager.removeWorkbenchPanel(customPanelDef);
+        }
 
-            final Activity activity = existingWorkbenchActivities.get(place);
-            if (activity == null) {
-                return;
-            }
-
-            activity.onClose();
-
-            panelManager.removePartForPlace(place);
-            existingWorkbenchActivities.remove(place);
-            activityManager.destroyActivity(activity);
-
-            // currently, we force all custom panels as Static panels, so they can only ever contain the one part we put in them.
-            // we are responsible for cleaning them up when their place closes.
-            PanelDefinition customPanelDef = dockPanels.remove(place);
-            if (customPanelDef != null) {
-                panelManager.removeWorkbenchPanel(customPanelDef);
-            }
-
-            if (onAfterClose != null) {
-                onAfterClose.execute();
-            }
-        };
+        if (onAfterClose != null) {
+            onAfterClose.execute();
+        }
     }
 }
