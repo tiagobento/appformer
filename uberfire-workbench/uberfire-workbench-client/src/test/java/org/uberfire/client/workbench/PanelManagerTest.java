@@ -368,7 +368,7 @@ public class PanelManagerTest {
     public void onSelectPlaceEventFocusesCorrectPresenter() throws Exception {
         PanelDefinition p1 = new PanelDefinitionImpl(SimpleWorkbenchPanelPresenter.class.getName());
         PartDefinition pd1 = new PartDefinitionImpl(new DefaultPlaceRequest());
-        p1.addPart(pd1);
+        p1.setPlace(pd1);
         testPerspectiveDef.getRoot().appendChild(CompassPosition.WEST,
                                                  p1);
         panelManager.addWorkbenchPanel(panelManager.getRoot(),
@@ -377,7 +377,7 @@ public class PanelManagerTest {
 
         PanelDefinition p2 = new PanelDefinitionImpl(SimpleWorkbenchPanelPresenter.class.getName());
         PartDefinition pd2 = new PartDefinitionImpl(new PathPlaceRequest());
-        p2.addPart(pd2);
+        p2.setPlace(pd2);
         testPerspectiveDef.getRoot().appendChild(CompassPosition.EAST,
                                                  p2);
         panelManager.addWorkbenchPanel(panelManager.getRoot(),

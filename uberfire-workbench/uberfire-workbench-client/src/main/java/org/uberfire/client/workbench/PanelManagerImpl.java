@@ -31,16 +31,12 @@ import com.google.gwt.user.client.ui.Widget;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenter;
-import org.uberfire.client.workbench.panels.WorkbenchPanelPresenterImpl;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.mvp.PlaceRequest;
-import org.uberfire.workbench.model.CustomPanelDefinition;
 import org.uberfire.workbench.model.PanelDefinition;
-import org.uberfire.workbench.model.PartDefinition;
-import org.uberfire.workbench.model.impl.CustomPanelDefinitionImpl;
+import org.uberfire.workbench.model.impl.PanelDefinitionImpl;
 
 import static org.kie.soup.commons.validation.PortablePreconditions.checkNotNull;
-import static org.uberfire.plugin.PluginUtil.ensureIterable;
 
 /**
  * Standard implementation of {@link PanelManager}.
@@ -48,7 +44,7 @@ import static org.uberfire.plugin.PluginUtil.ensureIterable;
 @ApplicationScoped
 public class PanelManagerImpl implements PanelManager {
 
-    protected final Map<PartDefinition, WorkbenchPartPresenter> mapPartDefinitionToPresenter = new HashMap<>();
+    protected final Map<PlaceRequest, WorkbenchPartPresenter> mapPlaceToPresenter = new HashMap<>();
     protected final Map<PanelDefinition, WorkbenchPanelPresenter> mapPanelDefinitionToPresenter = new HashMap<>();
     protected final Map<PanelDefinition, HasWidgets> customPanels = new HashMap<>();
     private boolean isRootSet;
@@ -84,17 +80,14 @@ public class PanelManagerImpl implements PanelManager {
         final WorkbenchPanelPresenter newPresenter = panelPresenterInstances.get();
         newPresenter.setDefinition(root);
         mapPanelDefinitionToPresenter.put(root, newPresenter);
-        workbenchLayout.addContent(newPresenter.getPanelView().asWidget());
+        workbenchLayout.setContent(newPresenter.getPanelView().asWidget());
         isRootSet = true;
     }
 
     @Override
     public void addWorkbenchPart(final PlaceRequest place,
-                                 final PartDefinition partDef,
                                  final PanelDefinition panelDef,
-                                 final IsWidget widget,
-                                 final Integer preferredWidth,
-                                 final Integer preferredHeight) {
+                                 final IsWidget widget) {
         checkNotNull("panel",
                      panelDef);
 
@@ -104,9 +97,9 @@ public class PanelManagerImpl implements PanelManager {
         }
 
         WorkbenchPartPresenter part =
-                mapPartDefinitionToPresenter.computeIfAbsent(partDef, pd -> {
+                mapPlaceToPresenter.computeIfAbsent(place, pr -> {
                     WorkbenchPartPresenter p = partPresenterInstances.get();
-                    p.setDefinition(pd);
+                    p.setPlace(pr);
                     p.setWrappedWidget(widget);
                     return p;
                 });
@@ -116,9 +109,8 @@ public class PanelManagerImpl implements PanelManager {
 
     @Override
     public boolean removePartForPlace(PlaceRequest toRemove) {
-        final PartDefinition removedPart = getPartForPlace(toRemove);
-        if (removedPart != null) {
-            removePart(removedPart);
+        if (toRemove != null) {
+            removePlace(toRemove);
             return true;
         }
         return false;
@@ -129,8 +121,8 @@ public class PanelManagerImpl implements PanelManager {
         if (toRemove.isRoot()) {
             throw new IllegalArgumentException("The root panel cannot be removed. To replace it, call setRoot()");
         }
-        if (!toRemove.getParts().isEmpty()) {
-            throw new IllegalStateException("Panel still contains parts: " + toRemove.getParts());
+        if (toRemove.getPlace() != null) {
+            throw new IllegalStateException("Panel still contains place: " + toRemove.getPlace());
         }
 
         final WorkbenchPanelPresenter presenterToRemove = mapPanelDefinitionToPresenter.remove(toRemove);
@@ -140,12 +132,6 @@ public class PanelManagerImpl implements PanelManager {
 
         removeWorkbenchPanelFromParent(toRemove,
                                        presenterToRemove);
-
-        // we do this check last because some panel types (eg. docking panels) can "rescue" orphaned child panels
-        // during the PanelPresenter.remove() call
-        if (!toRemove.getChildren().isEmpty()) {
-            throw new IllegalStateException("Panel still contains child panels: " + toRemove.getChildren());
-        }
 
         iocManager.destroyBean(presenterToRemove);
     }
@@ -158,32 +144,22 @@ public class PanelManagerImpl implements PanelManager {
         }
     }
 
-    protected PartDefinition getPartForPlace(final PlaceRequest place) {
-        for (PartDefinition part : mapPartDefinitionToPresenter.keySet()) {
-            if (part.getPlace().asString().equals(place.asString())) {
-                return part;
-            }
-        }
-        return null;
-    }
-
-    protected void removePart(final PartDefinition part) {
+    protected void removePlace(final PlaceRequest place) {
         for (Map.Entry<PanelDefinition, WorkbenchPanelPresenter> e : mapPanelDefinitionToPresenter.entrySet()) {
             final WorkbenchPanelPresenter panelPresenter = e.getValue();
-            if (panelPresenter.getDefinition().getParts().contains(part)) {
-                panelPresenter.removePart(part);
+            if (panelPresenter.getDefinition().getPlace().equals(place)) {
+                panelPresenter.removePlace(place);
                 break;
             }
         }
 
-        WorkbenchPartPresenter deadPartPresenter = mapPartDefinitionToPresenter.remove(part);
+        WorkbenchPartPresenter deadPartPresenter = mapPlaceToPresenter.remove(place);
         iocManager.destroyBean(deadPartPresenter);
     }
 
     @Override
-    public CustomPanelDefinition addCustomPanel(final HasWidgets container) {
-        final CustomPanelDefinitionImpl panelDef = new CustomPanelDefinitionImpl(WorkbenchPanelPresenterImpl.class.getName(),
-                                                                                 container);
+    public PanelDefinition addCustomPanel(final HasWidgets container) {
+        final PanelDefinitionImpl panelDef = new PanelDefinitionImpl();
         final WorkbenchPanelPresenter panelPresenter = panelPresenterInstances.get();
         panelPresenter.setDefinition(panelDef);
         Widget panelViewWidget = panelPresenter.getPanelView().asWidget();
@@ -216,10 +192,7 @@ public class PanelManagerImpl implements PanelManager {
                 detaching = true;
                 Scheduler.get().scheduleFinally(() -> {
                     try {
-                        for (PartDefinition part : ensureIterable(panelPresenter.getDefinition().getParts())) {
-                            placeManager.closePlace(part.getPlace(), null);
-                        }
-
+                        placeManager.closePlace(panelPresenter.getDefinition().getPlace(), null);
                         // in many cases, the panel will have cleaned itself up when we closed its last part in the loop above.
                         // for other custom panel use cases, the panel may still be open. we can do the cleanup here.
                         if (mapPanelDefinitionToPresenter.containsKey(panelPresenter.getDefinition())) {

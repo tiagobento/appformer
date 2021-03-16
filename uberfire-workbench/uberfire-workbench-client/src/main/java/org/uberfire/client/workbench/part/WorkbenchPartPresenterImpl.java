@@ -21,14 +21,14 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 import com.google.gwt.user.client.ui.IsWidget;
-import org.uberfire.workbench.model.PartDefinition;
+import org.uberfire.mvp.PlaceRequest;
 
 @Dependent
 public class WorkbenchPartPresenterImpl implements WorkbenchPartPresenter {
 
     private final WorkbenchPartView view;
 
-    private PartDefinition definition;
+    private PlaceRequest place;
 
     @Inject
     public WorkbenchPartPresenterImpl(final WorkbenchPartView view) {
@@ -41,13 +41,13 @@ public class WorkbenchPartPresenterImpl implements WorkbenchPartPresenter {
     }
 
     @Override
-    public PartDefinition getDefinition() {
-        return definition;
+    public PlaceRequest getPlace() {
+        return place;
     }
 
     @Override
-    public void setDefinition(final PartDefinition definition) {
-        this.definition = definition;
+    public void setPlace(final PlaceRequest place) {
+        this.place = place;
     }
 
     @Override

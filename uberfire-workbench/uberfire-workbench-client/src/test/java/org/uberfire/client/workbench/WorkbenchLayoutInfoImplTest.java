@@ -32,7 +32,7 @@ import static org.mockito.Mockito.mock;
 public class WorkbenchLayoutInfoImplTest {
 
     @Mock
-    WorkbenchLayoutImpl workbenchLayout;
+    WorkbenchLayout workbenchLayout;
 
     @InjectMocks
     WorkbenchLayoutInfoImpl workbenchLayoutInfo;

@@ -16,8 +16,8 @@
 package org.uberfire.client.workbench.panels;
 
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
+import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.model.PanelDefinition;
-import org.uberfire.workbench.model.PartDefinition;
 
 /**
  * Top-level interface for all panel presenters within the UberFire MVP framework.
@@ -54,14 +54,7 @@ public interface WorkbenchPanelPresenter {
      */
     void addPart(final WorkbenchPartPresenter part);
 
-    /**
-     * Removes the given part from this panel, updating this panel's definition and the part's definition to reflect
-     * that the part no longer belongs to this panel.
-     *
-     * @return true if the given part was found and removed; false if this call had no effect
-     * @see #addPart(WorkbenchPartPresenter)
-     */
-    boolean removePart(final PartDefinition part);
+    void removePlace(final PlaceRequest place);
 
     /**
      * Returns the view that was given to this panel when it was first created.

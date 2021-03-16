@@ -32,7 +32,7 @@ import javax.inject.Inject;
 import org.jboss.errai.ioc.client.container.IOCBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
-import org.uberfire.client.util.GWTEditorNativeRegister;
+import org.uberfire.client.util.JSFunctions;
 import org.uberfire.mvp.PlaceRequest;
 
 import static java.util.Collections.emptyList;
@@ -46,12 +46,10 @@ public class ActivityManagerImpl implements ActivityManager {
 
     @Inject
     private SyncBeanManager iocManager;
-    @Inject
-    private GWTEditorNativeRegister gwtEditorNativeRegister;
 
     @PostConstruct
     void init() {
-        gwtEditorNativeRegister.nativeRegisterGwtEditorProvider();
+        JSFunctions.nativeRegisterGwtEditorProvider();
 
         iocManager.lookupBeans(Activity.class)
                 .stream()
@@ -63,7 +61,7 @@ public class ActivityManagerImpl implements ActivityManager {
                     }
                     activitiesById.put(id, bean);
                     if (bean.isAssignableTo(EditorActivity.class)) {
-                        gwtEditorNativeRegister.nativeRegisterGwtClientBean(id, bean);
+                        JSFunctions.nativeRegisterGwtClientBean(id, bean);
                     }
                 });
     }

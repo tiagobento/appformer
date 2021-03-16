@@ -25,7 +25,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.uberfire.client.util.Layouts;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.client.workbench.part.WorkbenchPartView;
-import org.uberfire.workbench.model.PartDefinition;
+import org.uberfire.mvp.PlaceRequest;
 
 @Dependent
 public class WorkbenchPanelViewImpl extends ResizeComposite implements WorkbenchPanelView {
@@ -62,9 +62,9 @@ public class WorkbenchPanelViewImpl extends ResizeComposite implements Workbench
     }
 
     @Override
-    public boolean removePart(final PartDefinition part) {
-        PartDefinition currentPartDefinition = getCurrentPartDefinition();
-        if (currentPartDefinition != null && currentPartDefinition.equals(part)) {
+    public boolean removePlace(final PlaceRequest place) {
+        PlaceRequest currentPlace = getCurrentPlace();
+        if (currentPlace != null && currentPlace.equals(place)) {
             panel.clear();
             return true;
         }
@@ -78,28 +78,18 @@ public class WorkbenchPanelViewImpl extends ResizeComposite implements Workbench
         super.onResize();
     }
 
-    PartDefinition getCurrentPartDefinition() {
+    PlaceRequest getCurrentPlace() {
         WorkbenchPartView partView = panel.getPartView();
         if (partView == null) {
             return null;
         }
 
-        WorkbenchPartPresenter presenter = partView.getPresenter();
-        if (presenter == null) {
+        WorkbenchPartPresenter p = partView.getPresenter();
+        if (p == null) {
             return null;
         }
 
-        return presenter.getDefinition();
-    }
-
-    @Override
-    public void setElementId(String elementId) {
-        if (elementId == null) {
-            getElement().removeAttribute("id");
-        } else {
-            getElement().setAttribute("id",
-                                      elementId);
-        }
+        return p.getPlace();
     }
 
     @Override

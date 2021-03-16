@@ -17,13 +17,13 @@
 package org.uberfire.client.workbench.part;
 
 import com.google.gwt.user.client.ui.IsWidget;
-import org.uberfire.workbench.model.PartDefinition;
+import org.uberfire.mvp.PlaceRequest;
 
 public interface WorkbenchPartPresenter {
 
-    PartDefinition getDefinition();
+    PlaceRequest getPlace();
 
-    void setDefinition(PartDefinition definition);
+    void setPlace(PlaceRequest definition);
 
     WorkbenchPartView getPartView();
 

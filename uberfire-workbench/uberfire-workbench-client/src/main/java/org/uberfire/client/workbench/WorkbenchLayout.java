@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2016 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,46 +16,78 @@
 
 package org.uberfire.client.workbench;
 
-import com.google.gwt.user.client.ui.IsWidget;
+import javax.inject.Inject;
+
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.jboss.errai.ioc.client.api.AfterInitialization;
+import org.jboss.errai.ioc.client.api.EntryPoint;
+import org.uberfire.client.mvp.PlaceManager;
+import org.uberfire.client.resources.WorkbenchResources;
+import org.uberfire.client.util.JSFunctions;
+import org.uberfire.client.util.Layouts;
+import org.uberfire.client.workbench.docks.UberfireDocksContainer;
 
-/**
- * Used by the workbench to construct the outer most DOM structure (header, footer and perspective container).
- */
-public interface WorkbenchLayout {
+@EntryPoint
+public class WorkbenchLayout {
 
-    /**
-     * Gives access to the root container element that will be attached to the {@link com.google.gwt.user.client.ui.RootLayoutPanel}.
-     * @return the outer most workbench widget
-     */
-    IsWidget getRoot();
+    private final UberfireDocksContainer uberfireDocksContainer;
+    private final PlaceManager placeManager;
+    private final DockLayoutPanel rootContainer = new DockLayoutPanel(Unit.PX);
+    private Widget currentContent;
 
-    /**
-     * Will be invoked by the {@link org.uberfire.client.workbench.Workbench}
-     * when the discovery of header and footer elements is completed.
-     */
-    void onBootstrap();
+    @Inject
+    public WorkbenchLayout(final UberfireDocksContainer uberfireDocksContainer,
+                           final PlaceManager placeManager) {
+        this.uberfireDocksContainer = uberfireDocksContainer;
+        this.placeManager = placeManager;
+    }
 
-    /**
-     * The {@link org.uberfire.client.workbench.Workbench} listens for resize events and hands them off
-     * to the layout. Not needed if your layout is based on {@link com.google.gwt.user.client.ui.LayoutPanel}'s.
-     * Kept for backwards compatibility.
-     */
-    void onResize();
+    @AfterInitialization
+    private void afterInit() {
+        WorkbenchResources.INSTANCE.CSS().ensureInjected();
 
-    /**
-     * See {@link #onResize()}
-     *
-     * @param width
-     * @param height
-     */
-    void resizeTo(int width,
-                  int height);
+        uberfireDocksContainer.setup(rootContainer,
+                                     () -> Scheduler.get().scheduleDeferred(this::onResize));
+        Layouts.setToFillParent(rootContainer);
 
-    /**
-     * Add content on the center of the layout.
-     *
-     * @param content Widget to be added
-     */
-    void addContent(Widget content);
+        RootLayoutPanel.get().add(rootContainer);
+        placeManager.bootstrapRootPanel();
+
+        // Resizing the Window should resize everything
+        Window.addResizeHandler(event -> resizeTo(event.getWidth(),
+                                                  event.getHeight()));
+
+        // Defer the initial resize call until widgets are rendered and sizes are available
+        Scheduler.get().scheduleDeferred(this::onResize);
+
+        JSFunctions.notifyJSReady();
+    }
+
+    public void setContent(Widget content) {
+        if (currentContent != null) {
+            rootContainer.remove(currentContent);
+        }
+        rootContainer.add(content);
+        Layouts.setToFillParent(content);
+    }
+
+    public void onResize() {
+        resizeTo(Window.getClientWidth(),
+                 Window.getClientHeight());
+    }
+
+    private void resizeTo(int width,
+                          int height) {
+        rootContainer.setPixelSize(width,
+                                   height);
+
+        // The dragBoundary can't be a LayoutPanel, so it doesn't support ProvidesResize/RequiresResize.
+        // We start the cascade of onResize() calls at its immediate child.
+        rootContainer.onResize();
+    }
 }

@@ -19,9 +19,7 @@ package org.uberfire.client.workbench.panels;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 
-public class RequiresResizeFocusPanel
-        extends FocusPanel
-        implements RequiresResize {
+public class RequiresResizeFocusPanel extends FocusPanel implements RequiresResize {
 
     @Override
     public void onResize() {

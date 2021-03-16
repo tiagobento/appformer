@@ -61,7 +61,7 @@ public class StaticWorkbenchPanelPresenterTest {
     public void addPartTest() {
 
         WorkbenchPartPresenter part = mock(WorkbenchPartPresenter.class);
-        when(part.getDefinition()).thenReturn(mock(PartDefinition.class));
+        when(part.getPlace()).thenReturn(mock(PartDefinition.class));
 
         presenter.addPart(part);
 
@@ -88,7 +88,7 @@ public class StaticWorkbenchPanelPresenterTest {
         when(singlePartPanelHelper.hasNoParts()).thenReturn(false);
 
         WorkbenchPartPresenter part2 = mock(WorkbenchPartPresenter.class);
-        when(part2.getDefinition()).thenReturn(mock(PartDefinition.class));
+        when(part2.getPlace()).thenReturn(mock(PartDefinition.class));
 
         presenter.addPart(part2);
 

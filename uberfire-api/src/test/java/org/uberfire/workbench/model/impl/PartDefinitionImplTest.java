@@ -24,7 +24,6 @@ import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.model.PanelDefinition;
 import org.uberfire.workbench.model.PartDefinition;
 
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class PartDefinitionImplTest {
@@ -53,7 +52,7 @@ public class PartDefinitionImplTest {
     public void defineParentPanelWithOldParentWithoutPart() throws Exception {
         parent = createParentMock();
         part.setParentPanel(parent);
-        when(parent.getParts()).thenReturn(new HashSet<PartDefinition>());
+        when(parent.getPlace()).thenReturn(new HashSet<PartDefinition>());
         PanelDefinitionImpl anotherParent = createParentMock();
         part.setParentPanel(anotherParent);
     }
@@ -62,7 +61,7 @@ public class PartDefinitionImplTest {
         PanelDefinitionImpl parentMock = mock(PanelDefinitionImpl.class);
         HashSet<PartDefinition> mockSet = new HashSet<PartDefinition>();
         mockSet.add(part);
-        when(parentMock.getParts()).thenReturn(mockSet);
+        when(parentMock.getPlace()).thenReturn(mockSet);
         return parentMock;
     }
 

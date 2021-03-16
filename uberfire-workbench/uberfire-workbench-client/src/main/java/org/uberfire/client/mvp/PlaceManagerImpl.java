@@ -20,33 +20,27 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import com.google.gwt.user.client.ui.HasWidgets;
-import org.jboss.errai.ioc.client.api.SharedSingleton;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.WorkbenchLayout;
-import org.uberfire.client.workbench.panels.WorkbenchPanelPresenterImpl;
 import org.uberfire.mvp.BiParameterizedCommand;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
 import org.uberfire.workbench.model.ActivityResourceType;
-import org.uberfire.workbench.model.CustomPanelDefinition;
 import org.uberfire.workbench.model.PanelDefinition;
-import org.uberfire.workbench.model.PartDefinition;
 import org.uberfire.workbench.model.impl.PanelDefinitionImpl;
-import org.uberfire.workbench.model.impl.PartDefinitionImpl;
 
-import static org.uberfire.plugin.PluginUtil.toInteger;
-
-@SharedSingleton
+@ApplicationScoped
 public class PlaceManagerImpl implements PlaceManager {
 
     private final Map<PlaceRequest, Activity> existingWorkbenchActivities = new HashMap<>();
-    private final Map<PlaceRequest, CustomPanelDefinition> dockPanels = new HashMap<>();
+    private final Map<PlaceRequest, PanelDefinition> dockPanels = new HashMap<>();
 
     @Inject
     private ActivityManager activityManager;
@@ -69,16 +63,15 @@ public class PlaceManagerImpl implements PlaceManager {
 
             launchActivity(editorPlace,
                            editorActivity,
-                           new PartDefinitionImpl(editorPlace),
                            panelDef);
 
             workbenchLayout.onResize();
         };
 
         final PlaceRequest editorPlaceRequest = resolveEditorPlaceRequest();
-        final PanelDefinitionImpl rootPanel = new PanelDefinitionImpl(WorkbenchPanelPresenterImpl.class.getName());
+        final PanelDefinitionImpl rootPanel = new PanelDefinitionImpl();
         rootPanel.setRoot(true);
-        rootPanel.addPart(new PartDefinitionImpl(editorPlaceRequest));
+        rootPanel.setPlace(editorPlaceRequest);
         command.execute(rootPanel, editorPlaceRequest);
     }
 
@@ -100,12 +93,11 @@ public class PlaceManagerImpl implements PlaceManager {
             return;
         }
 
-        final CustomPanelDefinition dockPanel = panelManager.addCustomPanel(addTo);
+        final PanelDefinition dockPanel = panelManager.addCustomPanel(addTo);
         dockPanels.put(place,
                        dockPanel);
         launchActivity(place,
                        dockActivity,
-                       new PartDefinitionImpl(place),
                        dockPanel);
     }
 
@@ -128,14 +120,10 @@ public class PlaceManagerImpl implements PlaceManager {
 
     private void launchActivity(final PlaceRequest place,
                                 final Activity activity,
-                                final PartDefinition part,
                                 final PanelDefinition panel) {
         panelManager.addWorkbenchPart(place,
-                                      part,
                                       panel,
-                                      activity.getWidget(),
-                                      toInteger(panel.getWidthAsInt()),
-                                      toInteger(panel.getHeightAsInt()));
+                                      activity.getWidget());
         try {
             activity.onOpen();
         } catch (Exception ex) {

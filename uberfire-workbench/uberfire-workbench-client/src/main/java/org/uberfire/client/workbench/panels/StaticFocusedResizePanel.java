@@ -25,40 +25,40 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import org.uberfire.client.util.CSSLocatorsUtils;
 import org.uberfire.client.workbench.part.WorkbenchPartView;
-import org.uberfire.workbench.model.PartDefinition;
+import org.uberfire.mvp.PlaceRequest;
 
 public class StaticFocusedResizePanel
         extends ResizeComposite
-        implements HasSelectionHandlers<PartDefinition>,
+        implements HasSelectionHandlers<PlaceRequest>,
                    HasFocusHandlers {
 
     private final RequiresResizeFocusPanel container = new RequiresResizeFocusPanel();
 
-    private PartDefinition partDefinition;
+    private PlaceRequest place;
 
     public StaticFocusedResizePanel() {
         initWidget(container);
         container.addClickHandler(event -> {
-            if (partDefinition != null) {
+            if (place != null) {
                 SelectionEvent.fire(StaticFocusedResizePanel.this,
-                                    partDefinition);
+                                    place);
             }
         });
         container.getElement().addClassName(CSSLocatorsUtils.buildLocator("qe", "static-workbench-panel-view"));
     }
 
     public void setPart(final WorkbenchPartView part) {
-        this.partDefinition = part.getPresenter().getDefinition();
+        this.place = part.getPresenter().getPlace();
         container.setWidget(part);
     }
 
     public void clear() {
-        partDefinition = null;
+        place = null;
         container.clear();
     }
 
     @Override
-    public HandlerRegistration addSelectionHandler(final SelectionHandler<PartDefinition> handler) {
+    public HandlerRegistration addSelectionHandler(final SelectionHandler<PlaceRequest> handler) {
         return addHandler(handler,
                           SelectionEvent.getType());
     }

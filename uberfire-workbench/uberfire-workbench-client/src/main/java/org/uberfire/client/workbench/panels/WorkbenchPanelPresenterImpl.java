@@ -15,23 +15,17 @@
  */
 package org.uberfire.client.workbench.panels;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
-
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
+import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.workbench.model.PanelDefinition;
-import org.uberfire.workbench.model.PartDefinition;
-import org.uberfire.workbench.model.Position;
 
 @Dependent
 public class WorkbenchPanelPresenterImpl implements WorkbenchPanelPresenter {
 
-    protected final Map<Position, WorkbenchPanelPresenter> childPanels = new LinkedHashMap<>();
     private final WorkbenchPanelView view;
     private PanelDefinition definition;
 
@@ -53,26 +47,20 @@ public class WorkbenchPanelPresenterImpl implements WorkbenchPanelPresenter {
     @Override
     public void setDefinition(final PanelDefinition definition) {
         this.definition = definition;
-        view.setElementId(definition.getElementId());
     }
 
     @Override
     public void addPart(final WorkbenchPartPresenter part) {
-        // special case: when new perspectives are being built up based on definitions,
-        // our definition will already say it contains the given part! We should not try to add it again.
-        Optional<PartDefinition> optional = definition.getParts().stream()
-                .filter(partDefinition -> partDefinition.equals(part.getDefinition()))
-                .findAny();
-        if (!optional.isPresent()) {
-            definition.addPart(part.getDefinition());
+        if (definition.getPlace() == null) {
+            definition.setPlace(part.getPlace());
         }
         getPanelView().addPart(part.getPartView());
     }
 
     @Override
-    public boolean removePart(final PartDefinition part) {
-        view.removePart(part);
-        return definition.removePart(part);
+    public void removePlace(final PlaceRequest place) {
+        view.removePlace(place);
+        definition.setPlace(null);
     }
 
     @Override
@@ -90,17 +78,5 @@ public class WorkbenchPanelPresenterImpl implements WorkbenchPanelPresenter {
         if (height != 0) {
             getDefinition().setHeight(height);
         }
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder(getClass().getName());
-        if (getDefinition() == null) {
-            sb.append(" (no definition)");
-        } else {
-            sb.append(" id=").append(getDefinition().getElementId());
-        }
-
-        return sb.toString();
     }
 }

@@ -49,44 +49,44 @@ public class PanelDefinitionImplTest {
 
     @Test
     public void addPartTest() throws Exception {
-        assertFalse(panelDefinition.getParts().contains(part));
-        panelDefinition.addPart(part);
-        assertTrue(panelDefinition.getParts().contains(part));
+        assertFalse(panelDefinition.getPlace().contains(part));
+        panelDefinition.setPlace(part);
+        assertTrue(panelDefinition.getPlace().contains(part));
     }
 
     @Test
     public void addPartToADifferentPanelChangePanel() throws Exception {
-        assertFalse(panelDefinition.getParts().contains(part));
-        panelDefinition.addPart(part);
-        assertTrue(panelDefinition.getParts().contains(part));
-        otherPanel.addPart(part);
-        assertTrue(otherPanel.getParts().contains(part));
+        assertFalse(panelDefinition.getPlace().contains(part));
+        panelDefinition.setPlace(part);
+        assertTrue(panelDefinition.getPlace().contains(part));
+        otherPanel.setPlace(part);
+        assertTrue(otherPanel.getPlace().contains(part));
         assertEquals(otherPanel,
                      part.getParentPanel());
-        assertFalse(panelDefinition.getParts().contains(part));
+        assertFalse(panelDefinition.getPlace().contains(part));
     }
 
     @Test
     public void addPartTwiceShouldWork() throws Exception {
-        assertFalse(panelDefinition.getParts().contains(part));
-        panelDefinition.addPart(part);
-        panelDefinition.addPart(part);
-        assertTrue(panelDefinition.getParts().contains(part));
+        assertFalse(panelDefinition.getPlace().contains(part));
+        panelDefinition.setPlace(part);
+        panelDefinition.setPlace(part);
+        assertTrue(panelDefinition.getPlace().contains(part));
     }
 
     @Test
     public void partShouldNotBePresentAfterRemoval() throws Exception {
-        panelDefinition.addPart(part);
+        panelDefinition.setPlace(part);
         assertNotNull(part.getParentPanel());
-        assertTrue(panelDefinition.getParts().contains(part));
-        panelDefinition.removePart(part);
+        assertTrue(panelDefinition.getPlace().contains(part));
+        panelDefinition.removePlace(part);
         assertNull(part.getParentPanel());
-        assertFalse(panelDefinition.getParts().contains(part));
+        assertFalse(panelDefinition.getPlace().contains(part));
     }
 
     @Test
     public void removeNonexistentPartShouldDoNothingAndReturnFalse() throws Exception {
-        boolean result = panelDefinition.removePart(part);
+        boolean result = panelDefinition.removePlace(part);
         assertEquals(false,
                      result);
     }

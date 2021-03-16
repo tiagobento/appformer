@@ -20,52 +20,11 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import org.uberfire.client.mvp.UberView;
 import org.uberfire.client.workbench.part.WorkbenchPartView;
 import org.uberfire.mvp.PlaceRequest;
-import org.uberfire.workbench.model.PartDefinition;
 
-/**
- * Manages the Widget and DOM interaction of a panel. Part of the UberFire MVC system for panels. For a full explanation
- * of what a panel is in UberFire, see the class-level documentation for {@link WorkbenchPanelPresenter}.
- * <p>
- * <h2>View Lifecycle</h2>
- * <p>
- * UberFire Panel Views are Dependent-scoped beans managed by the Errai IOC container. Views are always created by
- * injection into their presenter, which ties their bean lifecycle to that of the presenter: they are created when the
- * presenter is created, and they are destroyed when the presenter is destroyed.
- * <p>
- * This is the lifecycle of a WorkbenchPanelView:
- * <ol>
- * <li>The view's constructor is invoked by Errai IOC. At this point, it is not yet safe to access injected
- * members (they may be uninitialized proxies).
- * <li>The view's {@code @PostConstruct} method (if it has one) is invoked by Errai IOC. Safe to access injected members.
- * <li>The view's {@link #init(Object)} method is invoked by the presenter. The argument is a reference to the presenter itself.
- * <li>The view's widget (obtained from {@link #asWidget()}) is added to the parent panel's widget.
- * <li>The view is now in service, and any of its public methods can be called.
- * <li>When the panel is no longer needed, Errai IOC is told to destroy the presenter bean. This results in the view bean
- * being destroyed too. At this point, the view's {@code @PreDestroy} method is invoked by Errai IOC.
- * </ol>
- */
 public interface WorkbenchPanelView extends UberView<WorkbenchPanelPresenter>,
                                             RequiresResize {
 
-    /**
-     * Adds the given part view to this panel if this panel does not already contain a view that handles the same
-     * {@link PlaceRequest} as the given one. If this panel does already contain such a part, the existing one is
-     * @param view the view to add as long as it is not a duplicate. Must not be null.
-     */
     void addPart(final WorkbenchPartView view);
 
-    /**
-     * Removes the given part from this view, if it belonged to this view.
-     * @param part the part to remove.
-     * @return true if the part was found and removed. False if not.
-     */
-    boolean removePart(final PartDefinition part);
-
-    /**
-     * Sets the ID of the physical root element of this view. For HTML-based views, this is the {@code id} attribute of
-     * the view's top-level DOM element. Implementations for other view technologies should map this to whatever the
-     * underlying widget/component system uses for unique identifiers.
-     * @param elementId the element ID to set. If null, the ID value will be cleared.
-     */
-    void setElementId(String elementId);
+    boolean removePlace(final PlaceRequest place);
 }

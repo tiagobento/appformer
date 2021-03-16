@@ -20,9 +20,7 @@ import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.IsWidget;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.mvp.PlaceRequest;
-import org.uberfire.workbench.model.CustomPanelDefinition;
 import org.uberfire.workbench.model.PanelDefinition;
-import org.uberfire.workbench.model.PartDefinition;
 
 /**
  * Internal framework component that handles the creation, destruction, layout, and composition (parent-child nesting)
@@ -39,23 +37,13 @@ public interface PanelManager {
     /**
      * Adds the given part to the given panel, which must already be part of the visible workbench layout.
      * @param place The PlaceRequest that the part was resolved from. Not null.
-     * @param part The description of the part to add. Not null.
      * @param panel definition of the panel to add the part to (must describe a panel that is already present in the
      * layout). Not null.
      * @param widget The widget.
-     * @param minInitialWidth minimum pixel width of the part's activity, or null if there is no known minimum width. The target
-     * panel will expand to the this width if the panel is not already at least as wide, and only if it
-     * supports resizing on the horizontal axis.
-     * @param minInitialHeight minimum pixel height of the part's activity, or null if there is no known minimum height. The target
-     * panel will expand to this height if the panel is not already at least as tall, and only if it supports
-     * resizing on the vertical axis.
      */
     void addWorkbenchPart(final PlaceRequest place,
-                          final PartDefinition part,
                           final PanelDefinition panel,
-                          final IsWidget widget,
-                          final Integer minInitialWidth,
-                          final Integer minInitialHeight);
+                          final IsWidget widget);
 
     /**
      * Creates an UberFire panel and installs its view in the given widget container.
@@ -69,7 +57,7 @@ public interface PanelManager {
      * @return the definition for the newly constructed panel. Never null. The panel's type will be {@code panelType};
      * its parent will be null; {@code isRoot()} will return false.
      */
-    CustomPanelDefinition addCustomPanel(HasWidgets container);
+    PanelDefinition addCustomPanel(HasWidgets container);
 
     /**
      * Removes the panel associated with the given definition, removing the panel's presenter and view from the

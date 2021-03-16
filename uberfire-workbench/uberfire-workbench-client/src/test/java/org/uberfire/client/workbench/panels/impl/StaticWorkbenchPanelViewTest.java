@@ -87,13 +87,13 @@ public class StaticWorkbenchPanelViewTest {
         PartDefinition mockPartDefinition = new PartDefinitionImpl(new DefaultPlaceRequest("mockPlace"));
 
         when(mockPartView.getPresenter()).thenReturn(mockPresenter);
-        when(mockPresenter.getDefinition()).thenReturn(mockPartDefinition);
+        when(mockPresenter.getPlace()).thenReturn(mockPartDefinition);
 
         when(view.panel.getPartView()).thenReturn(null);
         view.addPart(mockPartView);
         when(view.panel.getPartView()).thenReturn(mockPartView);
 
-        boolean removed = view.removePart(mockPartDefinition);
+        boolean removed = view.removePlace(mockPartDefinition);
 
         assertTrue(removed);
         verify(panel).clear();
@@ -106,20 +106,20 @@ public class StaticWorkbenchPanelViewTest {
         PartDefinition mockPartDefinition = new PartDefinitionImpl(new DefaultPlaceRequest("mock1"));
 
         when(mockPartView.getPresenter()).thenReturn(mockPresenter);
-        when(mockPresenter.getDefinition()).thenReturn(mockPartDefinition);
+        when(mockPresenter.getPlace()).thenReturn(mockPartDefinition);
 
         WorkbenchPartPresenter mockPresenter2 = mock(WorkbenchPartPresenter.class);
         WorkbenchPartPresenter.View mockPartView2 = mock(WorkbenchPartPresenter.View.class);
         PartDefinition mockPartDefinition2 = new PartDefinitionImpl(new DefaultPlaceRequest("mock2"));
 
         when(mockPartView2.getPresenter()).thenReturn(mockPresenter2);
-        when(mockPresenter2.getDefinition()).thenReturn(mockPartDefinition2);
+        when(mockPresenter2.getPlace()).thenReturn(mockPartDefinition2);
 
         when(view.panel.getPartView()).thenReturn(null);
         view.addPart(mockPartView);
         when(view.panel.getPartView()).thenReturn(mockPartView);
 
-        boolean removed = view.removePart(mockPartDefinition2);
+        boolean removed = view.removePlace(mockPartDefinition2);
 
         assertFalse(removed);
         verify(panel,

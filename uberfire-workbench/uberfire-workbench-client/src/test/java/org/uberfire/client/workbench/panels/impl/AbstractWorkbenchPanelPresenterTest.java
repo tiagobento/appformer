@@ -77,7 +77,7 @@ public abstract class AbstractWorkbenchPanelPresenterTest {
         when(mockActivityManager.getActivity(ContextActivity.class,
                                              perspectiveContextDefinition.getPlace())).thenReturn(perspectiveContextActivity);
         when(mockPartView.getPresenter()).thenReturn(mockPartPresenter);
-        when(mockPartPresenter.getDefinition()).thenReturn(partPresenterPartDefinition);
+        when(mockPartPresenter.getPlace()).thenReturn(partPresenterPartDefinition);
     }
 
     @Test
@@ -92,8 +92,8 @@ public abstract class AbstractWorkbenchPanelPresenterTest {
         }
 
         assertSame(panelPresenter.getDefinition(),
-                   mockPartPresenter.getDefinition().getParentPanel());
-        assertTrue(panelPresenter.getDefinition().getParts().contains(mockPartPresenter.getDefinition()));
+                   mockPartPresenter.getPlace().getParentPanel());
+        assertTrue(panelPresenter.getDefinition().getPlace().contains(mockPartPresenter.getPlace()));
     }
 
     @Test
@@ -107,10 +107,10 @@ public abstract class AbstractWorkbenchPanelPresenterTest {
             return;
         }
 
-        panelPresenter.removePart(mockPartPresenter.getDefinition());
+        panelPresenter.removePlace(mockPartPresenter.getPlace());
 
-        assertNull(mockPartPresenter.getDefinition().getParentPanel());
-        assertFalse(panelPresenter.getDefinition().getParts().contains(mockPartPresenter.getDefinition()));
+        assertNull(mockPartPresenter.getPlace().getParentPanel());
+        assertFalse(panelPresenter.getDefinition().getPlace().contains(mockPartPresenter.getPlace()));
     }
 
     /**
@@ -121,9 +121,9 @@ public abstract class AbstractWorkbenchPanelPresenterTest {
     public void addingPartThatIsAlreadyInPanelDefShouldNotChangePanelDef() throws Exception {
         WorkbenchPanelPresenter panelPresenter = getPresenterToTest();
 
-        panelPresenter.getDefinition().addPart(partPresenterPartDefinition);
+        panelPresenter.getDefinition().setPlace(partPresenterPartDefinition);
         assertEquals(1,
-                     panelPresenter.getDefinition().getParts().size());
+                     panelPresenter.getDefinition().getPlace().size());
 
         try {
             panelPresenter.addPart(mockPartPresenter);
@@ -134,11 +134,11 @@ public abstract class AbstractWorkbenchPanelPresenterTest {
 
         // the rest of the add operation should have happened
         assertSame(panelPresenter.getDefinition(),
-                   mockPartPresenter.getDefinition().getParentPanel());
-        assertTrue(panelPresenter.getDefinition().getParts().contains(mockPartPresenter.getDefinition()));
+                   mockPartPresenter.getPlace().getParentPanel());
+        assertTrue(panelPresenter.getDefinition().getPlace().contains(mockPartPresenter.getPlace()));
 
         // there should still only be 1 part
         assertEquals(1,
-                     panelPresenter.getDefinition().getParts().size());
+                     panelPresenter.getDefinition().getPlace().size());
     }
 }
