@@ -6,7 +6,7 @@ import org.uberfire.client.mvp.Activity;
 public class JSFunctions {
 
     private JSFunctions() {
-
+        // Empty
     }
 
     public static native void nativeRegisterGwtEditorProvider() /*-{

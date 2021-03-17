@@ -118,8 +118,8 @@ public class PanelManagerTest {
 
         when(beanFactory.newRootPanel(any(),
                                       eq(testPerspectiveDef.getRoot()))).thenReturn(testPerspectiveRootPanelPresenter);
-        when(testPerspectiveRootPanelPresenter.getDefinition()).thenReturn(testPerspectiveDef.getRoot());
-        when(testPerspectiveRootPanelPresenter.getPanelView()).thenReturn(mock(WorkbenchPanelView.class));
+        when(testPerspectiveRootPanelPresenter.getPlace()).thenReturn(testPerspectiveDef.getRoot());
+        when(testPerspectiveRootPanelPresenter.getView()).thenReturn(mock(WorkbenchPanelView.class));
         when(testPerspectiveRootPanelPresenter.getDefaultChildType()).thenReturn(SimpleWorkbenchPanelPresenter.class.getName());
 
         partPresenter = mock(WorkbenchPartPresenter.class);
@@ -134,7 +134,7 @@ public class PanelManagerTest {
             public WorkbenchPanelPresenter answer(InvocationOnMock invocation) throws Throwable {
                 WorkbenchPanelPresenter newPanelPresenter = mock(WorkbenchPanelPresenter.class,
                                                                  RETURNS_DEEP_STUBS);
-                when(newPanelPresenter.getDefinition()).thenReturn((PanelDefinition) invocation.getArguments()[0]);
+                when(newPanelPresenter.getPlace()).thenReturn((PanelDefinition) invocation.getArguments()[0]);
                 return newPanelPresenter;
             }
         });
@@ -248,7 +248,7 @@ public class PanelManagerTest {
                                       null,
                                       null);
 
-        panelManager.removePartForPlace(rootPartPlace);
+        panelManager.removePanelForPlace(rootPartPlace);
 
         // the panel manager should not know about the part/place mapping anymore
         assertEquals(null,
@@ -289,7 +289,7 @@ public class PanelManagerTest {
                                        subPanel,
                                        CompassPosition.WEST);
 
-        assertTrue(panelManager.mapPanelDefinitionToPresenter.containsKey(subPanel));
+        assertTrue(panelManager.mapPlaceToPanel.containsKey(subPanel));
     }
 
     @Test
@@ -298,7 +298,7 @@ public class PanelManagerTest {
         PanelDefinition customPanel = panelManager.addCustomPanel(container,
                                                                   WorkbenchPanelPresenterImpl.class.getName());
 
-        assertTrue(panelManager.mapPanelDefinitionToPresenter.containsKey(customPanel));
+        assertTrue(panelManager.mapPlaceToPanel.containsKey(customPanel));
     }
 
     @Test
@@ -307,7 +307,7 @@ public class PanelManagerTest {
         PanelDefinition customPanel = panelManager.addCustomPanel(container,
                                                                   WorkbenchPanelPresenterImpl.class.getName());
 
-        assertTrue(panelManager.mapPanelDefinitionToPresenter.containsKey(customPanel));
+        assertTrue(panelManager.mapPlaceToPanel.containsKey(customPanel));
     }
 
     @Test
@@ -321,7 +321,7 @@ public class PanelManagerTest {
                                        CompassPosition.WEST);
         panelManager.removeWorkbenchPanel(subPanel);
 
-        assertFalse(panelManager.mapPanelDefinitionToPresenter.containsKey(subPanel));
+        assertFalse(panelManager.mapPlaceToPanel.containsKey(subPanel));
     }
 
     @Test
@@ -331,7 +331,7 @@ public class PanelManagerTest {
                                                                   WorkbenchPanelPresenterImpl.class.getName());
         panelManager.removeWorkbenchPanel(customPanel);
 
-        assertFalse(panelManager.mapPanelDefinitionToPresenter.containsKey(customPanel));
+        assertFalse(panelManager.mapPlaceToPanel.containsKey(customPanel));
     }
 
     @Test
@@ -341,7 +341,7 @@ public class PanelManagerTest {
                                                                   WorkbenchPanelPresenterImpl.class.getName());
         panelManager.removeWorkbenchPanel(customPanel);
 
-        assertFalse(panelManager.mapPanelDefinitionToPresenter.containsKey(customPanel));
+        assertFalse(panelManager.mapPlaceToPanel.containsKey(customPanel));
     }
 
     @Test
@@ -351,7 +351,7 @@ public class PanelManagerTest {
                                                                   WorkbenchPanelPresenterImpl.class.getName());
         panelManager.removeWorkbenchPanel(customPanel);
 
-        assertFalse(panelManager.mapPanelDefinitionToPresenter.containsKey(customPanel));
+        assertFalse(panelManager.mapPlaceToPanel.containsKey(customPanel));
     }
 
     @Test
@@ -387,7 +387,7 @@ public class PanelManagerTest {
         SelectPlaceEvent event = new SelectPlaceEvent(new PathPlaceRequest());
         panelManager.onSelectPlaceEvent(event);
 
-        final WorkbenchPanelPresenter partPresenter = panelManager.mapPanelDefinitionToPresenter.get(p2);
+        final WorkbenchPanelPresenter partPresenter = panelManager.mapPlaceToPanel.get(p2);
         verify(partPresenter,
                times(2)).setFocus(true);
     }

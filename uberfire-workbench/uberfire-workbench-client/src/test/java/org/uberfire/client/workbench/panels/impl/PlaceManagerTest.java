@@ -406,7 +406,7 @@ public class PlaceManagerTest {
         verify(kansasActivity,
                never()).onShutdown();
         verify(activityManager).destroyActivity(kansasActivity);
-        verify(panelManager).removePartForPlace(kansas);
+        verify(panelManager).removePanelForPlace(kansas);
 
         assertEquals(PlaceStatus.CLOSE,
                      placeManager.getStatus(kansas));
@@ -445,7 +445,7 @@ public class PlaceManagerTest {
         verify(activityManager,
                never()).destroyActivity(kansasActivity);
         verify(panelManager,
-               never()).removePartForPlace(kansas);
+               never()).removePanelForPlace(kansas);
 
         assertEquals(PlaceStatus.OPEN,
                      placeManager.getStatus(kansas));
@@ -470,7 +470,7 @@ public class PlaceManagerTest {
         verify(kansasActivity,
                never()).onShutdown();
         verify(activityManager).destroyActivity(kansasActivity);
-        verify(panelManager).removePartForPlace(kansas);
+        verify(panelManager).removePanelForPlace(kansas);
 
         assertEquals(PlaceStatus.CLOSE,
                      placeManager.getStatus(kansas));
@@ -1621,7 +1621,7 @@ public class PlaceManagerTest {
         verify(screenActivity,
                never()).onShutdown();
         verify(activityManager).destroyActivity(screenActivity);
-        verify(panelManager).removePartForPlace(place);
+        verify(panelManager).removePanelForPlace(place);
 
         assertEquals(PlaceStatus.CLOSE,
                      placeManager.getStatus(place));
@@ -1644,7 +1644,7 @@ public class PlaceManagerTest {
         verify(activityManager,
                never()).destroyActivity(screenActivity);
         verify(panelManager,
-               never()).removePartForPlace(place);
+               never()).removePanelForPlace(place);
 
         assertEquals(PlaceStatus.OPEN,
                      placeManager.getStatus(place));

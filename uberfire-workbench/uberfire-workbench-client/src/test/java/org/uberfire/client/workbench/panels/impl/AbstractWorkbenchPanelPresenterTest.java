@@ -91,9 +91,9 @@ public abstract class AbstractWorkbenchPanelPresenterTest {
             return;
         }
 
-        assertSame(panelPresenter.getDefinition(),
+        assertSame(panelPresenter.getPlace(),
                    mockPartPresenter.getPlace().getParentPanel());
-        assertTrue(panelPresenter.getDefinition().getPlace().contains(mockPartPresenter.getPlace()));
+        assertTrue(panelPresenter.getPlace().getPlace().contains(mockPartPresenter.getPlace()));
     }
 
     @Test
@@ -107,10 +107,10 @@ public abstract class AbstractWorkbenchPanelPresenterTest {
             return;
         }
 
-        panelPresenter.removePlace(mockPartPresenter.getPlace());
+        panelPresenter.clear(mockPartPresenter.getPlace());
 
         assertNull(mockPartPresenter.getPlace().getParentPanel());
-        assertFalse(panelPresenter.getDefinition().getPlace().contains(mockPartPresenter.getPlace()));
+        assertFalse(panelPresenter.getPlace().getPlace().contains(mockPartPresenter.getPlace()));
     }
 
     /**
@@ -121,9 +121,9 @@ public abstract class AbstractWorkbenchPanelPresenterTest {
     public void addingPartThatIsAlreadyInPanelDefShouldNotChangePanelDef() throws Exception {
         WorkbenchPanelPresenter panelPresenter = getPresenterToTest();
 
-        panelPresenter.getDefinition().setPlace(partPresenterPartDefinition);
+        panelPresenter.getPlace().setPlace(partPresenterPartDefinition);
         assertEquals(1,
-                     panelPresenter.getDefinition().getPlace().size());
+                     panelPresenter.getPlace().getPlace().size());
 
         try {
             panelPresenter.addPart(mockPartPresenter);
@@ -133,12 +133,12 @@ public abstract class AbstractWorkbenchPanelPresenterTest {
         }
 
         // the rest of the add operation should have happened
-        assertSame(panelPresenter.getDefinition(),
+        assertSame(panelPresenter.getPlace(),
                    mockPartPresenter.getPlace().getParentPanel());
-        assertTrue(panelPresenter.getDefinition().getPlace().contains(mockPartPresenter.getPlace()));
+        assertTrue(panelPresenter.getPlace().getPlace().contains(mockPartPresenter.getPlace()));
 
         // there should still only be 1 part
         assertEquals(1,
-                     panelPresenter.getDefinition().getPlace().size());
+                     panelPresenter.getPlace().getPlace().size());
     }
 }

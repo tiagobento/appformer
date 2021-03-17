@@ -27,7 +27,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenterImpl;
-import org.uberfire.client.workbench.panels.WorkbenchPanelViewImpl;
+import org.uberfire.client.workbench.WorkbenchPanel;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.client.workbench.panels.StaticFocusedResizePanel;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
@@ -48,7 +48,7 @@ public class StaticWorkbenchPanelViewTest {
     // Not a @Mock or @GwtMock because we want to test the view.init() method
     private final WorkbenchPanelPresenterImpl presenter = mock(WorkbenchPanelPresenterImpl.class);
     @InjectMocks
-    private WorkbenchPanelViewImpl view;
+    private WorkbenchPanel view;
     @Mock
     private PanelManager panelManager;
 
@@ -75,9 +75,9 @@ public class StaticWorkbenchPanelViewTest {
         WorkbenchPartPresenter.View viewWbPartPresenter = mock(WorkbenchPartPresenter.View.class);
         when(panel.getPartView()).thenReturn(null);
 
-        view.addPart(viewWbPartPresenter);
+        view.add(viewWbPartPresenter);
 
-        verify(panel).setPart(viewWbPartPresenter);
+        verify(panel).setWidget(viewWbPartPresenter);
     }
 
     @Test
@@ -90,10 +90,10 @@ public class StaticWorkbenchPanelViewTest {
         when(mockPresenter.getPlace()).thenReturn(mockPartDefinition);
 
         when(view.panel.getPartView()).thenReturn(null);
-        view.addPart(mockPartView);
+        view.add(mockPartView);
         when(view.panel.getPartView()).thenReturn(mockPartView);
 
-        boolean removed = view.removePlace(mockPartDefinition);
+        boolean removed = view.clear(mockPartDefinition);
 
         assertTrue(removed);
         verify(panel).clear();
@@ -116,10 +116,10 @@ public class StaticWorkbenchPanelViewTest {
         when(mockPresenter2.getPlace()).thenReturn(mockPartDefinition2);
 
         when(view.panel.getPartView()).thenReturn(null);
-        view.addPart(mockPartView);
+        view.add(mockPartView);
         when(view.panel.getPartView()).thenReturn(mockPartView);
 
-        boolean removed = view.removePlace(mockPartDefinition2);
+        boolean removed = view.clear(mockPartDefinition2);
 
         assertFalse(removed);
         verify(panel,

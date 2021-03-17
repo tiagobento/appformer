@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package org.uberfire.client.workbench.part;
+package org.uberfire.client.workbench;
 
-import com.google.gwt.user.client.ui.IsWidget;
-import org.uberfire.mvp.PlaceRequest;
+import com.google.gwt.user.client.ui.FocusPanel;
+import com.google.gwt.user.client.ui.RequiresResize;
 
-public interface WorkbenchPartPresenter {
+public class RequiresResizeFocusPanel extends FocusPanel implements RequiresResize {
 
-    PlaceRequest getPlace();
-
-    void setPlace(PlaceRequest definition);
-
-    WorkbenchPartView getPartView();
-
-    void setWrappedWidget(IsWidget widget);
+    @Override
+    public void onResize() {
+        if (getWidget() instanceof RequiresResize) {
+            ((RequiresResize) getWidget()).onResize();
+        }
+    }
 }

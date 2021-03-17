@@ -23,7 +23,7 @@ import org.mockito.Mock;
 import org.uberfire.client.mvp.PerspectiveManager;
 import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenterImpl;
-import org.uberfire.client.workbench.panels.WorkbenchPanelViewImpl;
+import org.uberfire.client.workbench.WorkbenchPanel;
 import org.uberfire.client.workbench.part.WorkbenchPartPresenter;
 import org.uberfire.mvp.Command;
 import org.uberfire.workbench.model.PartDefinition;
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.*;
 public class StaticWorkbenchPanelPresenterTest {
 
     @Mock
-    WorkbenchPanelViewImpl view;
+    WorkbenchPanel view;
     WorkbenchPanelPresenterImpl presenter;
     @Mock
     private PlaceManager placeManager;
@@ -48,7 +48,7 @@ public class StaticWorkbenchPanelPresenterTest {
                                                     mock(PerspectiveManager.class),
                                                     placeManager);
         presenter.init();
-        presenter.setDefinition(new PanelDefinitionImpl());
+        presenter.setPlace(new PanelDefinitionImpl());
     }
 
     @Test
@@ -65,7 +65,7 @@ public class StaticWorkbenchPanelPresenterTest {
 
         presenter.addPart(part);
 
-        verify(view).addPart(any());
+        verify(view).add(any());
     }
 
     @Test
@@ -82,7 +82,7 @@ public class StaticWorkbenchPanelPresenterTest {
         };
 
         presenter.init();
-        presenter.setDefinition(new PanelDefinitionImpl());
+        presenter.setPlace(new PanelDefinitionImpl());
 
         //there is already a part
         when(singlePartPanelHelper.hasNoParts()).thenReturn(false);

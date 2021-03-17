@@ -15,8 +15,10 @@
  */
 package org.uberfire.client.mvp;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,19 +30,17 @@ import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.WorkbenchLayout;
-import org.uberfire.mvp.BiParameterizedCommand;
 import org.uberfire.mvp.Command;
+import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
 import org.uberfire.workbench.model.ActivityResourceType;
-import org.uberfire.workbench.model.PanelDefinition;
-import org.uberfire.workbench.model.impl.PanelDefinitionImpl;
 
 @ApplicationScoped
 public class PlaceManagerImpl implements PlaceManager {
 
     private final Map<PlaceRequest, Activity> existingWorkbenchActivities = new HashMap<>();
-    private final Map<PlaceRequest, PanelDefinition> dockPanels = new HashMap<>();
+    private final List<PlaceRequest> dockPanels = new ArrayList<>();
 
     @Inject
     private ActivityManager activityManager;
@@ -53,8 +53,8 @@ public class PlaceManagerImpl implements PlaceManager {
 
     @Override
     public void bootstrapRootPanel() {
-        final BiParameterizedCommand<PanelDefinition, PlaceRequest> command = (panelDef, editorPlace) -> {
-            panelManager.setRoot(panelDef);
+        final ParameterizedCommand<PlaceRequest> command = editorPlace -> {
+            panelManager.setRoot(editorPlace);
 
             final Activity editorActivity = resolveActivity(editorPlace, ActivityResourceType.EDITOR);
             if (editorActivity == null) {
@@ -62,17 +62,11 @@ public class PlaceManagerImpl implements PlaceManager {
             }
 
             launchActivity(editorPlace,
-                           editorActivity,
-                           panelDef);
+                           editorActivity);
 
             workbenchLayout.onResize();
         };
-
-        final PlaceRequest editorPlaceRequest = resolveEditorPlaceRequest();
-        final PanelDefinitionImpl rootPanel = new PanelDefinitionImpl();
-        rootPanel.setRoot(true);
-        rootPanel.setPlace(editorPlaceRequest);
-        command.execute(rootPanel, editorPlaceRequest);
+        command.execute(resolveEditorPlaceRequest());
     }
 
     private DefaultPlaceRequest resolveEditorPlaceRequest() {
@@ -93,12 +87,10 @@ public class PlaceManagerImpl implements PlaceManager {
             return;
         }
 
-        final PanelDefinition dockPanel = panelManager.addCustomPanel(addTo);
-        dockPanels.put(place,
-                       dockPanel);
+        panelManager.addCustomPanel(place, addTo);
+        dockPanels.add(place);
         launchActivity(place,
-                       dockActivity,
-                       dockPanel);
+                       dockActivity);
     }
 
     private Activity resolveActivity(final PlaceRequest place,
@@ -119,10 +111,8 @@ public class PlaceManagerImpl implements PlaceManager {
     }
 
     private void launchActivity(final PlaceRequest place,
-                                final Activity activity,
-                                final PanelDefinition panel) {
+                                final Activity activity) {
         panelManager.addWorkbenchPart(place,
-                                      panel,
                                       activity.getWidget());
         try {
             activity.onOpen();
@@ -144,16 +134,9 @@ public class PlaceManagerImpl implements PlaceManager {
 
         activity.onClose();
 
-        panelManager.removePartForPlace(place);
+        panelManager.removePanelForPlace(place, dockPanels.remove(place));
         existingWorkbenchActivities.remove(place);
         activityManager.destroyActivity(activity);
-
-        // currently, we force all custom panels as Static panels, so they can only ever contain the one part we put in them.
-        // we are responsible for cleaning them up when their place closes.
-        PanelDefinition customPanelDef = dockPanels.remove(place);
-        if (customPanelDef != null) {
-            panelManager.removeWorkbenchPanel(customPanelDef);
-        }
 
         if (onAfterClose != null) {
             onAfterClose.execute();

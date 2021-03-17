@@ -18,71 +18,18 @@ package org.uberfire.client.workbench;
 
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.IsWidget;
-import org.uberfire.client.mvp.PlaceManager;
 import org.uberfire.mvp.PlaceRequest;
-import org.uberfire.workbench.model.PanelDefinition;
 
-/**
- * Internal framework component that handles the creation, destruction, layout, and composition (parent-child nesting)
- * of all panels that make up a perspective. Also orchestrates adding and removing parts to/from panels. The outer most
- * workbench panels (header, footer, perspective container) are managed by the
- * {@link org.uberfire.client.workbench.WorkbenchLayout}.
- * <p>
- * <b>Application code should not invoke any of the methods of this class directly.</b> Doing so will corrupt the state
- * of the PlaceManager, ActivityManager, and potentially other stateful framework components. Applications should always
- * initiate Workbench actions through the public methods on {@link PlaceManager}.
- */
 public interface PanelManager {
 
-    /**
-     * Adds the given part to the given panel, which must already be part of the visible workbench layout.
-     * @param place The PlaceRequest that the part was resolved from. Not null.
-     * @param panel definition of the panel to add the part to (must describe a panel that is already present in the
-     * layout). Not null.
-     * @param widget The widget.
-     */
     void addWorkbenchPart(final PlaceRequest place,
-                          final PanelDefinition panel,
                           final IsWidget widget);
 
-    /**
-     * Creates an UberFire panel and installs its view in the given widget container.
-     * <p>
-     * <h3>Custom Panel Lifecycle</h3>
-     * <p>
-     * Custom panels can be disposed like any other panel: by calling {@link #removeWorkbenchPanel(PanelDefinition)}.
-     * Additionally, custom panels are monitored for DOM detachment. When a custom panel's view is removed from the DOM
-     * (whether directly removed from its parent or some ancestor is removed,) all the panel's parts are closed and then
-     * the associated panel is disposed.
-     * @return the definition for the newly constructed panel. Never null. The panel's type will be {@code panelType};
-     * its parent will be null; {@code isRoot()} will return false.
-     */
-    PanelDefinition addCustomPanel(HasWidgets container);
+    void addCustomPanel(PlaceRequest place,
+                        HasWidgets container);
 
-    /**
-     * Removes the panel associated with the given definition, removing the panel's presenter and view from the
-     * workbench, and freeing any resources associated with them. The panel must have no parts and no child panels.
-     * @param toRemove the panel to remove from the workbench layout. Must not be null.
-     * @throws IllegalStateException if the panel contains parts or child panels
-     * @throws IllegalArgumentException if no panel presenter is currently associated with the given definition
-     */
-    void removeWorkbenchPanel(final PanelDefinition toRemove) throws IllegalStateException;
+    void removePanelForPlace(final PlaceRequest toRemove,
+                             final boolean isDock);
 
-    /**
-     * Removes the part associated with the given PlaceRequest from the panel that contains it. If this operation
-     * removes the last part from the panel, and the panel is not the root panel, it will be removed from the workbench
-     * layout. Child panels are preserved by reparenting them to the removed panel's parent. Application code should not
-     * call this method directly; it is called by PlaceManager as part of the overall procedure in closing a place.
-     * @param toRemove the place that is closing. Must not be null.
-     * @return true if the associated part was found and removed; false if no matching part could be found.
-     */
-    boolean removePartForPlace(final PlaceRequest toRemove);
-
-    /**
-     * Clears all existing panel structure from the user interface, then installs a new root panel according to the
-     * specifications in the given {@link PanelDefinition}. Only installs the root panel; does not build the child
-     * panel/part structure recursively.
-     * @param root description of the new root panel to install. Must not be null.
-     */
-    void setRoot(PanelDefinition root);
+    void setRoot(PlaceRequest place);
 }
