@@ -19,7 +19,6 @@ package org.uberfire.client.workbench;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 
 import com.google.gwt.core.client.Scheduler;
@@ -30,16 +29,16 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import org.jboss.errai.ioc.client.api.AfterInitialization;
 import org.jboss.errai.ioc.client.api.EntryPoint;
 import org.uberfire.client.mvp.Activity;
 import org.uberfire.client.mvp.ActivityManager;
 import org.uberfire.client.resources.WorkbenchResources;
+import org.uberfire.client.util.CSSLocatorsUtils;
 import org.uberfire.client.util.JSFunctions;
 import org.uberfire.client.util.Layouts;
 import org.uberfire.client.workbench.docks.UberfireDocksContainer;
-import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
 import org.uberfire.workbench.model.ActivityResourceType;
@@ -51,8 +50,6 @@ public class WorkbenchEntryPoint {
     private UberfireDocksContainer uberfireDocksContainer;
     @Inject
     private ActivityManager activityManager;
-    @Inject
-    private Instance<WorkbenchPanel> workbenchPanelInstance;
 
     private final DockLayoutPanel rootContainer = new DockLayoutPanel(Unit.PX);
 
@@ -65,16 +62,13 @@ public class WorkbenchEntryPoint {
 
         uberfireDocksContainer.setup(rootContainer,
                                      () -> Scheduler.get().scheduleDeferred(this::onResize));
-        Layouts.setToFillParent(rootContainer);
 
+        Layouts.setToFillParent(rootContainer);
         RootLayoutPanel.get().add(rootContainer);
         bootstrapRootPanel();
 
-        // Resizing the Window should resize everything
         Window.addResizeHandler(event -> resizeTo(event.getWidth(),
                                                   event.getHeight()));
-
-        // Defer the initial resize call until widgets are rendered and sizes are available
         Scheduler.get().scheduleDeferred(this::onResize);
 
         JSFunctions.notifyJSReady();
@@ -89,32 +83,29 @@ public class WorkbenchEntryPoint {
                           int height) {
         rootContainer.setPixelSize(width,
                                    height);
-
-        // The dragBoundary can't be a LayoutPanel, so it doesn't support ProvidesResize/RequiresResize.
-        // We start the cascade of onResize() calls at its immediate child.
         rootContainer.onResize();
     }
 
     private void bootstrapRootPanel() {
-        final ParameterizedCommand<PlaceRequest> command = editorPlace -> {
-            final WorkbenchPanel panel = workbenchPanelInstance.get();
-            final Widget content = panel.asWidget();
-            rootContainer.add(content);
-            Layouts.setToFillParent(content);
-
-            final Activity editorActivity = activityManager.getActivity(editorPlace);
-            if (!editorActivity.isType(ActivityResourceType.EDITOR.name())) {
-                return;
-            }
-
-            panel.init(editorActivity.getWidget());
-            activityManager.openActivity(editorActivity.getIdentifier());
-
-            onResize();
-        };
-
         final DefaultPlaceRequest editorPlace = new DefaultPlaceRequest(activityManager.getEditorActivity().getIdentifier());
-        command.execute(editorPlace);
+        final Activity editorActivity = activityManager.getActivity(editorPlace);
+        if (!editorActivity.isType(ActivityResourceType.EDITOR.name())) {
+            return;
+        }
+
+        final SimpleLayoutPanel panel = new SimpleLayoutPanel();
+        panel.getElement().addClassName(CSSLocatorsUtils.buildLocator("qe", "static-workbench-panel-view"));
+
+        final ScrollPanel sp = new ScrollPanel();
+        sp.setWidget(editorActivity.getWidget());
+        sp.getElement().getFirstChildElement().setClassName("uf-scroll-panel");
+
+        panel.setWidget(sp);
+        Layouts.setToFillParent(panel);
+
+        rootContainer.add(panel);
+        activityManager.openActivity(editorActivity.getIdentifier());
+        onResize();
     }
 
     public void openDock(PlaceRequest place,
@@ -164,7 +155,6 @@ public class WorkbenchEntryPoint {
                         if (customContainer != null) {
                             customContainer.remove(panelToRemove.asWidget());
                         }
-                        activityManager.destroyBean(panelToRemove);
                     }
                     activityManager.destroyActivity(activity);
                 } finally {

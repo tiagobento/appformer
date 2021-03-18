@@ -114,13 +114,8 @@ public class ActivityManagerImpl implements ActivityManager {
             throw new IllegalStateException("Activity " + activity + " is not currently in the started state");
         }
         if (getBeanScope(activity) == Dependent.class) {
-            destroyBean(activity);
+            iocManager.destroyBean(activity);
         }
-    }
-
-    @Override
-    public void destroyBean(Object bean) {
-        iocManager.destroyBean(bean);
     }
 
     private Class<?> getBeanScope(Activity startedActivity) {

@@ -28,6 +28,4 @@ public interface ActivityManager {
     void closeActivity(final String activityId);
 
     void destroyActivity(final Activity activity);
-
-    void destroyBean(final Object bean);
 }
