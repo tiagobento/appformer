@@ -57,7 +57,7 @@ public class WorkbenchLayoutImplTest {
     UberfireDocksContainer uberfireDocksContainer;
     @Mock
     WorkbenchPickupDragController dragController;
-    private WorkbenchLayout workbenchLayout;
+    private WorkbenchEntryPoint workbenchLayout;
     private Widget widget;
     @Mock
     private SyncBeanManager iocManager;
@@ -79,13 +79,13 @@ public class WorkbenchLayoutImplTest {
 
     @Before
     public void setup() {
-        workbenchLayout = new WorkbenchLayout(iocManager,
-                                              root,
-                                              dndManager,
-                                              uberfireDocksContainer,
-                                              dragController,
-                                              headerPanel,
-                                              footerPanel) {
+        workbenchLayout = new WorkbenchEntryPoint(iocManager,
+                                                  root,
+                                                  dndManager,
+                                                  uberfireDocksContainer,
+                                                  dragController,
+                                                  headerPanel,
+                                                  footerPanel) {
             @Override
             ElementWrapperWidget<?> createWidgetFrom(HTMLElement h) {
                 return mock(ElementWrapperWidget.class);
@@ -108,7 +108,7 @@ public class WorkbenchLayoutImplTest {
     public void testMaximize() {
         workbenchLayout.maximize(widget);
 
-        verify(widget).addStyleName(WorkbenchLayout.UF_MAXIMIZED_PANEL);
+        verify(widget).addStyleName(WorkbenchEntryPoint.UF_MAXIMIZED_PANEL);
 
         verify(((RequiresResize) widget),
                never()).onResize();
@@ -116,10 +116,10 @@ public class WorkbenchLayoutImplTest {
 
     @Test
     public void testExpandAnimation() {
-        final WorkbenchLayout.ExpandAnimation expandAnimation = new WorkbenchLayout.ExpandAnimation(widget,
-                                                                                                    Maps.<Widget, WorkbenchLayout.OriginalStyleInfo>newHashMap(),
-                                                                                                    mock(SimpleLayoutPanel.class),
-                                                                                                    null);
+        final WorkbenchEntryPoint.ExpandAnimation expandAnimation = new WorkbenchEntryPoint.ExpandAnimation(widget,
+                                                                                                            Maps.<Widget, WorkbenchEntryPoint.OriginalStyleInfo>newHashMap(),
+                                                                                                            mock(SimpleLayoutPanel.class),
+                                                                                                            null);
 
         expandAnimation.onComplete();
 
@@ -129,10 +129,10 @@ public class WorkbenchLayoutImplTest {
     @Test
     public void testExpandAnimationWithCallback() {
         final Command callback = mock(Command.class);
-        final WorkbenchLayout.ExpandAnimation expandAnimation = new WorkbenchLayout.ExpandAnimation(widget,
-                                                                                                    Maps.<Widget, WorkbenchLayout.OriginalStyleInfo>newHashMap(),
-                                                                                                    mock(SimpleLayoutPanel.class),
-                                                                                                    callback);
+        final WorkbenchEntryPoint.ExpandAnimation expandAnimation = new WorkbenchEntryPoint.ExpandAnimation(widget,
+                                                                                                            Maps.<Widget, WorkbenchEntryPoint.OriginalStyleInfo>newHashMap(),
+                                                                                                            mock(SimpleLayoutPanel.class),
+                                                                                                            callback);
 
         expandAnimation.onComplete();
 
@@ -145,8 +145,8 @@ public class WorkbenchLayoutImplTest {
         workbenchLayout.maximize(widget);
         workbenchLayout.unmaximize(widget);
 
-        verify(widget).addStyleName(WorkbenchLayout.UF_MAXIMIZED_PANEL);
-        verify(widget).removeStyleName(WorkbenchLayout.UF_MAXIMIZED_PANEL);
+        verify(widget).addStyleName(WorkbenchEntryPoint.UF_MAXIMIZED_PANEL);
+        verify(widget).removeStyleName(WorkbenchEntryPoint.UF_MAXIMIZED_PANEL);
 
         verify(((RequiresResize) widget),
                never()).onResize();
@@ -154,10 +154,10 @@ public class WorkbenchLayoutImplTest {
 
     @Test
     public void testCollapseAnimation() {
-        final HashMap<Widget, WorkbenchLayout.OriginalStyleInfo> maximizedWidgetOriginalStyles = Maps.newHashMap();
+        final HashMap<Widget, WorkbenchEntryPoint.OriginalStyleInfo> maximizedWidgetOriginalStyles = Maps.newHashMap();
         maximizedWidgetOriginalStyles.put(widget,
-                                          new WorkbenchLayout.OriginalStyleInfo(widget));
-        final WorkbenchLayout.CollapseAnimation collapseAnimation = new WorkbenchLayout.CollapseAnimation(
+                                          new WorkbenchEntryPoint.OriginalStyleInfo(widget));
+        final WorkbenchEntryPoint.CollapseAnimation collapseAnimation = new WorkbenchEntryPoint.CollapseAnimation(
                 widget,
                 maximizedWidgetOriginalStyles,
                 null);
@@ -169,11 +169,11 @@ public class WorkbenchLayoutImplTest {
 
     @Test
     public void testCollapseAnimationWithCallback() {
-        final HashMap<Widget, WorkbenchLayout.OriginalStyleInfo> maximizedWidgetOriginalStyles = Maps.newHashMap();
+        final HashMap<Widget, WorkbenchEntryPoint.OriginalStyleInfo> maximizedWidgetOriginalStyles = Maps.newHashMap();
         maximizedWidgetOriginalStyles.put(widget,
-                                          new WorkbenchLayout.OriginalStyleInfo(widget));
+                                          new WorkbenchEntryPoint.OriginalStyleInfo(widget));
         final Command callback = mock(Command.class);
-        final WorkbenchLayout.CollapseAnimation collapseAnimation = new WorkbenchLayout.CollapseAnimation(
+        final WorkbenchEntryPoint.CollapseAnimation collapseAnimation = new WorkbenchEntryPoint.CollapseAnimation(
                 widget,
                 maximizedWidgetOriginalStyles,
                 callback);
@@ -248,7 +248,7 @@ public class WorkbenchLayoutImplTest {
         workbenchLayout.addWorkbenchProfileCssClass(new WorkbenchProfileCssClass("dora"));
 
         verify(root).removeStyleName("current stylename");
-        verify(root).addStyleName(WorkbenchLayout.UF_ROOT_CSS_CLASS);
+        verify(root).addStyleName(WorkbenchEntryPoint.UF_ROOT_CSS_CLASS);
         verify(root).addStyleName("dora");
 
     }

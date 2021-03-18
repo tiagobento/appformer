@@ -16,24 +16,24 @@
 
 package org.uberfire.client.workbench;
 
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.jboss.errai.ioc.client.api.AfterInitialization;
 import org.jboss.errai.ioc.client.api.EntryPoint;
-import org.jboss.errai.ioc.client.container.SyncBeanDef;
-import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.mvp.Activity;
 import org.uberfire.client.mvp.ActivityManager;
-import org.uberfire.client.mvp.EditorActivity;
 import org.uberfire.client.resources.WorkbenchResources;
 import org.uberfire.client.util.JSFunctions;
 import org.uberfire.client.util.Layouts;
@@ -44,18 +44,19 @@ import org.uberfire.mvp.impl.DefaultPlaceRequest;
 import org.uberfire.workbench.model.ActivityResourceType;
 
 @EntryPoint
-public class WorkbenchLayout {
+public class WorkbenchEntryPoint {
 
     @Inject
     private UberfireDocksContainer uberfireDocksContainer;
-    @Inject
-    private SyncBeanManager iocManager;
     @Inject
     private ActivityManager activityManager;
     @Inject
     private Instance<WorkbenchPanel> workbenchPanelInstance;
 
     private final DockLayoutPanel rootContainer = new DockLayoutPanel(Unit.PX);
+
+    private final Map<PlaceRequest, WorkbenchPanel> placePanelMap = new HashMap<>();
+    private final Map<PlaceRequest, HasWidgets> placeCustomWidgetMap = new HashMap<>();
 
     @AfterInitialization
     private void afterInit() {
@@ -111,11 +112,65 @@ public class WorkbenchLayout {
             onResize();
         };
 
-        final Collection<SyncBeanDef<EditorActivity>> editors = iocManager.lookupBeans(EditorActivity.class);
-        if (editors.size() != 1) {
-            throw new RuntimeException("There must be exactly one instance of EditorActivity.");
-        }
-        final DefaultPlaceRequest editorPlace = new DefaultPlaceRequest(editors.iterator().next().getInstance().getIdentifier());
+        final DefaultPlaceRequest editorPlace = new DefaultPlaceRequest(activityManager.getEditorActivity().getIdentifier());
         command.execute(editorPlace);
+    }
+
+    public void openDock(PlaceRequest place,
+                         HasWidgets addTo) {
+        final Activity dockActivity = activityManager.getActivity(place);
+        if (place == null || !dockActivity.isType(ActivityResourceType.DOCK.name())) {
+            return;
+        }
+
+        final WorkbenchPanel newPanel = workbenchPanelInstance.get();
+        Widget panelViewWidget = newPanel.asWidget();
+        panelViewWidget.addAttachHandler(new CustomPanelCleanupHandler(place));
+
+        addTo.add(panelViewWidget);
+        newPanel.init(dockActivity.getWidget());
+        activityManager.openActivity(dockActivity.getIdentifier());
+        placeCustomWidgetMap.put(place,
+                                 addTo);
+        placePanelMap.put(place,
+                          newPanel);
+    }
+
+    private final class CustomPanelCleanupHandler implements AttachEvent.Handler {
+
+        private final PlaceRequest place;
+        private boolean detaching;
+
+        private CustomPanelCleanupHandler(PlaceRequest place) {
+            this.place = place;
+        }
+
+        @Override
+        public void onAttachOrDetach(AttachEvent event) {
+            if (event.isAttached() || detaching || place == null || !placePanelMap.containsKey(place)) {
+                return;
+            }
+            detaching = true;
+            Scheduler.get().scheduleFinally(() -> {
+                try {
+                    final Activity activity = activityManager.getActivity(place);
+                    activityManager.closeActivity(activity.getIdentifier());
+
+                    final WorkbenchPanel panelToRemove = placePanelMap.remove(place);
+                    if (panelToRemove != null) {
+                        panelToRemove.clear();
+
+                        final HasWidgets customContainer = placeCustomWidgetMap.remove(place);
+                        if (customContainer != null) {
+                            customContainer.remove(panelToRemove.asWidget());
+                        }
+                        activityManager.destroyBean(panelToRemove);
+                    }
+                    activityManager.destroyActivity(activity);
+                } finally {
+                    detaching = false;
+                }
+            });
+        }
     }
 }

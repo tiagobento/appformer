@@ -44,7 +44,6 @@ import org.uberfire.workbench.model.Position;
  * </ol>
  * An activity will never receive a call to {@link #onOpen()} when it is uninitialized or open, but it may be reopened after a call
  * to {@link #onClose()}.
- * @see PlaceManager
  * @see ActivityManager
  */
 @JsType

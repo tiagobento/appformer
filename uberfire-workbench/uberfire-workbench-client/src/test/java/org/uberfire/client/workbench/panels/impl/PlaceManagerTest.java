@@ -36,7 +36,7 @@ import org.uberfire.client.mvp.*;
 import org.uberfire.client.util.MockIOCBeanDef;
 import org.uberfire.client.workbench.LayoutSelection;
 import org.uberfire.client.workbench.PanelManager;
-import org.uberfire.client.workbench.WorkbenchLayout;
+import org.uberfire.client.workbench.WorkbenchEntryPoint;
 import org.uberfire.client.workbench.docks.UberfireDocks;
 import org.uberfire.client.workbench.events.*;
 import org.uberfire.client.workbench.panels.WorkbenchPanelPresenterImpl;
@@ -116,7 +116,7 @@ public class PlaceManagerTest {
     @Mock
     PerspectiveManager perspectiveManager;
     @Mock
-    WorkbenchLayout workbenchLayout;
+    WorkbenchEntryPoint workbenchLayout;
     @Mock
     LayoutSelection layoutSelection;
     /**

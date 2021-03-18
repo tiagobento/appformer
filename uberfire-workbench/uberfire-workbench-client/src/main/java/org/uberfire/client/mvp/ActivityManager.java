@@ -19,6 +19,8 @@ import org.uberfire.mvp.PlaceRequest;
 
 public interface ActivityManager {
 
+    Activity getEditorActivity();
+
     Activity getActivity(final PlaceRequest placeRequest);
 
     void openActivity(final String activityId);
