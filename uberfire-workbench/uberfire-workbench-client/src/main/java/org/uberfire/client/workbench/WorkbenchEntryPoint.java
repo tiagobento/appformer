@@ -29,6 +29,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.jboss.errai.ioc.client.api.AfterInitialization;
 import org.jboss.errai.ioc.client.api.EntryPoint;
@@ -55,7 +56,7 @@ public class WorkbenchEntryPoint {
 
     private final DockLayoutPanel rootContainer = new DockLayoutPanel(Unit.PX);
 
-    private final Map<PlaceRequest, WorkbenchPanel> placePanelMap = new HashMap<>();
+    private final Map<PlaceRequest, ScrollPanel> dockPanels = new HashMap<>();
     private final Map<PlaceRequest, HasWidgets> placeCustomWidgetMap = new HashMap<>();
 
     @AfterInitialization
@@ -117,37 +118,36 @@ public class WorkbenchEntryPoint {
     }
 
     public void openDock(PlaceRequest place,
-                         HasWidgets addTo) {
+                         HasWidgets container) {
         final Activity dockActivity = activityManager.getActivity(place);
         if (place == null || !dockActivity.isType(ActivityResourceType.DOCK.name())) {
             return;
         }
 
-        final WorkbenchPanel newPanel = workbenchPanelInstance.get();
-        Widget panelViewWidget = newPanel.asWidget();
-        panelViewWidget.addAttachHandler(new CustomPanelCleanupHandler(place));
-
-        addTo.add(panelViewWidget);
-        newPanel.init(dockActivity.getWidget());
+        final ScrollPanel panel = new ScrollPanel();
+        panel.setWidget(dockActivity.getWidget());
+        panel.addAttachHandler(new CleanupHandler(place));
+        Layouts.setToFillParent(panel);
+        container.add(panel);
         activityManager.openActivity(dockActivity.getIdentifier());
         placeCustomWidgetMap.put(place,
-                                 addTo);
-        placePanelMap.put(place,
-                          newPanel);
+                                 container);
+        dockPanels.put(place,
+                       panel);
     }
 
-    private final class CustomPanelCleanupHandler implements AttachEvent.Handler {
+    private final class CleanupHandler implements AttachEvent.Handler {
 
         private final PlaceRequest place;
         private boolean detaching;
 
-        private CustomPanelCleanupHandler(PlaceRequest place) {
+        private CleanupHandler(PlaceRequest place) {
             this.place = place;
         }
 
         @Override
         public void onAttachOrDetach(AttachEvent event) {
-            if (event.isAttached() || detaching || place == null || !placePanelMap.containsKey(place)) {
+            if (event.isAttached() || detaching || place == null || !dockPanels.containsKey(place)) {
                 return;
             }
             detaching = true;
@@ -156,7 +156,7 @@ public class WorkbenchEntryPoint {
                     final Activity activity = activityManager.getActivity(place);
                     activityManager.closeActivity(activity.getIdentifier());
 
-                    final WorkbenchPanel panelToRemove = placePanelMap.remove(place);
+                    final ScrollPanel panelToRemove = dockPanels.remove(place);
                     if (panelToRemove != null) {
                         panelToRemove.clear();
 
