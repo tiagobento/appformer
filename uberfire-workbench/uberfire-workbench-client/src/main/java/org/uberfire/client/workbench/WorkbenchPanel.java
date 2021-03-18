@@ -19,29 +19,21 @@ package org.uberfire.client.workbench;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 
+import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimpleLayoutPanel;
-import com.google.gwt.user.client.ui.Widget;
 import org.uberfire.client.util.CSSLocatorsUtils;
 import org.uberfire.client.util.Layouts;
 
 @Dependent
-public class WorkbenchPanel extends ResizeComposite {
-
-    private final RequiresResizeFocusPanel container = new RequiresResizeFocusPanel();
+public class WorkbenchPanel extends FocusPanel implements RequiresResize {
 
     @PostConstruct
     void postConstruct() {
-        Layouts.setToFillParent(container);
-        initWidget(container);
-        container.getElement().addClassName(CSSLocatorsUtils.buildLocator("qe", "static-workbench-panel-view"));
-    }
-
-    @Override
-    public Widget getWidget() {
-        return container;
+        Layouts.setToFillParent(this);
+        this.getElement().addClassName(CSSLocatorsUtils.buildLocator("qe", "static-workbench-panel-view"));
     }
 
     public void init(final IsWidget widget) {
@@ -51,11 +43,14 @@ public class WorkbenchPanel extends ResizeComposite {
         sp.getElement().getFirstChildElement().setClassName("uf-scroll-panel");
         Layouts.setToFillParent(panel);
         sp.setWidget(widget);
-        container.setWidget(panel);
+        this.setWidget(panel);
         onResize();
     }
 
-    public void clear() {
-        container.clear();
+    @Override
+    public void onResize() {
+        if (getWidget() instanceof RequiresResize) {
+            ((RequiresResize) getWidget()).onResize();
+        }
     }
 }

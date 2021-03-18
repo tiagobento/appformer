@@ -1082,8 +1082,8 @@ public class PlaceManagerTest {
         CustomPanelDefinitionImpl customPanelDef = new CustomPanelDefinitionImpl(
                 UnanchoredStaticWorkbenchPanelPresenter.class.getName(),
                 any);
-        when(panelManager.addCustomPanel(any,
-                                         eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
+        when(panelManager.addDockPanel(any,
+                                       eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
                 .thenReturn(customPanelDef);
 
         PlaceRequest emeraldCityPlace = new DefaultPlaceRequest("emerald_city");
@@ -1106,14 +1106,14 @@ public class PlaceManagerTest {
         verifyActivityLaunchSideEffects(emeraldCityPlace,
                                         emeraldCityActivity,
                                         customPanelDef);
-        verify(panelManager).addWorkbenchPart(eq(emeraldCityPlace),
-                                              eq(new PartDefinitionImpl(emeraldCityPlace)),
-                                              eq(customPanelDef),
-                                              isNull(Menus.class),
-                                              any(UIPart.class),
-                                              isNull(String.class),
-                                              isNull(Integer.class),
-                                              isNull(Integer.class));
+        verify(panelManager).addWidget(eq(emeraldCityPlace),
+                                       eq(new PartDefinitionImpl(emeraldCityPlace)),
+                                       eq(customPanelDef),
+                                       isNull(Menus.class),
+                                       any(UIPart.class),
+                                       isNull(String.class),
+                                       isNull(Integer.class),
+                                       isNull(Integer.class));
         assertNull(customPanelDef.getParent());
     }
 
@@ -1124,8 +1124,8 @@ public class PlaceManagerTest {
         CustomPanelDefinitionImpl customPanelDef = spy(new CustomPanelDefinitionImpl(
                 UnanchoredStaticWorkbenchPanelPresenter.class.getName(),
                 panel));
-        when(panelManager.addCustomPanel(eq(panel),
-                                         eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
+        when(panelManager.addDockPanel(eq(panel),
+                                       eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
                 .thenReturn(customPanelDef);
 
         PlaceRequest emeraldCityPlace = new DefaultPlaceRequest("emerald_city");
@@ -1158,14 +1158,14 @@ public class PlaceManagerTest {
         verifyActivityLaunchSideEffects(emeraldCityPlace,
                                         emeraldCityActivity,
                                         customPanelDef);
-        verify(panelManager).addWorkbenchPart(eq(emeraldCityPlace),
-                                              eq(new PartDefinitionImpl(emeraldCityPlace)),
-                                              eq(customPanelDef),
-                                              isNull(Menus.class),
-                                              any(UIPart.class),
-                                              isNull(String.class),
-                                              isNull(Integer.class),
-                                              isNull(Integer.class));
+        verify(panelManager).addWidget(eq(emeraldCityPlace),
+                                       eq(new PartDefinitionImpl(emeraldCityPlace)),
+                                       eq(customPanelDef),
+                                       isNull(Menus.class),
+                                       any(UIPart.class),
+                                       isNull(String.class),
+                                       isNull(Integer.class),
+                                       isNull(Integer.class));
         assertNull(customPanelDef.getParent());
 
         Set<PartDefinition> parts = new HashSet<>();
@@ -1181,14 +1181,14 @@ public class PlaceManagerTest {
                                         emeraldCityActivity2,
                                         customPanelDef);
 
-        verify(panelManager).addWorkbenchPart(eq(emeraldCityPlace2),
-                                              eq(new PartDefinitionImpl(emeraldCityPlace2)),
-                                              eq(customPanelDef),
-                                              isNull(Menus.class),
-                                              any(UIPart.class),
-                                              isNull(String.class),
-                                              isNull(Integer.class),
-                                              isNull(Integer.class));
+        verify(panelManager).addWidget(eq(emeraldCityPlace2),
+                                       eq(new PartDefinitionImpl(emeraldCityPlace2)),
+                                       eq(customPanelDef),
+                                       isNull(Menus.class),
+                                       any(UIPart.class),
+                                       isNull(String.class),
+                                       isNull(Integer.class),
+                                       isNull(Integer.class));
 
         verify(placeManagerSpy).closePlace(emeraldCityPlace);
 
@@ -1202,8 +1202,8 @@ public class PlaceManagerTest {
         CustomPanelDefinitionImpl customPanelDef = spy(new CustomPanelDefinitionImpl(
                 UnanchoredStaticWorkbenchPanelPresenter.class.getName(),
                 panel));
-        when(panelManager.addCustomPanel(eq(panel),
-                                         eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
+        when(panelManager.addDockPanel(eq(panel),
+                                       eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
                 .thenReturn(customPanelDef);
 
         PlaceRequest emeraldCityPlace = new DefaultPlaceRequest("emerald_city");
@@ -1236,14 +1236,14 @@ public class PlaceManagerTest {
         verifyActivityLaunchSideEffects(emeraldCityPlace,
                                         emeraldCityActivity,
                                         customPanelDef);
-        verify(panelManager).addWorkbenchPart(eq(emeraldCityPlace),
-                                              eq(new PartDefinitionImpl(emeraldCityPlace)),
-                                              eq(customPanelDef),
-                                              isNull(Menus.class),
-                                              any(UIPart.class),
-                                              isNull(String.class),
-                                              isNull(Integer.class),
-                                              isNull(Integer.class));
+        verify(panelManager).addWidget(eq(emeraldCityPlace),
+                                       eq(new PartDefinitionImpl(emeraldCityPlace)),
+                                       eq(customPanelDef),
+                                       isNull(Menus.class),
+                                       any(UIPart.class),
+                                       isNull(String.class),
+                                       isNull(Integer.class),
+                                       isNull(Integer.class));
         assertNull(customPanelDef.getParent());
 
         Set<PartDefinition> parts = new HashSet<>();
@@ -1259,14 +1259,14 @@ public class PlaceManagerTest {
                                         emeraldCityActivity2,
                                         customPanelDef);
 
-        verify(panelManager).addWorkbenchPart(eq(emeraldCityPlace2),
-                                              eq(new PartDefinitionImpl(emeraldCityPlace2)),
-                                              eq(customPanelDef),
-                                              isNull(Menus.class),
-                                              any(UIPart.class),
-                                              isNull(String.class),
-                                              isNull(Integer.class),
-                                              isNull(Integer.class));
+        verify(panelManager).addWidget(eq(emeraldCityPlace2),
+                                       eq(new PartDefinitionImpl(emeraldCityPlace2)),
+                                       eq(customPanelDef),
+                                       isNull(Menus.class),
+                                       any(UIPart.class),
+                                       isNull(String.class),
+                                       isNull(Integer.class),
+                                       isNull(Integer.class));
 
         verify(placeManagerSpy).closePlace(emeraldCityPlace);
 
@@ -1283,8 +1283,8 @@ public class PlaceManagerTest {
 
         verify(panelManager,
                never())
-                .addCustomPanel(customContainer,
-                                WorkbenchPanelPresenterImpl.class.getName());
+                .addDockPanel(customContainer,
+                              WorkbenchPanelPresenterImpl.class.getName());
         verifyNoActivityLaunchSideEffects(kansas,
                                           kansasActivity);
         verify(selectWorkbenchPartEvent).fire(refEq(new SelectPlaceEvent(kansas)));
@@ -1296,8 +1296,8 @@ public class PlaceManagerTest {
         CustomPanelDefinitionImpl customPanelDef = new CustomPanelDefinitionImpl(
                 UnanchoredStaticWorkbenchPanelPresenter.class.getName(),
                 any);
-        when(panelManager.addCustomPanel(any,
-                                         eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
+        when(panelManager.addDockPanel(any,
+                                       eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
                 .thenReturn(customPanelDef);
 
         PlaceRequest emeraldCityPlace = new DefaultPlaceRequest("emerald_city");
@@ -1319,8 +1319,8 @@ public class PlaceManagerTest {
         CustomPanelDefinitionImpl customPanelDef = new CustomPanelDefinitionImpl(
                 UnanchoredStaticWorkbenchPanelPresenter.class.getName(),
                 any);
-        when(panelManager.addCustomPanel(any,
-                                         eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
+        when(panelManager.addDockPanel(any,
+                                       eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
                 .thenReturn(customPanelDef);
 
         PlaceRequest emeraldCityPlace = new DefaultPlaceRequest("emerald_city");
@@ -1342,8 +1342,8 @@ public class PlaceManagerTest {
         CustomPanelDefinitionImpl customPanelDef = new CustomPanelDefinitionImpl(
                 UnanchoredStaticWorkbenchPanelPresenter.class.getName(),
                 any);
-        when(panelManager.addCustomPanel(any,
-                                         eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
+        when(panelManager.addDockPanel(any,
+                                       eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
                 .thenReturn(customPanelDef);
 
         PlaceRequest emeraldCityPlace = new DefaultPlaceRequest("emerald_city");
@@ -1366,14 +1366,14 @@ public class PlaceManagerTest {
         verifyActivityLaunchSideEffects(emeraldCityPlace,
                                         emeraldCityActivity,
                                         customPanelDef);
-        verify(panelManager).addWorkbenchPart(eq(emeraldCityPlace),
-                                              eq(new PartDefinitionImpl(emeraldCityPlace)),
-                                              eq(customPanelDef),
-                                              isNull(Menus.class),
-                                              any(UIPart.class),
-                                              isNull(String.class),
-                                              isNull(Integer.class),
-                                              isNull(Integer.class));
+        verify(panelManager).addWidget(eq(emeraldCityPlace),
+                                       eq(new PartDefinitionImpl(emeraldCityPlace)),
+                                       eq(customPanelDef),
+                                       isNull(Menus.class),
+                                       any(UIPart.class),
+                                       isNull(String.class),
+                                       isNull(Integer.class),
+                                       isNull(Integer.class));
         assertNull(customPanelDef.getParent());
     }
 
@@ -1387,8 +1387,8 @@ public class PlaceManagerTest {
 
         verify(panelManager,
                never())
-                .addCustomPanel(customContainer,
-                                WorkbenchPanelPresenterImpl.class.getName());
+                .addDockPanel(customContainer,
+                              WorkbenchPanelPresenterImpl.class.getName());
         verifyNoActivityLaunchSideEffects(kansas,
                                           kansasActivity);
         verify(selectWorkbenchPartEvent).fire(refEq(new SelectPlaceEvent(kansas)));
@@ -1400,8 +1400,8 @@ public class PlaceManagerTest {
         CustomPanelDefinitionImpl customPanelDef = new CustomPanelDefinitionImpl(
                 UnanchoredStaticWorkbenchPanelPresenter.class.getName(),
                 any);
-        when(panelManager.addCustomPanel(any,
-                                         eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
+        when(panelManager.addDockPanel(any,
+                                       eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
                 .thenReturn(customPanelDef);
 
         PlaceRequest emeraldCityPlace = new DefaultPlaceRequest("emerald_city");
@@ -1423,8 +1423,8 @@ public class PlaceManagerTest {
         CustomPanelDefinitionImpl customPanelDef = new CustomPanelDefinitionImpl(
                 UnanchoredStaticWorkbenchPanelPresenter.class.getName(),
                 any);
-        when(panelManager.addCustomPanel(any,
-                                         eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
+        when(panelManager.addDockPanel(any,
+                                       eq(UnanchoredStaticWorkbenchPanelPresenter.class.getName())))
                 .thenReturn(customPanelDef);
 
         PlaceRequest emeraldCityPlace = new DefaultPlaceRequest("emerald_city");
@@ -1689,15 +1689,15 @@ public class PlaceManagerTest {
             expectedPartWidth = expectedPanel.getWidth();
             expectedPartHeight = expectedPanel.getHeight();
         }
-        verify(panelManager).addWorkbenchPart(eq(placeRequest),
-                                              eq(new PartDefinitionImpl(placeRequest)),
-                                              expectedPanel == null ? any(PanelDefinition.class) : eq(
+        verify(panelManager).addWidget(eq(placeRequest),
+                                       eq(new PartDefinitionImpl(placeRequest)),
+                                       expectedPanel == null ? any(PanelDefinition.class) : eq(
                                                       expectedPanel),
-                                              isNull(Menus.class),
-                                              any(UIPart.class),
-                                              isNull(String.class),
-                                              eq(expectedPartWidth),
-                                              eq(expectedPartHeight));
+                                       isNull(Menus.class),
+                                       any(UIPart.class),
+                                       isNull(String.class),
+                                       eq(expectedPartWidth),
+                                       eq(expectedPartHeight));
 
         // contract between PlaceManager and PlaceHistoryHandler
 

@@ -23,13 +23,17 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.ui.HasWidgets;
+import com.google.gwt.user.client.ui.Widget;
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
-import org.uberfire.client.workbench.PanelManager;
 import org.uberfire.client.workbench.WorkbenchLayout;
+import org.uberfire.client.workbench.WorkbenchPanel;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;
@@ -40,28 +44,32 @@ import org.uberfire.workbench.model.ActivityResourceType;
 public class PlaceManagerImpl implements PlaceManager {
 
     private final Map<PlaceRequest, Activity> existingWorkbenchActivities = new HashMap<>();
-    private final List<PlaceRequest> dockPanels = new ArrayList<>();
+    private final List<PlaceRequest> dockPlaces = new ArrayList<>();
+    private final Map<PlaceRequest, WorkbenchPanel> mapPlaceToPanel = new HashMap<>();
+    private final Map<PlaceRequest, HasWidgets> customPanels = new HashMap<>();
 
     @Inject
     private ActivityManager activityManager;
     @Inject
-    private PanelManager panelManager;
-    @Inject
     private WorkbenchLayout workbenchLayout;
     @Inject
     private SyncBeanManager iocManager;
+    @Inject
+    private Instance<WorkbenchPanel> workbenchPanelInstance;
 
     @Override
     public void bootstrapRootPanel() {
         final ParameterizedCommand<PlaceRequest> command = editorPlace -> {
-            panelManager.setRoot(editorPlace);
+            final WorkbenchPanel panel = workbenchPanelInstance.get();
+            workbenchLayout.setContent(panel.asWidget());
 
             final Activity editorActivity = resolveActivity(editorPlace, ActivityResourceType.EDITOR);
             if (editorActivity == null) {
                 return;
             }
 
-            launchActivity(editorPlace,
+            launchActivity(panel,
+                           editorPlace,
                            editorActivity);
 
             workbenchLayout.onResize();
@@ -87,9 +95,10 @@ public class PlaceManagerImpl implements PlaceManager {
             return;
         }
 
-        panelManager.addCustomPanel(place, addTo);
-        dockPanels.add(place);
-        launchActivity(place,
+        final WorkbenchPanel panel = addDockPanel(place, addTo);
+        dockPlaces.add(place);
+        launchActivity(panel,
+                       place,
                        dockActivity);
     }
 
@@ -110,10 +119,10 @@ public class PlaceManagerImpl implements PlaceManager {
         return resolvedActivity;
     }
 
-    private void launchActivity(final PlaceRequest place,
+    private void launchActivity(final WorkbenchPanel panel,
+                                final PlaceRequest place,
                                 final Activity activity) {
-        panelManager.addWorkbenchPart(place,
-                                      activity.getWidget());
+        panel.init(activity.getWidget());
         try {
             activity.onOpen();
         } catch (Exception ex) {
@@ -134,12 +143,75 @@ public class PlaceManagerImpl implements PlaceManager {
 
         activity.onClose();
 
-        panelManager.removePanelForPlace(place, dockPanels.remove(place));
+        removePanelForPlace(place, dockPlaces.remove(place));
         existingWorkbenchActivities.remove(place);
         activityManager.destroyActivity(activity);
 
         if (onAfterClose != null) {
             onAfterClose.execute();
+        }
+    }
+
+    private void removePanelForPlace(final PlaceRequest toRemove,
+                                     final boolean isDock) {
+        if (toRemove == null) {
+            return;
+        }
+
+        final WorkbenchPanel panelToRemove = mapPlaceToPanel.remove(toRemove);
+        if (panelToRemove == null) {
+            return;
+        }
+
+        panelToRemove.clear();
+
+        if (isDock) {
+            HasWidgets customContainer = customPanels.remove(toRemove);
+            if (customContainer != null) {
+                customContainer.remove(panelToRemove.asWidget());
+            }
+        }
+
+        iocManager.destroyBean(panelToRemove);
+    }
+
+    private WorkbenchPanel addDockPanel(final PlaceRequest place,
+                                        final HasWidgets container) {
+        final WorkbenchPanel newPanel = workbenchPanelInstance.get();
+        Widget panelViewWidget = newPanel.asWidget();
+        panelViewWidget.addAttachHandler(new CustomPanelCleanupHandler(place));
+
+        container.add(panelViewWidget);
+        customPanels.put(place,
+                         container);
+
+        mapPlaceToPanel.put(place,
+                            newPanel);
+        return newPanel;
+    }
+
+    private final class CustomPanelCleanupHandler implements AttachEvent.Handler {
+
+        private final PlaceRequest place;
+        private boolean detaching;
+
+        private CustomPanelCleanupHandler(PlaceRequest place) {
+            this.place = place;
+        }
+
+        @Override
+        public void onAttachOrDetach(AttachEvent event) {
+            if (event.isAttached() || detaching || !mapPlaceToPanel.containsKey(place)) {
+                return;
+            }
+            detaching = true;
+            Scheduler.get().scheduleFinally(() -> {
+                try {
+                    closePlace(place, null);
+                } finally {
+                    detaching = false;
+                }
+            });
         }
     }
 }
