@@ -227,7 +227,7 @@ public class DocksBars {
     private void goToPlace(DocksExpandedBar expandedBar,
                            PlaceRequest placeRequest) {
         placeRequest.setUpdateLocationBar(false);
-        placeManager.goToDock(placeRequest,
+        placeManager.openDock(placeRequest,
                               expandedBar.targetPanel());
     }
 

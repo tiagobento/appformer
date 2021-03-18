@@ -19,8 +19,8 @@ package org.uberfire.client.mvp;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,7 +41,7 @@ import static java.util.Collections.singletonList;
 @ApplicationScoped
 public class ActivityManagerImpl implements ActivityManager {
 
-    private final Map<Activity, PlaceRequest> startedActivities = new IdentityHashMap<>();
+    private final Map<String, Activity> startedActivities = new IdentityHashMap<>();
     private final Map<String, SyncBeanDef<Activity>> activitiesById = new HashMap<>();
 
     @Inject
@@ -67,22 +67,51 @@ public class ActivityManagerImpl implements ActivityManager {
     }
 
     @Override
-    public Set<Activity> getActivities(final PlaceRequest placeRequest) {
-        return getActivitiesFromBeans(resolveById(placeRequest.getIdentifier()))
+    public Activity getActivity(final PlaceRequest place) {
+        final List<Activity> activities = getActivitiesFromBeans(resolveById(place.getIdentifier()))
                 .stream()
-                .map(activity -> startIfNecessary(activity, placeRequest))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+                .map(activity -> startedActivities.computeIfAbsent(activity.getIdentifier(), a -> {
+                    activity.onStartup(place);
+                    return activity;
+                }))
+                .collect(Collectors.toList());
+
+        if (activities.size() != 1) {
+            throw new RuntimeException("There must be exactly one activity associated with a place request: ." + place);
+        }
+
+        return activities.get(0);
+    }
+
+    @Override
+    public void openActivity(final String activityId) {
+        final Activity activity = startedActivities.get(activityId);
+        if (activity != null) {
+            activity.onOpen();
+        }
+    }
+
+    @Override
+    public void closeActivity(final String activityId) {
+        final Activity activity = startedActivities.get(activityId);
+        if (activity != null) {
+            activity.onClose();
+        }
     }
 
     @Override
     public void destroyActivity(final Activity activity) {
-        if (startedActivities.remove(activity) == null) {
+        if (startedActivities.remove(activity.getIdentifier()) == null) {
             throw new IllegalStateException("Activity " + activity + " is not currently in the started state");
         }
         if (getBeanScope(activity) == Dependent.class) {
-            iocManager.destroyBean(activity);
+            destroyBean(activity);
         }
+    }
+
+    @Override
+    public void destroyBean(Object bean) {
+        iocManager.destroyBean(bean);
     }
 
     private Class<?> getBeanScope(Activity startedActivity) {
@@ -99,23 +128,6 @@ public class ActivityManagerImpl implements ActivityManager {
                 .filter(IOCBeanDef::isActivated)
                 .map(SyncBeanDef::getInstance)
                 .collect(Collectors.toSet());
-    }
-
-    private Activity startIfNecessary(Activity activity,
-                                      PlaceRequest place) {
-        if (activity == null) {
-            return null;
-        }
-        try {
-            startedActivities.computeIfAbsent(activity, a -> {
-                a.onStartup(place);
-                return place;
-            });
-            return activity;
-        } catch (Exception ex) {
-            destroyActivity(activity);
-            return null;
-        }
     }
 
     private Collection<SyncBeanDef<Activity>> resolveById(final String identifier) {

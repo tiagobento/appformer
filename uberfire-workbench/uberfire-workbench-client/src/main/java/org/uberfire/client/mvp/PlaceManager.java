@@ -17,15 +17,10 @@
 package org.uberfire.client.mvp;
 
 import com.google.gwt.user.client.ui.HasWidgets;
-import org.uberfire.mvp.Command;
 import org.uberfire.mvp.PlaceRequest;
 
 public interface PlaceManager {
 
-    void bootstrapRootPanel();
-
-    void goToDock(final PlaceRequest place,
+    void openDock(final PlaceRequest place,
                   final HasWidgets addTo);
-
-    void closePlace(final PlaceRequest placeToClose);
 }

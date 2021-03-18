@@ -15,13 +15,17 @@
  */
 package org.uberfire.client.mvp;
 
-import java.util.Set;
-
 import org.uberfire.mvp.PlaceRequest;
 
 public interface ActivityManager {
 
-    Set<Activity> getActivities(final PlaceRequest placeRequest);
+    Activity getActivity(final PlaceRequest placeRequest);
+
+    void openActivity(final String activityId);
+
+    void closeActivity(final String activityId);
 
     void destroyActivity(final Activity activity);
+
+    void destroyBean(final Object bean);
 }

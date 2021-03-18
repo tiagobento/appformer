@@ -17,7 +17,9 @@ package org.uberfire.client.util;
 
 public class CSSLocatorsUtils {
 
-    private CSSLocatorsUtils() {}
+    private CSSLocatorsUtils() {
+        // Empty
+    }
 
     public static String buildLocator(String... values) {
         StringBuilder cssClass = new StringBuilder();

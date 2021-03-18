@@ -26,12 +26,7 @@ import org.uberfire.mvp.PlaceRequest;
 public class MockPlaceManager implements PlaceManager {
 
     @Override
-    public void bootstrapRootPanel() {
-        throw new UnsupportedOperationException("Not implemented.");
-    }
-
-    @Override
-    public void goToDock(PlaceRequest place,
+    public void openDock(PlaceRequest place,
                          HasWidgets addTo) {
         throw new UnsupportedOperationException("Not implemented.");
     }

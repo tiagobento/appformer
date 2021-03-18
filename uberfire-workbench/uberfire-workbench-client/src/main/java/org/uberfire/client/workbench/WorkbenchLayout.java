@@ -16,6 +16,9 @@
 
 package org.uberfire.client.workbench;
 
+import java.util.Collection;
+
+import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 
 import com.google.gwt.core.client.Scheduler;
@@ -26,26 +29,33 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.jboss.errai.ioc.client.api.AfterInitialization;
 import org.jboss.errai.ioc.client.api.EntryPoint;
-import org.uberfire.client.mvp.PlaceManager;
+import org.jboss.errai.ioc.client.container.SyncBeanDef;
+import org.jboss.errai.ioc.client.container.SyncBeanManager;
+import org.uberfire.client.mvp.Activity;
+import org.uberfire.client.mvp.ActivityManager;
+import org.uberfire.client.mvp.EditorActivity;
 import org.uberfire.client.resources.WorkbenchResources;
 import org.uberfire.client.util.JSFunctions;
 import org.uberfire.client.util.Layouts;
 import org.uberfire.client.workbench.docks.UberfireDocksContainer;
+import org.uberfire.mvp.ParameterizedCommand;
+import org.uberfire.mvp.PlaceRequest;
+import org.uberfire.mvp.impl.DefaultPlaceRequest;
+import org.uberfire.workbench.model.ActivityResourceType;
 
 @EntryPoint
 public class WorkbenchLayout {
 
-    private final UberfireDocksContainer uberfireDocksContainer;
-    private final PlaceManager placeManager;
-    private final DockLayoutPanel rootContainer = new DockLayoutPanel(Unit.PX);
-    private Widget currentContent;
-
     @Inject
-    public WorkbenchLayout(final UberfireDocksContainer uberfireDocksContainer,
-                           final PlaceManager placeManager) {
-        this.uberfireDocksContainer = uberfireDocksContainer;
-        this.placeManager = placeManager;
-    }
+    private UberfireDocksContainer uberfireDocksContainer;
+    @Inject
+    private SyncBeanManager iocManager;
+    @Inject
+    private ActivityManager activityManager;
+    @Inject
+    private Instance<WorkbenchPanel> workbenchPanelInstance;
+
+    private final DockLayoutPanel rootContainer = new DockLayoutPanel(Unit.PX);
 
     @AfterInitialization
     private void afterInit() {
@@ -56,7 +66,7 @@ public class WorkbenchLayout {
         Layouts.setToFillParent(rootContainer);
 
         RootLayoutPanel.get().add(rootContainer);
-        placeManager.bootstrapRootPanel();
+        bootstrapRootPanel();
 
         // Resizing the Window should resize everything
         Window.addResizeHandler(event -> resizeTo(event.getWidth(),
@@ -66,14 +76,6 @@ public class WorkbenchLayout {
         Scheduler.get().scheduleDeferred(this::onResize);
 
         JSFunctions.notifyJSReady();
-    }
-
-    public void setContent(Widget content) {
-        if (currentContent != null) {
-            rootContainer.remove(currentContent);
-        }
-        rootContainer.add(content);
-        Layouts.setToFillParent(content);
     }
 
     public void onResize() {
@@ -89,5 +91,31 @@ public class WorkbenchLayout {
         // The dragBoundary can't be a LayoutPanel, so it doesn't support ProvidesResize/RequiresResize.
         // We start the cascade of onResize() calls at its immediate child.
         rootContainer.onResize();
+    }
+
+    private void bootstrapRootPanel() {
+        final ParameterizedCommand<PlaceRequest> command = editorPlace -> {
+            final WorkbenchPanel panel = workbenchPanelInstance.get();
+            final Widget content = panel.asWidget();
+            rootContainer.add(content);
+            Layouts.setToFillParent(content);
+
+            final Activity editorActivity = activityManager.getActivity(editorPlace);
+            if (!editorActivity.isType(ActivityResourceType.EDITOR.name())) {
+                return;
+            }
+
+            panel.init(editorActivity.getWidget());
+            activityManager.openActivity(editorActivity.getIdentifier());
+
+            onResize();
+        };
+
+        final Collection<SyncBeanDef<EditorActivity>> editors = iocManager.lookupBeans(EditorActivity.class);
+        if (editors.size() != 1) {
+            throw new RuntimeException("There must be exactly one instance of EditorActivity.");
+        }
+        final DefaultPlaceRequest editorPlace = new DefaultPlaceRequest(editors.iterator().next().getInstance().getIdentifier());
+        command.execute(editorPlace);
     }
 }
