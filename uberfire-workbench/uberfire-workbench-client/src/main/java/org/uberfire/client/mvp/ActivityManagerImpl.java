@@ -19,10 +19,7 @@ package org.uberfire.client.mvp;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -34,9 +31,6 @@ import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.util.JSFunctions;
 import org.uberfire.mvp.PlaceRequest;
-
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 
 @ApplicationScoped
 public class ActivityManagerImpl implements ActivityManager {
@@ -50,7 +44,6 @@ public class ActivityManagerImpl implements ActivityManager {
     @PostConstruct
     void init() {
         JSFunctions.nativeRegisterGwtEditorProvider();
-
         iocManager.lookupBeans(Activity.class)
                 .stream()
                 .filter(IOCBeanDef::isActivated)
@@ -77,35 +70,14 @@ public class ActivityManagerImpl implements ActivityManager {
 
     @Override
     public Activity getActivity(final PlaceRequest place) {
-        final List<Activity> activities = getActivitiesFromBeans(resolveById(place.getIdentifier()))
-                .stream()
-                .map(activity -> startedActivities.computeIfAbsent(activity.getIdentifier(), a -> {
-                    activity.onStartup(place);
-                    return activity;
-                }))
-                .collect(Collectors.toList());
-
-        if (activities.size() != 1) {
-            throw new RuntimeException("There must be exactly one activity associated with a place request: ." + place);
+        final Activity activity = activitiesById.get(place.getIdentifier()).getInstance();
+        if (activity == null) {
+            throw new RuntimeException("There must be one activity associated with a place request: ." + place);
         }
-
-        return activities.get(0);
-    }
-
-    @Override
-    public void openActivity(final String activityId) {
-        final Activity activity = startedActivities.get(activityId);
-        if (activity != null) {
-            activity.onOpen();
-        }
-    }
-
-    @Override
-    public void closeActivity(final String activityId) {
-        final Activity activity = startedActivities.get(activityId);
-        if (activity != null) {
-            activity.onClose();
-        }
+        return startedActivities.computeIfAbsent(activity.getIdentifier(), a -> {
+            activity.onStartup(place);
+            return activity;
+        });
     }
 
     @Override
@@ -113,36 +85,9 @@ public class ActivityManagerImpl implements ActivityManager {
         if (startedActivities.remove(activity.getIdentifier()) == null) {
             throw new IllegalStateException("Activity " + activity + " is not currently in the started state");
         }
-        if (getBeanScope(activity) == Dependent.class) {
+        final SyncBeanDef<Activity> bean = activitiesById.get(activity.getIdentifier());
+        if (bean == null || bean.getScope() == Dependent.class) {
             iocManager.destroyBean(activity);
         }
-    }
-
-    private Class<?> getBeanScope(Activity startedActivity) {
-        final IOCBeanDef<?> beanDef = activitiesById.get(startedActivity.getPlace().getIdentifier());
-        if (beanDef == null) {
-            return Dependent.class;
-        }
-        return beanDef.getScope();
-    }
-
-    private Set<Activity> getActivitiesFromBeans(final Collection<SyncBeanDef<Activity>> activityBeans) {
-        return activityBeans
-                .stream()
-                .filter(IOCBeanDef::isActivated)
-                .map(SyncBeanDef::getInstance)
-                .collect(Collectors.toSet());
-    }
-
-    private Collection<SyncBeanDef<Activity>> resolveById(final String identifier) {
-        if (identifier == null) {
-            return emptyList();
-        }
-
-        SyncBeanDef<Activity> beanDefActivity = activitiesById.get(identifier);
-        if (beanDefActivity == null) {
-            return emptyList();
-        }
-        return singletonList(beanDefActivity);
     }
 }

@@ -23,9 +23,5 @@ public interface ActivityManager {
 
     Activity getActivity(final PlaceRequest placeRequest);
 
-    void openActivity(final String activityId);
-
-    void closeActivity(final String activityId);
-
     void destroyActivity(final Activity activity);
 }

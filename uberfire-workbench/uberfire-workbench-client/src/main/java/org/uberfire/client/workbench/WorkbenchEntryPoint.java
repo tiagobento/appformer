@@ -104,7 +104,7 @@ public class WorkbenchEntryPoint {
         Layouts.setToFillParent(panel);
 
         rootContainer.add(panel);
-        activityManager.openActivity(editorActivity.getIdentifier());
+        editorActivity.onOpen();
         onResize();
     }
 
@@ -120,7 +120,7 @@ public class WorkbenchEntryPoint {
         panel.addAttachHandler(new CleanupHandler(place));
         Layouts.setToFillParent(panel);
         container.add(panel);
-        activityManager.openActivity(dockActivity.getIdentifier());
+        dockActivity.onOpen();
         placeCustomWidgetMap.put(place,
                                  container);
         dockPanels.put(place,
@@ -145,7 +145,7 @@ public class WorkbenchEntryPoint {
             Scheduler.get().scheduleFinally(() -> {
                 try {
                     final Activity activity = activityManager.getActivity(place);
-                    activityManager.closeActivity(activity.getIdentifier());
+                    activity.onClose();
 
                     final ScrollPanel panelToRemove = dockPanels.remove(place);
                     if (panelToRemove != null) {
