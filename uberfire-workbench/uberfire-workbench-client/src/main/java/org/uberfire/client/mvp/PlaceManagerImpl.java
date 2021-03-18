@@ -34,7 +34,6 @@ import org.jboss.errai.ioc.client.container.SyncBeanDef;
 import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.workbench.WorkbenchLayout;
 import org.uberfire.client.workbench.WorkbenchPanel;
-import org.uberfire.mvp.Command;
 import org.uberfire.mvp.ParameterizedCommand;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
@@ -126,13 +125,12 @@ public class PlaceManagerImpl implements PlaceManager {
         try {
             activity.onOpen();
         } catch (Exception ex) {
-            closePlace(place, null);
+            closePlace(place);
         }
     }
 
     @Override
-    public void closePlace(final PlaceRequest place,
-                           final Command onAfterClose) {
+    public void closePlace(final PlaceRequest place) {
         if (place == null) {
             return;
         }
@@ -146,10 +144,6 @@ public class PlaceManagerImpl implements PlaceManager {
         removePanelForPlace(place, dockPlaces.remove(place));
         existingWorkbenchActivities.remove(place);
         activityManager.destroyActivity(activity);
-
-        if (onAfterClose != null) {
-            onAfterClose.execute();
-        }
     }
 
     private void removePanelForPlace(final PlaceRequest toRemove,
@@ -207,7 +201,7 @@ public class PlaceManagerImpl implements PlaceManager {
             detaching = true;
             Scheduler.get().scheduleFinally(() -> {
                 try {
-                    closePlace(place, null);
+                    closePlace(place);
                 } finally {
                     detaching = false;
                 }

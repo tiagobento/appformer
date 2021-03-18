@@ -27,6 +27,5 @@ public interface PlaceManager {
     void goToDock(final PlaceRequest place,
                   final HasWidgets addTo);
 
-    void closePlace(final PlaceRequest placeToClose,
-                    final Command onAfterClose);
+    void closePlace(final PlaceRequest placeToClose);
 }

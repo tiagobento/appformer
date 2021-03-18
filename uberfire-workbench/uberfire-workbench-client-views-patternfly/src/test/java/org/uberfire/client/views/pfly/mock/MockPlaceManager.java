@@ -20,7 +20,6 @@ import javax.enterprise.inject.Alternative;
 
 import com.google.gwt.user.client.ui.HasWidgets;
 import org.uberfire.client.mvp.PlaceManager;
-import org.uberfire.mvp.Command;
 import org.uberfire.mvp.PlaceRequest;
 
 @Alternative
@@ -38,7 +37,7 @@ public class MockPlaceManager implements PlaceManager {
     }
 
     @Override
-    public void closePlace(PlaceRequest placeToClose, Command onAfterClose) {
+    public void closePlace(PlaceRequest placeToClose) {
         throw new UnsupportedOperationException("Not implemented.");
     }
 }
