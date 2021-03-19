@@ -27,6 +27,7 @@ import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimpleLayoutPanel;
@@ -53,7 +54,7 @@ public class WorkbenchEntryPoint {
 
     private final DockLayoutPanel rootContainer = new DockLayoutPanel(Unit.PX);
 
-    private final Map<PlaceRequest, ScrollPanel> dockPanels = new HashMap<>();
+    private final Map<PlaceRequest, SimpleLayoutPanel> dockPanels = new HashMap<>();
     private final Map<PlaceRequest, HasWidgets> placeCustomWidgetMap = new HashMap<>();
 
     @AfterInitialization
@@ -93,16 +94,7 @@ public class WorkbenchEntryPoint {
             return;
         }
 
-        final SimpleLayoutPanel panel = new SimpleLayoutPanel();
-        panel.getElement().addClassName(CSSLocatorsUtils.buildLocator("qe", "static-workbench-panel-view"));
-
-        final ScrollPanel sp = new ScrollPanel();
-        sp.setWidget(editorActivity.getWidget());
-        sp.getElement().getFirstChildElement().setClassName("uf-scroll-panel");
-
-        panel.setWidget(sp);
-        Layouts.setToFillParent(panel);
-
+        final SimpleLayoutPanel panel = createPanel(editorActivity.getWidget());
         rootContainer.add(panel);
         editorActivity.onOpen();
         onResize();
@@ -115,16 +107,31 @@ public class WorkbenchEntryPoint {
             return;
         }
 
-        final ScrollPanel panel = new ScrollPanel();
-        panel.setWidget(dockActivity.getWidget());
-        panel.addAttachHandler(new CleanupHandler(place));
-        Layouts.setToFillParent(panel);
+        final SimpleLayoutPanel panel = createPanel(dockActivity.getWidget());
+
         container.add(panel);
         dockActivity.onOpen();
+        onResize();
+
+        panel.addAttachHandler(new CleanupHandler(place));
+
         placeCustomWidgetMap.put(place,
                                  container);
         dockPanels.put(place,
                        panel);
+    }
+
+    private SimpleLayoutPanel createPanel(final IsWidget widget) {
+        final SimpleLayoutPanel panel = new SimpleLayoutPanel();
+        panel.getElement().addClassName(CSSLocatorsUtils.buildLocator("qe", "static-workbench-panel-view"));
+
+        final ScrollPanel sp = new ScrollPanel();
+        sp.setWidget(widget);
+        sp.getElement().getFirstChildElement().setClassName("uf-scroll-panel");
+
+        panel.setWidget(sp);
+        Layouts.setToFillParent(panel);
+        return panel;
     }
 
     private final class CleanupHandler implements AttachEvent.Handler {
@@ -147,7 +154,7 @@ public class WorkbenchEntryPoint {
                     final Activity activity = activityManager.getActivity(place);
                     activity.onClose();
 
-                    final ScrollPanel panelToRemove = dockPanels.remove(place);
+                    final SimpleLayoutPanel panelToRemove = dockPanels.remove(place);
                     if (panelToRemove != null) {
                         panelToRemove.clear();
 

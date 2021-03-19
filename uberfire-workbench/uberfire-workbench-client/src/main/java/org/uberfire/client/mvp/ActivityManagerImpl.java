@@ -63,7 +63,7 @@ public class ActivityManagerImpl implements ActivityManager {
     public Activity getEditorActivity() {
         final Collection<SyncBeanDef<EditorActivity>> editors = iocManager.lookupBeans(EditorActivity.class);
         if (editors.size() != 1) {
-            throw new RuntimeException("There must be exactly one instance of EditorActivity.");
+            throw new RuntimeException("There must be exactly one instance of EditorActivity. Found " + editors.size());
         }
         return editors.iterator().next().getInstance();
     }
