@@ -26,7 +26,6 @@ import javax.inject.Inject;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
@@ -136,9 +135,22 @@ public class WorkbenchEntryPoint {
         }
 
         final SimpleLayoutPanel panel = createPanel(dockActivity.getWidget());
-        panel.addAttachHandler(new DockCleanupHandler(dockActivity.getIdentifier(),
-                                                      container,
-                                                      panel));
+        panel.addAttachHandler(attachEvent -> {
+            if (attachEvent.isAttached()) {
+                return;
+            }
+            Scheduler.get().scheduleFinally(() -> {
+                final Activity activity = idActivityMap.remove(dockActivity.getIdentifier());
+                if (activity != null) {
+                    activity.onClose();
+                    final SyncBeanDef<Activity> bean = getBean(Activity.class, dockActivity.getIdentifier());
+                    if (bean.getScope() == Dependent.class) {
+                        iocManager.destroyBean(activity);
+                    }
+                }
+                container.remove(panel);
+            });
+        });
 
         container.add(panel);
         resize();
@@ -155,44 +167,5 @@ public class WorkbenchEntryPoint {
         panel.setWidget(scrollPanel);
         Layouts.setToFillParent(panel);
         return panel;
-    }
-
-    private final class DockCleanupHandler implements AttachEvent.Handler {
-
-        private final String dockId;
-        private final HasWidgets container;
-        private final SimpleLayoutPanel panelToRemove;
-        private boolean detaching;
-
-        private DockCleanupHandler(final String dockId,
-                                   final HasWidgets container,
-                                   final SimpleLayoutPanel panel) {
-            this.dockId = dockId;
-            this.container = container;
-            this.panelToRemove = panel;
-        }
-
-        @Override
-        public void onAttachOrDetach(AttachEvent event) {
-            if (event.isAttached() || detaching) {
-                return;
-            }
-            detaching = true;
-            Scheduler.get().scheduleFinally(() -> {
-                try {
-                    final Activity activity = idActivityMap.remove(dockId);
-                    if (activity != null) {
-                        activity.onClose();
-                        final SyncBeanDef<Activity> bean = getBean(Activity.class, dockId);
-                        if (bean.getScope() == Dependent.class) {
-                            iocManager.destroyBean(activity);
-                        }
-                    }
-                    container.remove(panelToRemove);
-                } finally {
-                    detaching = false;
-                }
-            });
-        }
     }
 }
