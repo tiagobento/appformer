@@ -16,9 +16,13 @@
 
 package org.uberfire.client.workbench;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 import com.google.gwt.core.client.Scheduler;
@@ -33,8 +37,11 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import org.jboss.errai.ioc.client.api.AfterInitialization;
 import org.jboss.errai.ioc.client.api.EntryPoint;
+import org.jboss.errai.ioc.client.container.IOCBeanDef;
+import org.jboss.errai.ioc.client.container.SyncBeanDef;
+import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.uberfire.client.mvp.Activity;
-import org.uberfire.client.mvp.ActivityManager;
+import org.uberfire.client.mvp.EditorActivity;
 import org.uberfire.client.resources.WorkbenchResources;
 import org.uberfire.client.util.CSSLocatorsUtils;
 import org.uberfire.client.util.JSFunctions;
@@ -50,12 +57,15 @@ public class WorkbenchEntryPoint {
     @Inject
     private UberfireDocksContainer uberfireDocksContainer;
     @Inject
-    private ActivityManager activityManager;
+    private SyncBeanManager iocManager;
 
     private final DockLayoutPanel rootContainer = new DockLayoutPanel(Unit.PX);
 
     private final Map<PlaceRequest, SimpleLayoutPanel> dockPanels = new HashMap<>();
     private final Map<PlaceRequest, HasWidgets> placeCustomWidgetMap = new HashMap<>();
+
+    private final Map<String, Activity> startedActivities = new IdentityHashMap<>();
+    private final Map<String, SyncBeanDef<Activity>> activitiesById = new HashMap<>();
 
     @AfterInitialization
     private void afterInit() {
@@ -75,6 +85,43 @@ public class WorkbenchEntryPoint {
         JSFunctions.notifyJSReady();
     }
 
+    @PostConstruct
+    void init() {
+        JSFunctions.nativeRegisterGwtEditorProvider();
+        iocManager.lookupBeans(Activity.class)
+                .stream()
+                .filter(IOCBeanDef::isActivated)
+                .forEach(bean -> {
+                    final String id = bean.getName();
+                    if (activitiesById.containsKey(id)) {
+                        throw new RuntimeException("Conflict detected: Activity already exists with id " + id);
+                    }
+                    activitiesById.put(id, bean);
+                    if (bean.isAssignableTo(EditorActivity.class)) {
+                        JSFunctions.nativeRegisterGwtClientBean(id, bean);
+                    }
+                });
+    }
+
+    private Activity getEditorActivity() {
+        final Collection<SyncBeanDef<EditorActivity>> editors = iocManager.lookupBeans(EditorActivity.class);
+        if (editors.size() != 1) {
+            throw new RuntimeException("There must be exactly one instance of EditorActivity. Found " + editors.size());
+        }
+        return editors.iterator().next().getInstance();
+    }
+
+    private Activity getActivity(final PlaceRequest place) {
+        final Activity activity = activitiesById.get(place.getIdentifier()).getInstance();
+        if (activity == null) {
+            throw new RuntimeException("There must be one activity associated with a place request: ." + place);
+        }
+        return startedActivities.computeIfAbsent(activity.getIdentifier(), a -> {
+            activity.onStartup(place);
+            return activity;
+        });
+    }
+
     public void onResize() {
         resizeTo(Window.getClientWidth(),
                  Window.getClientHeight());
@@ -88,8 +135,8 @@ public class WorkbenchEntryPoint {
     }
 
     private void bootstrapRootPanel() {
-        final DefaultPlaceRequest editorPlace = new DefaultPlaceRequest(activityManager.getEditorActivity().getIdentifier());
-        final Activity editorActivity = activityManager.getActivity(editorPlace);
+        final DefaultPlaceRequest editorPlace = new DefaultPlaceRequest(getEditorActivity().getIdentifier());
+        final Activity editorActivity = getActivity(editorPlace);
         if (!editorActivity.isType(ActivityResourceType.EDITOR.name())) {
             return;
         }
@@ -102,8 +149,8 @@ public class WorkbenchEntryPoint {
 
     public void openDock(PlaceRequest place,
                          HasWidgets container) {
-        final Activity dockActivity = activityManager.getActivity(place);
-        if (place == null || !dockActivity.isType(ActivityResourceType.DOCK.name())) {
+        final Activity dockActivity = getActivity(place);
+        if (!dockActivity.isType(ActivityResourceType.DOCK.name())) {
             return;
         }
 
@@ -151,7 +198,7 @@ public class WorkbenchEntryPoint {
             detaching = true;
             Scheduler.get().scheduleFinally(() -> {
                 try {
-                    final Activity activity = activityManager.getActivity(place);
+                    final Activity activity = getActivity(place);
                     activity.onClose();
 
                     final SimpleLayoutPanel panelToRemove = dockPanels.remove(place);
@@ -163,11 +210,21 @@ public class WorkbenchEntryPoint {
                             customContainer.remove(panelToRemove.asWidget());
                         }
                     }
-                    activityManager.destroyActivity(activity);
+                    destroyActivity(activity);
                 } finally {
                     detaching = false;
                 }
             });
+        }
+
+        private void destroyActivity(final Activity activity) {
+            if (startedActivities.remove(activity.getIdentifier()) == null) {
+                throw new IllegalStateException("Activity " + activity + " is not currently in the started state");
+            }
+            final SyncBeanDef<Activity> bean = activitiesById.get(activity.getIdentifier());
+            if (bean == null || bean.getScope() == Dependent.class) {
+                iocManager.destroyBean(activity);
+            }
         }
     }
 }
