@@ -16,10 +16,9 @@
 
 package org.uberfire.client.workbench;
 
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
@@ -60,69 +59,64 @@ public class WorkbenchEntryPoint {
     private SyncBeanManager iocManager;
 
     private final DockLayoutPanel rootContainer = new DockLayoutPanel(Unit.PX);
-
-    private final Map<PlaceRequest, SimpleLayoutPanel> dockPanels = new HashMap<>();
-    private final Map<PlaceRequest, HasWidgets> placeCustomWidgetMap = new HashMap<>();
-
-    private final Map<String, Activity> startedActivities = new IdentityHashMap<>();
-    private final Map<String, SyncBeanDef<Activity>> activitiesById = new HashMap<>();
+    private final Map<String, Activity> idActivityMap = new HashMap<>();
 
     @AfterInitialization
-    private void afterInit() {
+    private void afterInitialization() {
         WorkbenchResources.INSTANCE.CSS().ensureInjected();
 
-        uberfireDocksContainer.setup(rootContainer,
-                                     () -> Scheduler.get().scheduleDeferred(this::onResize));
+        setupRootContainer();
 
-        Layouts.setToFillParent(rootContainer);
-        RootLayoutPanel.get().add(rootContainer);
-        bootstrapRootPanel();
-
-        Window.addResizeHandler(event -> resizeTo(event.getWidth(),
-                                                  event.getHeight()));
-        Scheduler.get().scheduleDeferred(this::onResize);
+        Window.addResizeHandler(event -> resizeTo(event.getWidth(), event.getHeight()));
+        Scheduler.get().scheduleDeferred(this::resize);
 
         JSFunctions.notifyJSReady();
     }
 
     @PostConstruct
-    void init() {
+    private void postConstruct() {
         JSFunctions.nativeRegisterGwtEditorProvider();
-        iocManager.lookupBeans(Activity.class)
+    }
+
+    private void setupRootContainer() {
+        uberfireDocksContainer.setup(rootContainer,
+                                     () -> Scheduler.get().scheduleDeferred(this::resize));
+
+        Layouts.setToFillParent(rootContainer);
+        RootLayoutPanel.get().add(rootContainer);
+
+        final SyncBeanDef<EditorActivity> editorBean = getBean(EditorActivity.class, null);
+        JSFunctions.nativeRegisterGwtClientBean(editorBean.getName(), editorBean);
+
+        final Activity editorActivity = openActivity(editorBean.getName());
+        rootContainer.add(createPanel(editorActivity.getWidget()));
+        resize();
+    }
+
+    private <T extends Activity> SyncBeanDef<T> getBean(Class<T> type, final String name) {
+        final Optional<SyncBeanDef<T>> optionalActivity = iocManager.lookupBeans(type)
                 .stream()
                 .filter(IOCBeanDef::isActivated)
-                .forEach(bean -> {
-                    final String id = bean.getName();
-                    if (activitiesById.containsKey(id)) {
-                        throw new RuntimeException("Conflict detected: Activity already exists with id " + id);
-                    }
-                    activitiesById.put(id, bean);
-                    if (bean.isAssignableTo(EditorActivity.class)) {
-                        JSFunctions.nativeRegisterGwtClientBean(id, bean);
-                    }
-                });
-    }
+                .filter(bean -> name == null || bean.getName().equals(name))
+                .findFirst();
 
-    private Activity getEditorActivity() {
-        final Collection<SyncBeanDef<EditorActivity>> editors = iocManager.lookupBeans(EditorActivity.class);
-        if (editors.size() != 1) {
-            throw new RuntimeException("There must be exactly one instance of EditorActivity. Found " + editors.size());
+        if (!optionalActivity.isPresent()) {
+            throw new RuntimeException("Activity not found" + (name != null ? ": " + name : ""));
         }
-        return editors.iterator().next().getInstance();
+
+        return optionalActivity.get();
     }
 
-    private Activity getActivity(final PlaceRequest place) {
-        final Activity activity = activitiesById.get(place.getIdentifier()).getInstance();
-        if (activity == null) {
-            throw new RuntimeException("There must be one activity associated with a place request: ." + place);
-        }
-        return startedActivities.computeIfAbsent(activity.getIdentifier(), a -> {
-            activity.onStartup(place);
-            return activity;
-        });
+    private Activity openActivity(final String name) {
+        final Activity activity = getBean(Activity.class,
+                                          name).getInstance();
+        idActivityMap.put(activity.getIdentifier(), activity);
+        activity.onStartup(new DefaultPlaceRequest(name));
+        activity.onOpen();
+        return activity;
     }
 
-    public void onResize() {
+    public void resize() {
         resizeTo(Window.getClientWidth(),
                  Window.getClientHeight());
     }
@@ -134,97 +128,71 @@ public class WorkbenchEntryPoint {
         rootContainer.onResize();
     }
 
-    private void bootstrapRootPanel() {
-        final DefaultPlaceRequest editorPlace = new DefaultPlaceRequest(getEditorActivity().getIdentifier());
-        final Activity editorActivity = getActivity(editorPlace);
-        if (!editorActivity.isType(ActivityResourceType.EDITOR.name())) {
-            return;
-        }
-
-        final SimpleLayoutPanel panel = createPanel(editorActivity.getWidget());
-        rootContainer.add(panel);
-        editorActivity.onOpen();
-        onResize();
-    }
-
-    public void openDock(PlaceRequest place,
-                         HasWidgets container) {
-        final Activity dockActivity = getActivity(place);
+    public void openDock(final PlaceRequest place,
+                         final HasWidgets container) {
+        final Activity dockActivity = openActivity(place.getIdentifier());
         if (!dockActivity.isType(ActivityResourceType.DOCK.name())) {
-            return;
+            throw new RuntimeException("The place should be associated with a dock activity. " + place);
         }
 
         final SimpleLayoutPanel panel = createPanel(dockActivity.getWidget());
+        panel.addAttachHandler(new DockCleanupHandler(dockActivity.getIdentifier(),
+                                                      container,
+                                                      panel));
 
         container.add(panel);
-        dockActivity.onOpen();
-        onResize();
-
-        panel.addAttachHandler(new CleanupHandler(place));
-
-        placeCustomWidgetMap.put(place,
-                                 container);
-        dockPanels.put(place,
-                       panel);
+        resize();
     }
 
     private SimpleLayoutPanel createPanel(final IsWidget widget) {
         final SimpleLayoutPanel panel = new SimpleLayoutPanel();
         panel.getElement().addClassName(CSSLocatorsUtils.buildLocator("qe", "static-workbench-panel-view"));
 
-        final ScrollPanel sp = new ScrollPanel();
-        sp.setWidget(widget);
-        sp.getElement().getFirstChildElement().setClassName("uf-scroll-panel");
+        final ScrollPanel scrollPanel = new ScrollPanel();
+        scrollPanel.setWidget(widget);
+        scrollPanel.getElement().getFirstChildElement().setClassName("uf-scroll-panel");
 
-        panel.setWidget(sp);
+        panel.setWidget(scrollPanel);
         Layouts.setToFillParent(panel);
         return panel;
     }
 
-    private final class CleanupHandler implements AttachEvent.Handler {
+    private final class DockCleanupHandler implements AttachEvent.Handler {
 
-        private final PlaceRequest place;
+        private final String dockId;
+        private final HasWidgets container;
+        private final SimpleLayoutPanel panelToRemove;
         private boolean detaching;
 
-        private CleanupHandler(PlaceRequest place) {
-            this.place = place;
+        private DockCleanupHandler(final String dockId,
+                                   final HasWidgets container,
+                                   final SimpleLayoutPanel panel) {
+            this.dockId = dockId;
+            this.container = container;
+            this.panelToRemove = panel;
         }
 
         @Override
         public void onAttachOrDetach(AttachEvent event) {
-            if (event.isAttached() || detaching || place == null || !dockPanels.containsKey(place)) {
+            if (event.isAttached() || detaching) {
                 return;
             }
             detaching = true;
             Scheduler.get().scheduleFinally(() -> {
                 try {
-                    final Activity activity = getActivity(place);
-                    activity.onClose();
-
-                    final SimpleLayoutPanel panelToRemove = dockPanels.remove(place);
-                    if (panelToRemove != null) {
-                        panelToRemove.clear();
-
-                        final HasWidgets customContainer = placeCustomWidgetMap.remove(place);
-                        if (customContainer != null) {
-                            customContainer.remove(panelToRemove.asWidget());
+                    final Activity activity = idActivityMap.remove(dockId);
+                    if (activity != null) {
+                        activity.onClose();
+                        final SyncBeanDef<Activity> bean = getBean(Activity.class, dockId);
+                        if (bean.getScope() == Dependent.class) {
+                            iocManager.destroyBean(activity);
                         }
                     }
-                    destroyActivity(activity);
+                    container.remove(panelToRemove);
                 } finally {
                     detaching = false;
                 }
             });
-        }
-
-        private void destroyActivity(final Activity activity) {
-            if (startedActivities.remove(activity.getIdentifier()) == null) {
-                throw new IllegalStateException("Activity " + activity + " is not currently in the started state");
-            }
-            final SyncBeanDef<Activity> bean = activitiesById.get(activity.getIdentifier());
-            if (bean == null || bean.getScope() == Dependent.class) {
-                iocManager.destroyBean(activity);
-            }
         }
     }
 }

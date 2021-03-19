@@ -1,7 +1,7 @@
 package org.uberfire.client.util;
 
 import org.jboss.errai.ioc.client.container.SyncBeanDef;
-import org.uberfire.client.mvp.Activity;
+import org.uberfire.client.mvp.EditorActivity;
 
 public class JSFunctions {
 
@@ -56,8 +56,8 @@ public class JSFunctions {
 
     }-*/;
 
-    public static native void nativeRegisterGwtClientBean(final String id, final SyncBeanDef<Activity> activityBean) /*-{
-        $wnd.gwtEditorBeans.set(id, new $wnd.GWTEditorSupplier(activityBean));
+    public static native void nativeRegisterGwtClientBean(final String id, final SyncBeanDef<EditorActivity> bean) /*-{
+        $wnd.gwtEditorBeans.set(id, new $wnd.GWTEditorSupplier(bean));
     }-*/;
 
     public static native void notifyJSReady() /*-{
